@@ -5,13 +5,15 @@ LAST UPDATED DATE: 5/21/15
 VERSION: 1.1
 
 SYNOPSIS
-   This module uses the F5 LTM REST API to manipulate and query pools and pool members
-   It is built to work with version 11.6
-	    
 
-It depends on the TunablesSSLValidator module to allow for using the REST API with LTM devices using self-signed SSL certificates
-If you are not connecting to your LTM(s) via SSL or you're using a trusted certificate, then the TunableSSLValidator module is not needed
-and you can remove the -Insecure parameter from the Invoke-WebRequest calls
+This module uses the F5 LTM REST API to manipulate and query pools and pool members
+It is built to work with version 11.6
+	    
+DEPENDENCIES
+
+It depends on the TunableSSLValidator module authored by Jaykul (https://github.com/Jaykul/Tunable-SSL-Validator) to allow for using the REST API 
+with LTM devices using self-signed SSL certificates. If you are not connecting to your LTM(s) via SSL or you're using a trusted 
+certificate, then the TunableSSLValidator module is not needed and you can remove the -Insecure parameter from the Invoke-WebRequest calls
 
 
 #>
