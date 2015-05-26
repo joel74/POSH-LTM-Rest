@@ -1,5 +1,5 @@
 # POSH-LTM-Rest
-This PowerShell module uses the F5 LTM REST API to manipulate and query pools and pool members
+This PowerShell module uses the F5 LTM REST API to manipulate and query pools and pool members. 
 It is built to work with version 11.6.
 
 It requires PowerShell v3 or higher.
@@ -30,4 +30,4 @@ The module contains the following functions.
    * Set-PoolMemberDescription
    * Test-F5IsActive
 
-Nearly all of the functions require an F5 session object as a parameter, which will contain the base URL for the F5 LTM and a credential object for a user with privileges to manipulate the F5 LTM via the REST API.
+Nearly all of the functions require an F5 session object as a parameter, which will contain the base URL for the F5 LTM and a credential object for a user with privileges to manipulate the F5 LTM via the REST API. Use the Get-F5session function to create this object.
