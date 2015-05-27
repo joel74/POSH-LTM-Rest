@@ -17,14 +17,8 @@ certificate, then the TunableSSLValidator module is not needed and you can remov
 
 
 #>
-
-# Check that the PS version is at least 3
-If ($Host.Version.Major -lt "3"){
-    Write-Host("Please use PowerShell version 3 or later. Thanks.") -Foregroundcolor "Red"
-    Exit
-}
-
-Import-Module TunableSSLValidator -force
+#requires -Version 3.0
+#requires -Modules TunableSSLValidator
 
 Function Get-F5session{
 # Generate an F5 session object to be used in querying and changing the F5 LTM
