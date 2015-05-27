@@ -1,7 +1,7 @@
 <#
 AUTHOR: Joel Newton
 CREATED DATE: 5/13/15
-LAST UPDATED DATE: 5/21/15
+LAST UPDATED DATE: 5/27/15
 VERSION: 1.1
 
 SYNOPSIS
@@ -15,10 +15,7 @@ It depends on the TunableSSLValidator module authored by Jaykul (https://github.
 with LTM devices using self-signed SSL certificates. If you are not connecting to your LTM(s) via SSL or you're using a trusted 
 certificate, then the TunableSSLValidator module is not needed and you can remove the -Insecure parameter from the Invoke-WebRequest calls
 
-
 #>
-#requires -Version 3.0
-#requires -Modules TunableSSLValidator
 
 Function Get-F5session{
 # Generate an F5 session object to be used in querying and changing the F5 LTM
