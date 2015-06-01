@@ -17,8 +17,6 @@ certificate, then the TunableSSLValidator module is not needed and you can remov
 
 
 #>
-#requires -Version 3.0
-#requires -Modules TunableSSLValidator
 
 Function Get-F5session{
 # Generate an F5 session object to be used in querying and changing the F5 LTM
