@@ -12,6 +12,7 @@ Download the F5-LTM.psm1 and F5-LTM.psd1 files, and place them in a F5-LTM folde
 
 The module contains the following functions. 
 
+   * Add-iRuleToVirtualServer
    * Add-PoolMember
    * Disable-PoolMemberForced
    * Disable-PoolMember
@@ -26,6 +27,8 @@ The module contains the following functions.
    * Get-Pools
    * Get-PoolsForMember
    * Get-StatusShape
+   * Get-VirtualServeriRules
+   * Remove-iRuleFromVirtualServer
    * Remove-PoolMember
    * Set-PoolMemberDescription
    * Test-F5IsActive

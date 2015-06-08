@@ -403,3 +403,4 @@ Function Get-StatusShape {
 }
 
 
+        $iRulesArray = $iRules
