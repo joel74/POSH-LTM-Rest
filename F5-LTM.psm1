@@ -1,8 +1,7 @@
 <#
 AUTHOR: Joel Newton
 CREATED DATE: 5/13/15
-LAST UPDATED DATE: 5/27/15
-VERSION: 1.1
+LAST UPDATED DATE: 6/8/15
 
 SYNOPSIS
 
@@ -403,4 +402,117 @@ Function Get-StatusShape {
 }
 
 
+Function Get-VirtualServeriRules {
+#Get the iRules currently applied to the specified virtual servers    
+#This function assumes everything is in the /Common partition
+    param(
+        [Parameter(Mandatory=$true)]$VirtualServer,
+        [Parameter(Mandatory=$true)]$F5session
+    )
+
+    $VirtualServerURI = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
+
+    $VirtualserverObject = Invoke-WebRequest -Insecure -Uri $VirtualServerURI -Credential $F5session.Credential
+
+    $VirtualserverObjectContent = $VirtualserverObject.Content | ConvertFrom-Json
+
+    #Filter the content for just the iRules
+    $VirtualserverObjectContent = $VirtualserverObjectContent | Select-Object -Property rules
+
+    $iRules = $VirtualserverObjectContent.rules
+
+    #If the existing iRules collection is not an array, then convert it to one before returning
+    If ($iRules -isnot [system.array]){
+        $iRulesArray = @()
+        $iRulesArray += $iRules
+    }
+    Else {
         $iRulesArray = $iRules
+    }
+
+    $iRulesArray
+
+}
+
+Function Add-iRuleToVirtualServer {
+#Add an iRule to the specified virtual server
+#This function assumes everything is in the /Common partition
+    param(
+        [Parameter(Mandatory=$true)]$VirtualServer,
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)]$iRule
+    )
+
+    $iRuleToAdd = "/Common/$iRule"
+
+    #Get the existing IRules on the virtual server
+    [array]$iRules = Get-VirtualServerIRules -VirtualServer $VirtualServer -F5session $F5session
+
+    #If there are no iRules on this virtual server, then create a new array
+    If (!$iRules){
+        $iRules = @()
+    }        
+
+    #Check that the specified iRule is not already in the collection 
+    If ($iRules -match $iRuleToAdd){
+        Write-Warning "The $VirtualServer virtual server already contains the $iRule iRule."
+        Return($false)
+    }
+    Else {
+        $iRules += $iRuleToAdd
+
+        $VirtualserverIRules = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
+
+        $JSONBody = @{rules=$iRules} | ConvertTo-Json
+
+        $response = Invoke-WebRequest -Insecure -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+
+        Return($true)
+
+    }
+
+
+}
+
+Function Remove-iRuleFromVirtualServer {
+#Remove an iRule from the specified virtual server
+#This function assumes everything is in the /Common partition
+    param(
+        [Parameter(Mandatory=$true)]$VirtualServer,
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)]$iRule
+    )
+
+    $iRuleToRemove = "/Common/$iRule"
+
+    #Get the existing IRules on the virtual server
+    [array]$iRules = Get-VirtualServerIRules -VirtualServer $VirtualServer -F5session $F5session
+
+    #If there are no iRules on this virtual server, then create a new array
+    If (!$iRules){
+        $iRules = @()
+    }  
+
+    #Check that the specified iRule is in the collection 
+    If ($iRules -match $iRuleToRemove){
+
+        $iRules = $iRules | Where-Object { $_ -ne $iRuleToRemove }
+
+        $VirtualserverIRules = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
+
+        $JSONBody = @{rules=$iRules} | ConvertTo-Json
+
+        $response = Invoke-WebRequest -Insecure -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+
+        Return($true)
+
+    }
+    Else {
+        Write-Warning "The $VirtualServer virtual server does not contain the $iRule iRule."
+
+        Return($false)
+
+    }
+
+}
+
