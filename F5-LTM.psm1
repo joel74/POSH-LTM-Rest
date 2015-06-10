@@ -37,7 +37,7 @@ Function Get-F5session{
     [pscustomobject]@{BaseURL = $BaseURL; Credential = $Credential}
 }
 
-Function Test-F5IsActive{
+Function Get-F5Status{
 #Test whether the specified F5 is currently in active or standby failover mode
 
     param (
@@ -344,7 +344,7 @@ Function Enable-PoolMember {
 }
 
 
-Function Get-CurrentConnections {
+Function Get-CurrentConnectionCount {
 #Get the count of the specified pool member's current connections
     param(
         [Parameter(Mandatory=$true)]$ComputerName,
