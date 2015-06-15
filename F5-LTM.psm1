@@ -59,7 +59,7 @@ Function Get-F5Status{
 }
 
 
-Function Get-Pools {
+Function Get-PoolList{
 #Get a list of all pools for the specified F5 LTM
     
     param (
@@ -189,7 +189,7 @@ Function Get-PoolsForMember {
     #All servers that are LTM pool members use the NIC with a default gateway as the IP that registers with the LTM
     $ComputerIP = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
     
-    $AllPools = Get-Pools -F5session $F5session
+    $AllPools = Get-PoolList -F5session $F5session
 
     $PoolsFound = @()
 
@@ -283,46 +283,40 @@ Function Remove-PoolMember{
 }
 
 
-
 Function Disable-PoolMember{
 #Disable a pool member
-#Members that have been disabled accept only new connections that match an existing persistence session.
     param(
         [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$F5session
+        [Parameter(Mandatory=$true)]$F5session,
+        [switch]$Force
     )
 
-    $Pools = Get-PoolsForMember -ComputerName $ComputerName -F5session $F5session
+    #If the -Force param is specified pool members do not accept any new connections, even if they match an existing persistence session.
+    #Otherwise, members will only accept only new connections that match an existing persistence session.
+    If ($Force){
+        $AcceptNewConnections = "user-down"
+    }
+    Else {
+        $AcceptNewConnections = "user-up"
+    }
+
     $IPAddress = (Get-PoolMember -ComputerName $ComputerName -F5session $F5session).Name
+
+    #Retrieve all pools of which this server is a member
+    $Pools = Get-PoolsForMember -ComputerName $ComputerName -F5session $F5session
+
+
+    $JSONBody = @{state=$AcceptNewConnections;session='user-disabled'} | ConvertTo-Json
 
     ForEach ($Pool in $Pools){
     
         $URI = $F5session.BaseURL + "pool/~Common~$Pool/members/$IPAddress"
-        $response = Invoke-WebRequest -Insecure -Method Put -Uri "$URI" -Credential $F5session.Credential -Body '{"state": "user-up", "session": "user-disabled"}'
+        $response = Invoke-WebRequest -Insecure -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
 
     }
     
 }
 
-Function Disable-PoolMemberForced {
-#Set a pool member to Forced-Offline
-#Members that have been forced offline do not accept any new connections, even if they match an existing persistence session.
-    param(
-        [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$F5session
-    )
-
-    $Pools = Get-PoolsForMember -ComputerName $ComputerName -F5session $F5session
-    $IPAddress = (Get-PoolMember -ComputerName $ComputerName -F5session $F5session).Name
-
-    ForEach ($Pool in $Pools){
-
-        $URI = $F5session.BaseURL + "pool/~Common~$Pool/members/$IPAddress"
-        $response = Invoke-WebRequest -Insecure -Method Put -Uri "$URI" -Credential $F5session.Credential -Body '{"state": "user-down", "session": "user-disabled"}'
-
-    }
-
-}
 
 Function Enable-PoolMember {
 #Enable a pool member
