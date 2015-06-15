@@ -77,6 +77,176 @@ Function Get-PoolList{
 
 }
 
+Function Get-Pool {
+#Retrieve the specified pool
+#NB: Pool names are case-specific.
+    
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$PoolName
+    )
+
+    Write-Verbose "NB: Pool names are case-specific."
+
+    #Build the URI for this pool
+    $URI = $F5session.BaseURL + "pool/$PoolName"
+
+    $PoolJSON = Invoke-WebRequest -Insecure -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+
+    If ($PoolJSON){
+        $Pool = $PoolJSON.Content | ConvertFrom-Json
+        $Pool
+    }
+    Else {
+
+        Write-Error ("The $PoolName pool does not exist.")
+    }
+
+}
+
+
+Function Test-Pool {
+#Test whether the specified pool exists
+#NB: Pool names are case-specific.
+    
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$PoolName
+    )
+
+    Write-Verbose "NB: Pool names are case-specific."
+
+    #Build the URI for this pool
+    $URI = $F5session.BaseURL + "pool/$PoolName"
+
+    $PoolJSON = Invoke-WebRequest -Insecure -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+
+    If ($PoolJSON){
+        $true
+    }
+    Else {
+        $false
+    }
+
+}
+
+Function New-Pool {
+<#
+
+.SYNOPSIS
+Create a new pool. Optionally, add pool members to the new pool
+
+.EXAMPLE
+New-Pool -F5Session $F5Session -PoolName "MyPoolName" -MemberDefinitionList @("Server1,80,Web server","Server2,443,Another web server")
+
+.DESCRIPTION
+Expects the $MemberDefinitionList param to be an array of strings. 
+Each string should contain a computer name and a port number, comma-separated.
+Optionally, it can contain a description of the member.
+
+#>   
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$PoolName,
+        [string[]]$MemberDefinitionList
+    )
+
+
+    $URI = ($F5session.BaseURL + "pool")
+
+    #Check whether the specified pool already exists
+    If (Test-Pool -F5session $F5session -PoolName $PoolName){
+        Write-Error "The $PoolName pool already exists."
+    }
+
+    Else {
+
+
+        #Start building the JSON for the action
+        $JSONBody = @{name=$PoolName;partition='Common';members=@()}
+
+        $Members = @()
+
+        ForEach ($MemberDefinition in $MemberDefinitionList){
+
+            #Build the member name from the IP address and the port
+            $MemberObject = $MemberDefinition.Split(",")
+
+            If ($MemberObject.Length -lt 2){
+                Throw("All member definitions should consist of a string containing at least a computer name and a port, comma-separated.")
+            }
+
+            $IPAddress = Get-WmiObject -ComputerName $MemberObject[0] -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+
+            Try {
+                $PortNumber = [int]$MemberObject[1]
+            }
+            Catch {
+                $ThrowMessage = $MemberObject[1] + " is not a valid value for a port number."
+                Throw($ThrowMessage)
+            }
+
+            If (($PortNumber -lt 0) -or ($PortNumber -gt 65535)){
+                $ThrowMessage = $MemberObject[1] + " is not a valid value for a port number."
+                Throw($ThrowMessage)
+            }
+
+            $Member = @{name=$($IPAddress + ":" + $PortNumber);address=$IPAddress;description=$($MemberObject[2])}
+            $Members += $Member
+
+        }
+
+        $JSONBody.members = $Members
+        $JSONBody = $JSONBody | ConvertTo-Json
+
+        $response = Invoke-WebRequest -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+
+    }
+
+}
+
+
+Function Remove-Pool{
+#Remove the specified pool. Confirmation is needed
+#NB: Pool names are case-specific.
+    
+    [CmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
+
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$PoolName
+        
+    )
+
+    Write-Verbose "NB: Pool names are case-specific."
+
+    #Build the URI for this pool
+    $URI = $F5session.BaseURL + "pool/$PoolName"
+
+    if ($pscmdlet.ShouldProcess($PoolName)){
+
+        #Check whether the specified pool already exists
+        If (!(Test-Pool -F5session $F5session -PoolName $PoolName)){
+            Write-Error "The $PoolName pool does not exist."
+        }
+
+        Else {
+  
+            $response = Invoke-WebRequest -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
+
+            If ($response.statusCode -eq "200"){
+                $true;
+            }
+            Else {
+                ("$($response.StatusCode): $($response.StatusDescription)")
+            }
+
+        }
+    }
+
+}
+
+
 
 Function Get-PoolMembers {
 #Get the members of the specified pool
