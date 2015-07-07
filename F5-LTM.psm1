@@ -248,7 +248,7 @@ Function Remove-Pool{
 
 
 
-Function Get-PoolMembers {
+Function Get-PoolMemberCollection {
 #Get the members of the specified pool
     param(
         [Parameter(Mandatory=$true)]$PoolName,
@@ -566,7 +566,7 @@ Function Get-StatusShape {
 }
 
 
-Function Get-VirtualServeriRules {
+Function Get-VirtualServeriRuleCollection {
 #Get the iRules currently applied to the specified virtual servers    
 #This function assumes everything is in the /Common partition
     param(
@@ -610,7 +610,7 @@ Function Add-iRuleToVirtualServer {
     $iRuleToAdd = "/Common/$iRule"
 
     #Get the existing IRules on the virtual server
-    [array]$iRules = Get-VirtualServerIRules -VirtualServer $VirtualServer -F5session $F5session
+    [array]$iRules = Get-VirtualServerIRuleCollection -VirtualServer $VirtualServer -F5session $F5session
 
     #If there are no iRules on this virtual server, then create a new array
     If (!$iRules){
