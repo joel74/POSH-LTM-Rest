@@ -29,11 +29,16 @@ The module contains the following functions.
    * Get-PoolsForMember
    * Get-StatusShape
    * Get-VirtualServeriRules
+   * Get-VirtualServer
+   * Get-VirtualServerList
    * New-Pool
+   * New-VirtualServer
    * Remove-iRuleFromVirtualServer
    * Remove-Pool
    * Remove-PoolMember
+   * Remove-VirtualServer
    * Set-PoolMemberDescription
    * Test-Pool
+   * Test-VirtualServer
 
 Nearly all of the functions require an F5 session object as a parameter, which will contain the base URL for the F5 LTM and a credential object for a user with privileges to manipulate the F5 LTM via the REST API. Use the Get-F5session function to create this object.

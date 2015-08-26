@@ -59,6 +59,172 @@ Function Get-F5Status{
 }
 
 
+Function Get-VirtualServerList{
+#Get a list of all virtual servers for the specified F5 LTM
+    
+    param (
+        [Parameter(Mandatory=$true)]$F5session
+    )
+
+    #Only retrieve the pool names
+    $VirtualServersPage = $F5session.BaseURL + 'virtual?$select=name'
+
+    $VirtualServersJSON = Invoke-WebRequest -Insecure -Uri $VirtualServersPage -Credential $F5session.Credential
+
+    $VirtualServers = $VirtualServersJSON.Content | ConvertFrom-Json
+
+    $VirtualServers.items.name
+
+}
+
+
+
+Function Get-VirtualServer{
+#Retrieve the specified virtual server
+
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$VirtualServerName
+    )
+
+    Write-Verbose "NB: Virtual server names are case-specific."
+
+    #Build the URI for this virtual server
+    $URI = $F5session.BaseURL + "virtual/$VirtualServerName"
+
+    $VirtualServerJSON = Invoke-WebRequest -Insecure -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+
+    If ($VirtualServerJSON){
+        $VirtualServer = $VirtualServerJSON.Content | ConvertFrom-Json
+        $VirtualServer
+    }
+    Else {
+
+        Write-Error ("The $VirtualServerName pool does not exist.")
+    }
+
+}
+
+Function Test-VirtualServer {
+#Test whether the specified virtual server exists
+#NB: Pool names are case-specific.
+    
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$VirtualServerName
+    )
+
+    Write-Verbose "NB: Virtual server names are case-specific."
+
+    #Build the URI for this virtual server
+    $URI = $F5session.BaseURL + "virtual/$VirtualServerName"
+
+    $VirtualServerJSON = Invoke-WebRequest -Insecure -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+
+    If ($VirtualServerJSON){
+        $true
+    }
+    Else {
+        $false
+    }
+
+}
+
+
+Function New-VirtualServer{
+
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        $Kind="tm:ltm:virtual:virtualstate",
+        [Parameter(Mandatory=$true)][string]$VirtualServerName,
+        $Description,
+        [Parameter(Mandatory=$true)]$DestinationIP,
+        [Parameter(Mandatory=$true)]$DestinationPort,
+        $Source='0.0.0.0/0',
+        $DefaultPool,
+        [string[]]$ProfileNames,
+        [Parameter(Mandatory=$true,ParameterSetName = 'IpProtocol')]
+        [ValidateSet("tcp","udp","sctp")]
+        $ipProtocol,
+        $Mask='255.255.255.255',
+        $ConnectionLimit='0'
+    )
+    
+    $URI = ($F5session.BaseURL + "virtual")
+
+    #Check whether the specified virtual server already exists
+    If (Test-VirtualServer -F5session $F5session -VirtualServerName $VirtualServerName){
+        Write-Error "The $VirtualServerName pool already exists."
+    }
+
+    Else {
+
+        #Start building the JSON for the action
+        $Destination = $DestinationIP + ":" + $DestinationPort
+        $JSONBody = @{kind=$Kind;name=$VirtualServerName;description=$Description;partition='Common';destination=$Destination;source=$Source;pool=$DefaultPool;ipProtocol=$ipProtocol;mask=$Mask;connectionLimit=$ConnectionLimit}
+
+        #Build array of profile items
+        #JN: What happens if a non-existent profile is passed in?
+        $ProfileItems = @()
+        ForEach ($ProfileName in $ProfileNames){
+            $ProfileItems += @{kind='tm:ltm:virtual:profiles:profilesstate';name=$ProfileName}
+        }
+        $JSONBody.profiles = $ProfileItems
+
+        $JSONBody = $JSONBody | ConvertTo-Json
+
+        Write-Verbose $JSONBody
+
+        $response = Invoke-WebRequest -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+
+    }
+}
+
+
+Function Remove-VirtualServer{
+<#
+
+.SYNOPSIS
+Remove the specified virtual server. Confirmation is needed. NB: Virtual server names are case-specific.
+
+#>
+    [CmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
+
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)][string]$VirtualServerName
+        
+    )
+
+    Write-Verbose "NB: Virtual server names are case-specific."
+
+    #Build the URI for this pool
+    $URI = $F5session.BaseURL + "virtual/$VirtualServerName"
+
+    if ($pscmdlet.ShouldProcess($VirtualServerName)){
+
+        #Check whether the specified virtual server exists
+        If (!(Test-VirtualServer -F5session $F5session -VirtualServerName $VirtualServerName)){
+            Write-Error "The $VirtualServerName virtual server does not exist."
+        }
+
+        Else {
+  
+            $response = Invoke-WebRequest -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
+
+            If ($response.statusCode -eq "200"){
+                $true;
+            }
+            Else {
+                ("$($response.StatusCode): $($response.StatusDescription)")
+            }
+
+        }
+    }
+
+}
+
+
 Function Get-PoolList{
 #Get a list of all pools for the specified F5 LTM
     
