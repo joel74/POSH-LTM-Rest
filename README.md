@@ -26,6 +26,7 @@ The module contains the following functions.
    * Get-PoolMemberStatus
    * Get-PoolMembers
    * Get-PoolList
+   * Get-PoolMemberDescription
    * Get-PoolsForMember
    * Get-StatusShape
    * Get-VirtualServeriRules
