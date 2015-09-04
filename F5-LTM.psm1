@@ -13,6 +13,7 @@
     certificate, then the TunableSSLValidator module is not needed and you can remove the -Insecure parameter from the Invoke-RestMethod calls
 #>
 
+
 Function Get-F5session{
 # Generate an F5 session object to be used in querying and changing the F5 LTM
 # This function takes the DNS name or IP address of the F5 LTM device, and a username for an account 
@@ -167,9 +168,16 @@ Function New-VirtualServer{
 
         Write-Verbose $JSONBody
 
-        $response = Invoke-RestMethod -Method POST -Insecure -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+        Try{
+            $response = Invoke-RestMethod -Method POST -Insecure -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
+        }
+        Catch {
+            Write-Error "Failed to create the virtual server $VirtualServerName.`r`nThe error returned was $error[0]"
+            Return(-1)
+        }
 
-
+        #Successfully created virtual server
+        $response
     }
 }
 
@@ -203,15 +211,16 @@ Remove the specified virtual server. Confirmation is needed. NB: Virtual server 
 
         Else {
   
-            $response = Invoke-WebRequest -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
-#            $response = Invoke-RestMethod -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
+            Try {
+                $response = Invoke-RestMethod -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
+            }
+            Catch {
+                Write-Error "Failed to remove the $VirtualServerName virtual server. The error returned was:`r`n$Error[0]"
+                Return(-1)
+            }
 
-            If ($response.statusCode -eq "200"){
-                $true;
-            }
-            Else {
-                ("$($response.StatusCode): $($response.StatusDescription)")
-            }
+            #Success - return TRUE
+            $true
 
         }
     }
@@ -356,7 +365,7 @@ Optionally, it can contain a description of the member.
         $JSONBody.members = $Members
         $JSONBody = $JSONBody | ConvertTo-Json
 
-        $response = Invoke-RestMethod -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+        $response = Invoke-RestMethod -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
 
     }
 
@@ -387,17 +396,16 @@ Function Remove-Pool{
 
         Else {
   
-            $response = Invoke-WebRequest -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
-#            $response = Invoke-RestMethod -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
-
-
-            If ($response.statusCode -eq "200"){
-                $true;
+            Try {
+                $response = Invoke-RestMethod -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
             }
-            Else {
-                ("$($response.StatusCode): $($response.StatusDescription)")
+            Catch {
+                Write-Error "Failed to remove the $PoolName pool. The error returned was:`r`n$Error[0]"
+                Return(-1)
             }
 
+            #Success - return TRUE
+            $true
         }
     }
 
@@ -480,7 +488,7 @@ Function Set-PoolMemberDescription {
 
     $JSONBody = @{description=$Description} | ConvertTo-Json
 
-    $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+    $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
 
 
 }
@@ -561,7 +569,15 @@ Function Get-PoolMemberIP {
     )
 
 
-    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    #If we don't get an IP address for the computer, then fail
+    If (!($IPAddress)){
+        Write-Error "Failed to obtain IP address for $ComputerName. The error returned was:`r`n$Error[0]"
+        Return($false)
+    }
+
+    $MemberName = $IPAddress + ":" + $PortNumber
+
 
     $Port = $PoolName -replace ".*_",""
 
@@ -586,20 +602,27 @@ Function Add-PoolMember{
 
     $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members"
 
-    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    #If we don't get an IP address for the computer, then fail
+    If (!($IPAddress)){
+        Write-Error "Failed to obtain IP address for $ComputerName. The error returned was:`r`n$Error[0]"
+        Return($false)
+    }
+
     $MemberName = $IPAddress + ":" + $PortNumber
 
     $JSONBody = @{name=$MemberName;address=$IPAddress;description=$ComputerName} | ConvertTo-Json
 
-    $response = Invoke-WebRequest -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
-#    $response = Invoke-RestMethod -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+    Try {
+        $response = Invoke-RestMethod -Insecure -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorAction SilentlyContinue
+    }
+    Catch {
+        Write-Error "Failed to add $ComputerName to $PoolName. The error returned was:`r`n$Error[0]"
+        Exit
+    }
 
-    If ($response.statusCode -eq "200"){
-        $true;
-    }
-    Else {
-        ("$($response.StatusCode): $($response.StatusDescription)")
-    }
+    #Success - return pool member
+    $response
 }
 
 
@@ -612,20 +635,27 @@ Function Remove-PoolMember{
         [Parameter(Mandatory=$true)]$F5session
     )
 
-    $ComputerIP = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
-    $MemberName = $ComputerIP + ":" + $PortNumber
+    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    #If we don't get an IP address for the computer, then fail
+    If (!($IPAddress)){
+        Write-Error "Failed to obtain IP address for $ComputerName. The error returned was:`r`n$Error[0]"
+        Return($false)
+    }
+    
+    $MemberName = $IPAddress + ":" + $PortNumber
 
     $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$MemberName"
     
-    $response = Invoke-WebRequest -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
-#    $response = Invoke-RestMethod -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -Headers @{"Content-Type"="application/json"}
+    Try {
+        $response = Invoke-RestMethod -Insecure -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json' -ErrorAction SilentlyContinue
+    }
+    Catch {
+        Write-Error "Failed to remove $ComputerName from $PoolName. The error returned was:`r`n$Error[0]"
+        Return(-1)
+    }
 
-    If ($response.statusCode -eq "200"){
-        $true;
-    }
-    Else {
-        ("$($response.StatusCode): $($response.StatusDescription)")
-    }
+    #Return true for success
+    $true
 }
 
 
@@ -801,7 +831,7 @@ Function Add-iRuleToVirtualServer {
 
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-        $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+        $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
 
         Return($true)
 
@@ -838,7 +868,7 @@ Function Remove-iRuleFromVirtualServer {
 
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-        $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+        $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
 
         Return($true)
 
