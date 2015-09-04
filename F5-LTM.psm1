@@ -13,7 +13,6 @@
     certificate, then the TunableSSLValidator module is not needed and you can remove the -Insecure parameter from the Invoke-RestMethod calls
 #>
 
-
 Function Get-F5session{
 # Generate an F5 session object to be used in querying and changing the F5 LTM
 # This function takes the DNS name or IP address of the F5 LTM device, and a username for an account 
@@ -115,10 +114,10 @@ Function Test-VirtualServer {
     $VirtualServerJSON = Invoke-RestMethod -Method Get -Insecure -Uri $URI -Credential $F5Session.Credential -ErrorAction SilentlyContinue
 
     If ($VirtualServerJSON){
-        $true
+        Return($true)
     }
     Else {
-        $false
+        Return($false)
     }
 
 }
@@ -173,7 +172,7 @@ Function New-VirtualServer{
         }
         Catch {
             Write-Error "Failed to create the virtual server $VirtualServerName.`r`nThe error returned was $error[0]"
-            Return(-1)
+            Return($false)
         }
 
         #Successfully created virtual server
@@ -216,11 +215,11 @@ Remove the specified virtual server. Confirmation is needed. NB: Virtual server 
             }
             Catch {
                 Write-Error "Failed to remove the $VirtualServerName virtual server. The error returned was:`r`n$Error[0]"
-                Return(-1)
+                Return($false)
             }
 
             #Success - return TRUE
-            $true
+            Return($true)
 
         }
     }
@@ -401,11 +400,11 @@ Function Remove-Pool{
             }
             Catch {
                 Write-Error "Failed to remove the $PoolName pool. The error returned was:`r`n$Error[0]"
-                Return(-1)
+                Return($false)
             }
 
             #Success - return TRUE
-            $true
+            Return($true)
         }
     }
 
@@ -457,7 +456,7 @@ Function Get-PoolMember {
  
     $PoolMember = ForEach ($Pool in $MemberInPools){
 
-        $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $Pool
+        $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $Pool -F5Session $F5session
 
         $PoolMemberURI = $F5session.BaseURL + "pool/~Common~$Pool/members/~Common~$IPAddress`?"
 
@@ -482,15 +481,22 @@ Function Set-PoolMemberDescription {
         [Parameter(Mandatory=$true)]$Description
     )
 
-    $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $PoolName
+    $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $PoolName -F5Session $F5session
 
     $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$IPAddress"
 
     $JSONBody = @{description=$Description} | ConvertTo-Json
 
-    $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
+    Try {
+        $response = Invoke-RestMethod -Insecure -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
+    }
+    Catch {
+        Write-Error "Failed to set the description on $ComputerName in the $PoolName pool to $Description. The error returned was:`r`n$Error[0]"
+        Return($false)
+    }
 
-
+    #Successfully set the description
+    Return($true)
 }
 
 Function Get-PoolMemberDescription {
@@ -507,7 +513,7 @@ Function Get-PoolMemberDescription {
 
     $PoolMember = $PoolMember | Select-Object -Property name,description
 
-    $PoolMember 
+    $PoolMember.description
 }
 
 
@@ -565,7 +571,8 @@ Function Get-PoolMemberIP {
 
     param(
         [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$PoolName
+        [Parameter(Mandatory=$true)]$PoolName,
+        [Parameter(Mandatory=$true)]$F5Session
     )
 
 
@@ -576,17 +583,25 @@ Function Get-PoolMemberIP {
         Return($false)
     }
 
-    $MemberName = $IPAddress + ":" + $PortNumber
+    #Check the members of the specified pool to see if there is a member that matches this computer's IP address
+    $PoolMembers = Get-PoolMemberCollection -PoolName $PoolName -F5session $F5Session     
+    $MemberName = $false
+    foreach($PoolMember in $PoolMembers) {
 
+        if($PoolMember.address -eq $IPAddress) {
+            $MemberName = $PoolMember.Name
+        }
+    }
 
-    $Port = $PoolName -replace ".*_",""
-
-    If ($IPAddress -eq $null){
-        throw ("This server $ComputerName was not found, or its NIC(s) don't have a default gateway.")
+    If ($MemberName){
+        Return($MemberName)
     }
     Else {
-        ($IPAddress+":"+$Port)
+        Write-Error "This computer was not found in the specified pool."
+        Return($false)
     }
+
+
 }
 
 
@@ -618,11 +633,11 @@ Function Add-PoolMember{
     }
     Catch {
         Write-Error "Failed to add $ComputerName to $PoolName. The error returned was:`r`n$Error[0]"
-        Exit
+        Return($false)
     }
 
     #Success - return pool member
-    $response
+    Return($response)
 }
 
 
@@ -651,11 +666,11 @@ Function Remove-PoolMember{
     }
     Catch {
         Write-Error "Failed to remove $ComputerName from $PoolName. The error returned was:`r`n$Error[0]"
-        Return(-1)
+        Return($false)
     }
 
     #Return true for success
-    $true
+    Return($true)
 }
 
 
