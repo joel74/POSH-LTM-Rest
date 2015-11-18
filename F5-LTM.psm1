@@ -8,7 +8,7 @@
     File Name    : F5-LTM.psm1
     Author       : Joel Newton - jnewton@springcm.com
     Requires     : PowerShell V3
-    Dependencies : It depends on the the Validation.cs class file (based on code posted by Brian Scholer) to allow for using the REST API 
+    Dependencies : It includes a Validation.cs class file (based on code posted by Brian Scholer) to allow for using the REST API 
     with LTM devices using self-signed SSL certificates.
 #>
 
@@ -908,6 +908,10 @@ Function Disable-PoolMember{
                 Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
             }
         }
+        Else {
+            Write-Verbose "Pool $PoolName not found"
+            Return($false)
+        }
     }
 
     #Otherwise, disable the member in all their pools
@@ -970,6 +974,12 @@ Function Enable-PoolMember {
                 Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
             }
         }
+
+        Else {
+            Write-Verbose "Pool $PoolName not found"
+            Return($false)
+        }
+
     }
 
     #Otherwise, enable the member in all their pools
