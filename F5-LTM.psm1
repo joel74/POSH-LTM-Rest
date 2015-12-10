@@ -1238,7 +1238,7 @@ Function Remove-iRuleFromVirtualServer {
 
     }
     Else {
-        Write-Warning "The $VirtualServer virtual server does not contain the $iRule iRule."
+        Write-Warning "The $VirtualServer virtual server does not contain the $iRuleName iRule."
         $false
     }
 
