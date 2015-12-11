@@ -12,7 +12,7 @@
 RootModule = 'F5-LTM.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.1'
+ModuleVersion = '1.2.0'
 
 # ID used to uniquely identify this module
 GUID = 'f4649254-d64a-407d-822f-66a4618ed5fb'

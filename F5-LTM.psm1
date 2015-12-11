@@ -27,7 +27,7 @@ Function Get-F5session{
 #>
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
-        [Parameter(Mandatory=$true)][System.Management.Automation.CredentialAttribute()]$LTMCredentials
+        [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials
     )
 
     $BaseURL = "https://$LTMName/mgmt/tm/ltm/"
@@ -73,7 +73,7 @@ Function Test-Functionality{
     Get-PoolMemberCollection -F5session $F5Session -PoolName $pools[0]
 
     Write-Host ("`r`n* Get the status of all members in the " + $pools[0] + " pool") -ForegroundColor $TestNotesColor
-    Get-AllPoolMembersStatus -F5session $F5Session -PoolName $pools[0]
+    Get-PoolMemberCollectionStatus -F5session $F5Session -PoolName $pools[0]
 
     Write-Host "`r`n* Create a new pool named '$TestPool'" -ForegroundColor $TestNotesColor
     New-Pool -F5session $F5Session -PoolName $TestPool 
@@ -100,10 +100,10 @@ Function Test-Functionality{
     $PoolMemberStatus = Get-PoolMemberStatus -F5session $F5session -ComputerName $PoolMember -PoolName $TestPool
     $PoolMemberStatus
 
-    Write-host "`r`n* Set the pool member description to 'My new pool' and retrieve it" -ForegroundColor $TestNotesColor
-    Write-host "Old description:"
+    Write-Host "`r`n* Set the pool member description to 'My new pool' and retrieve it" -ForegroundColor $TestNotesColor
+    Write-Host "Old description:"
     Get-PoolMemberDescription -F5Session $F5session -ComputerName $PoolMember -PoolName $TestPool
-    $Result = Set-PoolMemberDescription -ComputerName $PoolMember -PoolName $TestPool -Description 'My new pool' -F5Session $F5session
+    Set-PoolMemberDescription -ComputerName $PoolMember -PoolName $TestPool -Description 'My new pool' -F5Session $F5session | out-null
     Write-Host "New description:"
     Get-PoolMemberDescription -F5Session $F5session -ComputerName $PoolMember -PoolName $TestPool
 
@@ -128,6 +128,8 @@ Function Test-Functionality{
 
     Write-Host ("`r`n* Retrieve all iRules on the F5 LTM device.") -ForegroundColor $TestNotesColor
     $iRules = Get-iRuleCollection -F5session $F5Session
+    Write-Output ("- This can be a large collection. The first entry found is:")
+    Write-Output $iRules[0]
 
     Write-Host ("`r`n* Add the iRule '" + $iRules[0].name + "' to the new virtual server '$TestVirtualServer'") -ForegroundColor $TestNotesColor
     Add-iRuleToVirtualServer -F5session $F5Session -VirtualServer $TestVirtualServer -iRuleName $($iRules[0].name)
@@ -155,7 +157,7 @@ Function Invoke-RestMethodOverride {
     param ( 
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,
-        [Parameter(Mandatory=$true)][System.Management.Automation.CredentialAttribute()]$Credential,
+        [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$Credential,
         $Body=$null,
         $Headers=$null,
         $ContentType=$null
@@ -213,8 +215,8 @@ Function Get-VirtualServerList{
     Catch{
 
         Write-Error ("Failed to retrieve the list of virtual servers.")
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
@@ -242,8 +244,8 @@ Function Get-VirtualServer{
     Catch{
 
         Write-Error ("Failed to retrieve the $VirtualServerName virtual server.")
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
@@ -267,7 +269,7 @@ Function Test-VirtualServer {
     $URI = $F5session.BaseURL + "virtual/$VirtualServerName"
 
     Try {
-        $VirtualServerJSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential
+        Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential | out-null
         $true
     }
     Catch{
@@ -285,15 +287,15 @@ Function New-VirtualServer{
         [Parameter(Mandatory=$true)]$F5session,
         $Kind="tm:ltm:virtual:virtualstate",
         [Parameter(Mandatory=$true)][string]$VirtualServerName,
-        $Description,
+        $Description=$null,
         [Parameter(Mandatory=$true)]$DestinationIP,
         [Parameter(Mandatory=$true)]$DestinationPort,
         $Source='0.0.0.0/0',
-        $DefaultPool,
-        [string[]]$ProfileNames,
+        $DefaultPool=$null,
+        [string[]]$ProfileNames=$null,
         [Parameter(Mandatory=$true,ParameterSetName = 'IpProtocol')]
         [ValidateSet("tcp","udp","sctp")]
-        $ipProtocol,
+        $ipProtocol=$null,
         $Mask='255.255.255.255',
         $ConnectionLimit='0'
     )
@@ -328,8 +330,8 @@ Function New-VirtualServer{
         }
         Catch {
             Write-Error ("Failed to retrieve the $VirtualServerName virtual server.")
-            Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
         }
 
     }
@@ -367,12 +369,12 @@ Function Remove-VirtualServer{
   
             Try {
                 $response = Invoke-RestMethodOverride -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
-                $true
+                Write-Output $true
             }
             Catch {
                 Write-Error ("Failed to remove the $VirtualServerName virtual server.")
-                Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
             }
         }
     }
@@ -399,8 +401,8 @@ Function Get-PoolList {
     }
     Catch{
         Write-Error ("Failed to get the list of pool names.")
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 }
 
@@ -427,8 +429,8 @@ Function Get-Pool {
     }
     Catch{
         Write-Error ("Failed to get the $PoolName pool.")
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
@@ -451,7 +453,7 @@ Function Test-Pool {
     $URI = $F5session.BaseURL + "pool/$PoolName"
 
     Try {
-        $PoolJSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+        Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue | out-null
         $true
     }
     Catch {
@@ -477,7 +479,7 @@ Function New-Pool {
     param (
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)][string]$PoolName,
-        [string[]]$MemberDefinitionList
+        [string[]]$MemberDefinitionList=$null
     )
 
 
@@ -504,7 +506,7 @@ Function New-Pool {
                 Throw("All member definitions should consist of a string containing at least a computer name and a port, comma-separated.")
             }
 
-            $IPAddress = Get-WmiObject -ComputerName $MemberObject[0] -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+            $IPAddress = Get-CimInstance -ComputerName $MemberObject[0] -Class Win32_NetworkAdapterConfiguration | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
 
             Try {
                 $PortNumber = [int]$MemberObject[1]
@@ -534,8 +536,8 @@ Function New-Pool {
         }
         Catch{
             Write-Error ("Failed to create the $PoolName pool.")
-            Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
         }
 
     }
@@ -572,12 +574,12 @@ Function Remove-Pool{
   
             Try {
                 $response = Invoke-RestMethodOverride -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
-                $true
+                Write-Output $true
             }
             Catch {
                 Write-Error "Failed to remove the $PoolName pool."
-                Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
                 Return($false)
             }
 
@@ -586,16 +588,6 @@ Function Remove-Pool{
 
 }
 
-Function Get-PoolMembers{
-#Deprecating
-    param(
-        [Parameter(Mandatory=$true)]$F5session,
-        [Parameter(Mandatory=$true)]$PoolName
-    )
-
-    Get-PoolMemberCollection -F5session $F5session -PoolName $PoolName
-
-}
 
 Function Get-PoolMemberCollection {
 <#
@@ -615,14 +607,14 @@ Function Get-PoolMemberCollection {
     }
     Catch {
         Write-Error "Failed to get the members of the $PoolName pool."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 
 }
 
-Function Get-AllPoolMembersStatus {
+Function Get-PoolMemberCollectionStatus {
 <#
 .SYNOPSIS
     Get the status of all members of the specified pool
@@ -632,7 +624,7 @@ Function Get-AllPoolMembersStatus {
         [Parameter(Mandatory=$true)]$F5session
     )
 
-    $PoolMembers = Get-PoolMembers -PoolName $PoolName -F5session $F5session | Select-Object -Property name,session,state
+    $PoolMembers = Get-PoolMemberCollection -PoolName $PoolName -F5session $F5session | Select-Object -Property name,session,state
 
     $PoolMembers
 }
@@ -660,8 +652,8 @@ Function Get-PoolMember {
     }
     Catch {
         Write-Error "Failed to get the details for the pool member $ComputerName in the $PoolName pool."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
     
     $PoolMember
@@ -710,8 +702,8 @@ Function Set-PoolMemberDescription {
     }
     Catch {
         Write-Error "Failed to set the description on $ComputerName in the $PoolName pool to $Description."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
@@ -745,7 +737,7 @@ Function Get-PoolsForMember {
     )
 
     #All servers that are LTM pool members use the NIC with a default gateway as the IP that registers with the LTM
-    $ComputerIP = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    $ComputerIP = Get-CimInstance -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
     
     $AllPools = Get-PoolList -F5session $F5session
 
@@ -753,7 +745,7 @@ Function Get-PoolsForMember {
 
     foreach($Pool in $AllPools) 
     {
-        $PoolMembers = Get-PoolMembers -PoolName $Pool -F5session $F5session
+        $PoolMembers = Get-PoolMemberCollection -PoolName $Pool -F5session $F5session
 
         foreach($PoolMember in $PoolMembers) {
 
@@ -778,7 +770,7 @@ Function Get-PoolMemberIP {
         [Parameter(Mandatory=$true)]$PoolName
     )
 
-    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    $IPAddress = Get-CimInstance -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
     #If we don't get an IP address for the computer, then fail
     If (!($IPAddress)){
         Write-Error "Failed to obtain IP address for $ComputerName. The error returned was:`r`n$Error[0]"
@@ -786,7 +778,7 @@ Function Get-PoolMemberIP {
     }
 
     #Check the members of the specified pool to see if there is a member that matches this computer's IP address
-    $PoolMembers = Get-PoolMembers -PoolName $PoolName -F5session $F5Session     
+    $PoolMembers = Get-PoolMemberCollection -PoolName $PoolName -F5session $F5Session     
     $MemberName = $false
     foreach($PoolMember in $PoolMembers) {
 
@@ -821,8 +813,9 @@ Function Add-PoolMember{
     )
 
     $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members"
+    
+    $IPAddress = Get-CimInstance -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
 
-    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where DefaultIPGateway | select -exp IPaddress | select -first 1
     #If we don't get an IP address for the computer, then fail
     If (!($IPAddress)){
         Write-Error "Failed to obtain IP address for $ComputerName. The error returned was:`r`n$Error[0]"
@@ -838,8 +831,8 @@ Function Add-PoolMember{
     }
     Catch {
         Write-Error "Failed to add $ComputerName to $PoolName."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 
@@ -865,7 +858,7 @@ Function Remove-PoolMember{
         [Parameter(Mandatory=$true)]$PoolName
     )
 
-    $IPAddress = Get-WmiObject -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where DefaultIPGateway | select -exp IPaddress | select -first 1
+    $IPAddress = Get-CimInstance -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
     #If we don't get an IP address for the computer, then fail
     If (!($IPAddress)){
         Write-Error "Failed to obtain IP address for $ComputerName. The error returned was:`r`n$Error[0]"
@@ -882,8 +875,8 @@ Function Remove-PoolMember{
     }
     Catch {
         Write-Error "Failed to remove $ComputerName from $PoolName."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
@@ -898,7 +891,7 @@ Function Disable-PoolMember{
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        $PoolName,
+        $PoolName=$null,
         [switch]$Force
     )
 
@@ -928,8 +921,8 @@ Function Disable-PoolMember{
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
             }
         }
         Else {
@@ -954,8 +947,8 @@ Function Disable-PoolMember{
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
                 Return($false)
             }
 
@@ -974,7 +967,7 @@ Function Enable-PoolMember {
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        $PoolName
+        $PoolName=$null
     )
 
     $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
@@ -994,8 +987,8 @@ Function Enable-PoolMember {
             }
             Catch {
                 Write-Error "Failed to enable $ComputerName in the $PoolName pool."
-                Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
             }
         }
 
@@ -1022,8 +1015,8 @@ Function Enable-PoolMember {
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
                 Return($false)
             }
 
@@ -1109,8 +1102,8 @@ Function Get-iRuleCollection {
     }
     Catch {
         Write-Error "Failed to get the list of iRules for the LTM device."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
@@ -1134,8 +1127,8 @@ Function Get-VirtualServeriRuleCollection {
     }
     Catch {
         Write-Error "Failed to get the list of iRules for the $VirtualServer virtual server."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
         return $false
     }
 
@@ -1210,8 +1203,8 @@ Function Add-iRuleToVirtualServer {
         }
         Catch {
             Write-Error "Failed to add the $iRuleName iRule to the $VirtualServer virtual server."
-            Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
         }
 
     }
@@ -1256,8 +1249,8 @@ Function Remove-iRuleFromVirtualServer {
         }
         Catch {
             Write-Error "Failed to remove the $iRuleName iRule from the $VirtualServer virtual server."
-            Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
         }
 
     }
@@ -1288,8 +1281,8 @@ Function Remove-ProfileRamCache{
     }
     Catch {
         Write-Error "Failed to clear the ram cache for the $ProfileName profile."
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
     }
 
 }
