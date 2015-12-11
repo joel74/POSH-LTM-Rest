@@ -12,6 +12,7 @@
     with LTM devices using self-signed SSL certificates.
 #>
 
+
 Add-Type -Path "${PSScriptRoot}\Validation.cs"
 
 Function Get-F5session{
@@ -26,17 +27,17 @@ Function Get-F5session{
 #>
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
-        [Parameter(Mandatory=$true)][string]$F5UserName,
-        [Parameter(Mandatory=$true)][Security.SecureString]$F5Password        
+        [Parameter(Mandatory=$true)][System.Management.Automation.CredentialAttribute()]$LTMCredentials
     )
 
     $BaseURL = "https://$LTMName/mgmt/tm/ltm/"
 
-    #Create credential object for connecting to REST API
-    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $F5UserName, $F5Password
+    #Create custom credential object for connecting to REST API
+    [pscustomobject]@{BaseURL = $BaseURL; Credential = $LTMCredentials}
 
-    [pscustomobject]@{BaseURL = $BaseURL; Credential = $Credential}
 }
+
+
 
 Function Test-Functionality{
 <#
@@ -149,9 +150,29 @@ Function Test-Functionality{
 
 }
 
+
+Function Invoke-RestMethodOverride {
+    param ( 
+        [Parameter(Mandatory=$true)][string]$Method,
+        [Parameter(Mandatory=$true)][string]$URI,
+        [Parameter(Mandatory=$true)][System.Management.Automation.CredentialAttribute()]$Credential,
+        $Body=$null,
+        $Headers=$null,
+        $ContentType=$null
+    )
+
+    [SSLValidator]::OverrideValidation()
+
+    Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType 
+
+    [SSLValidator]::RestoreValidation()
+
+}
+
+
 Function Get-F5Status{
 <#
-.SYNOPSIS
+.SYNOPSIS                                                                          
     Test whether the specified F5 is currently in active or standby failover mode
 #>
     param (
@@ -160,7 +181,7 @@ Function Get-F5Status{
 
     $FailoverPage = $F5Session.BaseURL -replace "/ltm/", "/cm/failover-status"
 
-    $FailoverJSON = Invoke-RestMethod -Method Get -Uri $FailoverPage -Credential $F5Session.Credential
+    $FailoverJSON = Invoke-RestMethodOverride -Method Get -Uri $FailoverPage -Credential $F5Session.Credential
 
     #This is where the failover status is indicated
     $FailOverStatus = $FailoverJSON.entries.'https://localhost/mgmt/tm/cm/failover-status/0'.nestedStats.entries.status.description
@@ -185,8 +206,9 @@ Function Get-VirtualServerList{
     $VirtualServersPage = $F5session.BaseURL + 'virtual?$select=name'
 
     Try {
-        $VirtualServersJSON = Invoke-RestMethod -Method Get -Uri $VirtualServersPage -Credential $F5session.Credential
+        $VirtualServersJSON = Invoke-RestMethodOverride -Method Get -Uri $VirtualServersPage -Credential $F5session.Credential
         $VirtualServersJSON.items.name
+
     }
     Catch{
 
@@ -215,7 +237,7 @@ Function Get-VirtualServer{
     $URI = $F5session.BaseURL + "virtual/$VirtualServerName"
 
     Try {
-        Invoke-RestMethod -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+        Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential
     }
     Catch{
 
@@ -245,7 +267,7 @@ Function Test-VirtualServer {
     $URI = $F5session.BaseURL + "virtual/$VirtualServerName"
 
     Try {
-        $VirtualServerJSON = Invoke-RestMethod -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+        $VirtualServerJSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential
         $true
     }
     Catch{
@@ -302,7 +324,7 @@ Function New-VirtualServer{
         Write-Verbose $JSONBody
 
         Try{
-            Invoke-RestMethod -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
+            Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
         }
         Catch {
             Write-Error ("Failed to retrieve the $VirtualServerName virtual server.")
@@ -344,7 +366,7 @@ Function Remove-VirtualServer{
         Else {
   
             Try {
-                $response = Invoke-RestMethod -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
+                $response = Invoke-RestMethodOverride -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
                 $true
             }
             Catch {
@@ -370,8 +392,10 @@ Function Get-PoolList {
     $PoolsPage = $F5session.BaseURL + 'pool/?$select=name'
 
     Try {
-        $PoolsJSON = Invoke-RestMethod -Method Get -Uri $PoolsPage -Credential $F5session.Credential
+
+        $PoolsJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolsPage -Credential $F5session.Credential
         $PoolsJSON.items.name
+
     }
     Catch{
         Write-Error ("Failed to get the list of pool names.")
@@ -399,7 +423,7 @@ Function Get-Pool {
     $URI = $F5session.BaseURL + "pool/$PoolName"
 
     Try {
-        Invoke-RestMethod -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+        Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
     }
     Catch{
         Write-Error ("Failed to get the $PoolName pool.")
@@ -427,7 +451,7 @@ Function Test-Pool {
     $URI = $F5session.BaseURL + "pool/$PoolName"
 
     Try {
-        $PoolJSON = Invoke-RestMethod -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
+        $PoolJSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue
         $true
     }
     Catch {
@@ -505,7 +529,7 @@ Function New-Pool {
 
 
         Try {
-            $response = Invoke-RestMethod -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+            $response = Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
             $true
         }
         Catch{
@@ -547,7 +571,7 @@ Function Remove-Pool{
         Else {
   
             Try {
-                $response = Invoke-RestMethod -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
+                $response = Invoke-RestMethodOverride -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json'
                 $true
             }
             Catch {
@@ -586,7 +610,7 @@ Function Get-PoolMemberCollection {
     $PoolMembersPage = $F5session.BaseURL + "pool/~Common~$PoolName/members/?"
 
     Try {
-        $PoolMembersJSON = Invoke-RestMethod -Method Get -Uri $PoolMembersPage -Credential $F5session.Credential
+        $PoolMembersJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMembersPage -Credential $F5session.Credential
         $PoolMembersJSON.items
     }
     Catch {
@@ -631,7 +655,7 @@ Function Get-PoolMember {
     $PoolMemberURI = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$IPAddress`?"
 
     Try {
-        $PoolMemberJSON = Invoke-RestMethod -Method Get -Uri $PoolMemberURI -Credential $F5session.Credential
+        $PoolMemberJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMemberURI -Credential $F5session.Credential
         $PoolMemberJSON
     }
     Catch {
@@ -681,7 +705,7 @@ Function Set-PoolMemberDescription {
     $JSONBody = @{description=$Description} | ConvertTo-Json
 
     Try {
-        $response = Invoke-RestMethod -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
+        $response = Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
         $true
     }
     Catch {
@@ -810,7 +834,7 @@ Function Add-PoolMember{
     $JSONBody = @{name=$MemberName;address=$IPAddress;description=$ComputerName} | ConvertTo-Json
 
     Try {
-        Invoke-RestMethod -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorAction SilentlyContinue
+        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorAction SilentlyContinue
     }
     Catch {
         Write-Error "Failed to add $ComputerName to $PoolName."
@@ -853,7 +877,7 @@ Function Remove-PoolMember{
     $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$MemberName"
     
     Try {
-        $response = Invoke-RestMethod -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json' -ErrorAction SilentlyContinue
+        $response = Invoke-RestMethodOverride -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json' -ErrorAction SilentlyContinue
         $true
     }
     Catch {
@@ -926,7 +950,7 @@ Function Disable-PoolMember{
             $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
 
             Try {
-                $response = Invoke-RestMethod -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
+                $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
@@ -965,7 +989,7 @@ Function Enable-PoolMember {
             $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
 
             Try {
-                $response = Invoke-RestMethod -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
+                $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
                 $true
             }
             Catch {
@@ -994,7 +1018,7 @@ Function Enable-PoolMember {
             $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
 
             Try {
-                $response = Invoke-RestMethod -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
+                $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
@@ -1024,7 +1048,7 @@ Function Get-CurrentConnectionCount {
 
     $PoolMember = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$IPAddress/stats"
 
-    $PoolMemberJSON = Invoke-RestMethod -Method Get -Uri $PoolMember -Credential $F5session.Credential
+    $PoolMemberJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMember -Credential $F5session.Credential
 
     #Return the number of current connections for this member of this pool
     $PoolMemberJSON.entries.'serverside.curConns'.value
@@ -1080,7 +1104,7 @@ Function Get-iRuleCollection {
     $iRuleURL = $F5session.BaseURL + "rule/"
 
     Try {
-        $iRulesJSON = Invoke-RestMethod -Method Get -Uri $iRuleURL -Credential $F5session.Credential
+        $iRulesJSON = Invoke-RestMethodOverride -Method Get -Uri $iRuleURL -Credential $F5session.Credential
         $iRulesJSON.items
     }
     Catch {
@@ -1106,7 +1130,7 @@ Function Get-VirtualServeriRuleCollection {
     $VirtualServerURI = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
 
     Try {
-        $VirtualserverObject = Invoke-RestMethod -Method Get -Uri $VirtualServerURI -Credential $F5session.Credential
+        $VirtualserverObject = Invoke-RestMethodOverride -Method Get -Uri $VirtualServerURI -Credential $F5session.Credential
     }
     Catch {
         Write-Error "Failed to get the list of iRules for the $VirtualServer virtual server."
@@ -1181,7 +1205,7 @@ Function Add-iRuleToVirtualServer {
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
         Try {
-            $response = Invoke-RestMethod -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+            $response = Invoke-RestMethodOverride -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
             $true
         }
         Catch {
@@ -1227,7 +1251,7 @@ Function Remove-iRuleFromVirtualServer {
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
         Try {
-            $response = Invoke-RestMethod -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
+            $response = Invoke-RestMethodOverride -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -Headers @{"Content-Type"="application/json"}
             $true
         }
         Catch {
@@ -1260,7 +1284,7 @@ Function Remove-ProfileRamCache{
     $ProfileURL = $F5session.BaseURL +$ProfileName
 
     Try {
-        $response = Invoke-RestMethod -Method DELETE -Uri "$ProfileURL" -Credential $F5session.Credential
+        $response = Invoke-RestMethodOverride -Method DELETE -Uri "$ProfileURL" -Credential $F5session.Credential
     }
     Catch {
         Write-Error "Failed to clear the ram cache for the $ProfileName profile."
