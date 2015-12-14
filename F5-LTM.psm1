@@ -43,6 +43,8 @@ Function Test-Functionality{
 <#
 .SYNOPSIS
     Perform some standard tests to make sure things work as expected
+.EXAMPLE
+    Test-Functionality -F5Session $f5 -TestVirtualServer 'virt123' -TestVirtualServerIP '10.1.1.240' -TestPool 'testpool123' -PoolMember 'Server1'
 
 #>
     param (
