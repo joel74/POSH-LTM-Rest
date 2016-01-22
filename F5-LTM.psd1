@@ -12,7 +12,7 @@
 RootModule = 'F5-LTM.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1'
+ModuleVersion = '1.2.0'
 
 # ID used to uniquely identify this module
 GUID = 'f4649254-d64a-407d-822f-66a4618ed5fb'
@@ -48,7 +48,7 @@ PowerShellVersion = '3.0'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @('TunableSSLValidator')
+# RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
