@@ -327,7 +327,9 @@ Function New-VirtualServer{
         [ValidateSet("tcp","udp","sctp")]
         $ipProtocol=$null,
         $Mask='255.255.255.255',
-        $ConnectionLimit='0'
+        $ConnectionLimit='0',
+        [Parameter(Mandatory=$false)]$Partition='Common'
+
     )
     
     $URI = ($F5session.BaseURL + "virtual")
@@ -341,7 +343,7 @@ Function New-VirtualServer{
 
         #Start building the JSON for the action
         $Destination = $DestinationIP + ":" + $DestinationPort
-        $JSONBody = @{kind=$Kind;name=$VirtualServerName;description=$Description;partition='Common';destination=$Destination;source=$Source;pool=$DefaultPool;ipProtocol=$ipProtocol;mask=$Mask;connectionLimit=$ConnectionLimit}
+        $JSONBody = @{kind=$Kind;name=$VirtualServerName;description=$Description;partition=$Partition;destination=$Destination;source=$Source;pool=$DefaultPool;ipProtocol=$ipProtocol;mask=$Mask;connectionLimit=$ConnectionLimit}
 
         #Build array of profile items
         #JN: What happens if a non-existent profile is passed in?
@@ -509,7 +511,8 @@ Function New-Pool {
     param (
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)][string]$PoolName,
-        [string[]]$MemberDefinitionList=$null
+        [string[]]$MemberDefinitionList=$null,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
 
@@ -523,7 +526,7 @@ Function New-Pool {
     Else {
 
         #Start building the JSON for the action
-        $JSONBody = @{name=$PoolName;partition='Common';members=@()}
+        $JSONBody = @{name=$PoolName;partition=$Partition;members=@()}
 
         $Members = @()
 
@@ -626,10 +629,11 @@ Function Get-PoolMemberCollection {
 #>
     param(
         [Parameter(Mandatory=$true)]$F5session,
-        [Parameter(Mandatory=$true)]$PoolName
+        [Parameter(Mandatory=$true)]$PoolName,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
-    $PoolMembersPage = $F5session.BaseURL + "pool/~Common~$PoolName/members/?"
+    $PoolMembersPage = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/?"
 
     Try {
         $PoolMembersJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMembersPage -Credential $F5session.Credential
@@ -667,14 +671,15 @@ Function Get-PoolMember {
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$PoolName
+        [Parameter(Mandatory=$true)]$PoolName,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
     $PoolMember = $null
 
     $IPAddress = Get-PoolMemberIP -F5Session $F5session -ComputerName $ComputerName -PoolName $PoolName
 
-    $PoolMemberURI = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$IPAddress`?"
+    $PoolMemberURI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/~$Partition~$IPAddress`?"
 
     Try {
         $PoolMemberJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMemberURI -Credential $F5session.Credential
@@ -717,12 +722,13 @@ Function Set-PoolMemberDescription {
         [Parameter(Mandatory=$true)]$F5Session,
         [Parameter(Mandatory=$true)]$ComputerName,
         [Parameter(Mandatory=$true)]$PoolName,
-        [Parameter(Mandatory=$true)]$Description
+        [Parameter(Mandatory=$true)]$Description,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
     $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $PoolName -F5Session $F5session
 
-    $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$IPAddress"
+    $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/$IPAddress"
 
     $JSONBody = @{description=$Description} | ConvertTo-Json
 
@@ -839,10 +845,11 @@ Function Add-PoolMember{
         [Parameter(Mandatory=$true)]$PortNumber,
         [Parameter(Mandatory=$true)]$PoolName,
         [ValidateSet("Enabled","Disabled")]
-        [Parameter(Mandatory=$true)]$Status
+        [Parameter(Mandatory=$true)]$Status,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
-    $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members"
+    $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members"
     
     $IPAddress = Get-CimInstance -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
 
@@ -885,7 +892,8 @@ Function Remove-PoolMember{
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
         [Parameter(Mandatory=$true)]$PortNumber,
-        [Parameter(Mandatory=$true)]$PoolName
+        [Parameter(Mandatory=$true)]$PoolName,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
     $IPAddress = Get-CimInstance -ComputerName $ComputerName -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
@@ -897,7 +905,7 @@ Function Remove-PoolMember{
     
     $MemberName = $IPAddress + ":" + $PortNumber
 
-    $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$MemberName"
+    $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/~$Partition~$MemberName"
     
     Try {
         $response = Invoke-RestMethodOverride -Method DELETE -Uri "$URI" -Credential $F5session.Credential -ContentType 'application/json' -ErrorAction SilentlyContinue
@@ -922,7 +930,8 @@ Function Disable-PoolMember{
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
         $PoolName=$null,
-        [switch]$Force
+        [switch]$Force,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
     #If the -Force param is specified pool members do not accept any new connections, even if they match an existing persistence session.
@@ -943,7 +952,7 @@ Function Disable-PoolMember{
 
             $MemberFullName = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
  
-            $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
+            $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/$MemberFullName"
 
             Try {
                 $response = Invoke-RestMethod -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
@@ -970,7 +979,7 @@ Function Disable-PoolMember{
     
             $MemberFullName = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
 
-            $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
+            $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/$MemberFullName"
 
             Try {
                 $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
@@ -997,7 +1006,8 @@ Function Enable-PoolMember {
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        $PoolName=$null
+        $PoolName=$null,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
     $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
@@ -1009,7 +1019,7 @@ Function Enable-PoolMember {
 
             $MemberFullName = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
 
-            $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
+            $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/$MemberFullName"
 
             Try {
                 $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
@@ -1038,7 +1048,7 @@ Function Enable-PoolMember {
     
             $MemberFullName = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
 
-            $URI = $F5session.BaseURL + "pool/~Common~$PoolName/members/$MemberFullName"
+            $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/$MemberFullName"
 
             Try {
                 $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
@@ -1064,12 +1074,13 @@ Function Get-CurrentConnectionCount {
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$PoolName
+        [Parameter(Mandatory=$true)]$PoolName,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
     $IPAddress = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
 
-    $PoolMember = $F5session.BaseURL + "pool/~Common~$PoolName/members/~Common~$IPAddress/stats"
+    $PoolMember = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/~$Partition~$IPAddress/stats"
 
     $PoolMemberJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMember -Credential $F5session.Credential
 
@@ -1143,14 +1154,15 @@ Function Get-VirtualServeriRuleCollection {
 .SYNOPSIS
     Get the iRules currently applied to the specified virtual server   
 .NOTES
-    This function assumes everything is in the /Common partition
+    This function defaults to the /Common partition
 #>
     param(
         [Parameter(Mandatory=$true)]$F5session,
-        [Parameter(Mandatory=$true)]$VirtualServer
+        [Parameter(Mandatory=$true)]$VirtualServer,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
-    $VirtualServerURI = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
+    $VirtualServerURI = $F5session.BaseURL + "virtual/~$Partition~$VirtualServer/"
 
     Try {
         $VirtualserverObject = Invoke-RestMethodOverride -Method Get -Uri $VirtualServerURI -Credential $F5session.Credential
@@ -1184,15 +1196,16 @@ Function Add-iRuleToVirtualServer {
 .SYNOPSIS
     Add an iRule to the specified virtual server
 .NOTES
-    This function assumes everything is in the /Common partition
+    This function defaults to the /Common partition
 #>
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$VirtualServer,
-        [Parameter(Mandatory=$true)]$iRuleName
+        [Parameter(Mandatory=$true)]$iRuleName,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
-    $iRuleToAdd = "/Common/$iRuleName"
+    $iRuleToAdd = "/$Partition/$iRuleName"
 
     #Verify that the iRule exists on the F5 LTM
     $AlliRules = Get-iRuleCollection -F5session $F5session
@@ -1223,7 +1236,7 @@ Function Add-iRuleToVirtualServer {
     Else {
         $iRules += $iRuleToAdd
 
-        $VirtualserverIRules = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
+        $VirtualserverIRules = $F5session.BaseURL + "virtual/~$Partition~$VirtualServer/"
 
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
@@ -1246,15 +1259,16 @@ Function Remove-iRuleFromVirtualServer {
 .SYNOPSIS
     Remove an iRule from the specified virtual server
 .NOTES
-    This function assumes everything is in the /Common partition
+    This function defaults to the /Common partition
 #>
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$VirtualServer,
-        [Parameter(Mandatory=$true)]$iRuleName
+        [Parameter(Mandatory=$true)]$iRuleName,
+        [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
-    $iRuleToRemove = "/Common/$iRuleName"
+    $iRuleToRemove = "/$Partition/$iRuleName"
 
     #Get the existing IRules on the virtual server
     [array]$iRules = Get-VirtualServeriRuleCollection -VirtualServer $VirtualServer -F5session $F5session
@@ -1269,7 +1283,7 @@ Function Remove-iRuleFromVirtualServer {
 
         $iRules = $iRules | Where-Object { $_ -ne $iRuleToRemove }
 
-        $VirtualserverIRules = $F5session.BaseURL + "virtual/~Common~$VirtualServer/"
+        $VirtualserverIRules = $F5session.BaseURL + "virtual/~$Partition~$VirtualServer/"
 
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
