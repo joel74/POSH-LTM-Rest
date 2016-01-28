@@ -45,7 +45,6 @@ Function Test-Functionality{
     Perform some standard tests to make sure things work as expected
 .EXAMPLE
     Test-Functionality -F5Session $f5 -TestVirtualServer 'virt123' -TestVirtualServerIP '10.1.1.240' -TestPool 'testpool123' -PoolMember 'Server1'
-
 #>
     param (
         [Parameter(Mandatory=$true)]$F5Session,
@@ -196,6 +195,34 @@ Function Get-F5Status{
 
 }
 
+Function Sync-DeviceToGroup{
+<#
+.SYNOPSIS
+    Sync the specified device to the group. This assumes the F5 session object is for the device that will be synced to the group.
+#>
+    param (
+        [Parameter(Mandatory=$true)]$F5session,
+        [Parameter(Mandatory=$true)]$GroupName
+    )
+    
+    $URI = $F5session.BaseURL -replace "/ltm", "/cm"
+
+    $JSONBody = @{command='run';utilCmdArgs="config-sync to-group $GroupName"}
+    $JSONBody = $JSONBody | ConvertTo-Json
+
+    Try{
+        $response = Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
+        Write-Output $true
+
+    }
+    Catch {
+        Write-Error ("Failed to sync the device to the $GroupName group")
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
+    }
+
+}
+
 
 Function Get-VirtualServerList{
 <#
@@ -218,8 +245,8 @@ Function Get-VirtualServerList{
     Catch{
 
         Write-Error ("Failed to retrieve the list of virtual servers.")
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
@@ -247,8 +274,8 @@ Function Get-VirtualServer{
     Catch{
 
         Write-Error ("Failed to retrieve the $VirtualServerName virtual server.")
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
@@ -333,8 +360,8 @@ Function New-VirtualServer{
         }
         Catch {
             Write-Error ("Failed to retrieve the $VirtualServerName virtual server.")
-            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
         }
 
     }
@@ -376,8 +403,8 @@ Function Remove-VirtualServer{
             }
             Catch {
                 Write-Error ("Failed to remove the $VirtualServerName virtual server.")
-                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)            
             }
         }
     }
@@ -404,8 +431,8 @@ Function Get-PoolList {
     }
     Catch{
         Write-Error ("Failed to get the list of pool names.")
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 }
 
@@ -432,8 +459,8 @@ Function Get-Pool {
     }
     Catch{
         Write-Error ("Failed to get the $PoolName pool.")
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
@@ -539,8 +566,8 @@ Function New-Pool {
         }
         Catch{
             Write-Error ("Failed to create the $PoolName pool.")
-            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
         }
 
     }
@@ -581,8 +608,8 @@ Function Remove-Pool{
             }
             Catch {
                 Write-Error "Failed to remove the $PoolName pool."
-                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
                 Return($false)
             }
 
@@ -610,8 +637,8 @@ Function Get-PoolMemberCollection {
     }
     Catch {
         Write-Error "Failed to get the members of the $PoolName pool."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 
@@ -655,8 +682,8 @@ Function Get-PoolMember {
     }
     Catch {
         Write-Error "Failed to get the details for the pool member $ComputerName in the $PoolName pool."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
     
     $PoolMember
@@ -705,8 +732,8 @@ Function Set-PoolMemberDescription {
     }
     Catch {
         Write-Error "Failed to set the description on $ComputerName in the $PoolName pool to $Description."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
@@ -834,8 +861,8 @@ Function Add-PoolMember{
     }
     Catch {
         Write-Error "Failed to add $ComputerName to $PoolName."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 
@@ -878,8 +905,8 @@ Function Remove-PoolMember{
     }
     Catch {
         Write-Error "Failed to remove $ComputerName from $PoolName."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
@@ -924,8 +951,8 @@ Function Disable-PoolMember{
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
             }
         }
         Else {
@@ -950,8 +977,8 @@ Function Disable-PoolMember{
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
                 Return($false)
             }
 
@@ -990,8 +1017,8 @@ Function Enable-PoolMember {
             }
             Catch {
                 Write-Error "Failed to enable $ComputerName in the $PoolName pool."
-                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
             }
         }
 
@@ -1018,8 +1045,8 @@ Function Enable-PoolMember {
             }
             Catch {
                 Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-                Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
                 Return($false)
             }
 
@@ -1105,8 +1132,8 @@ Function Get-iRuleCollection {
     }
     Catch {
         Write-Error "Failed to get the list of iRules for the LTM device."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
@@ -1130,8 +1157,8 @@ Function Get-VirtualServeriRuleCollection {
     }
     Catch {
         Write-Error "Failed to get the list of iRules for the $VirtualServer virtual server."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
         return $false
     }
 
@@ -1206,8 +1233,8 @@ Function Add-iRuleToVirtualServer {
         }
         Catch {
             Write-Error "Failed to add the $iRuleName iRule to the $VirtualServer virtual server."
-            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
         }
 
     }
@@ -1252,8 +1279,8 @@ Function Remove-iRuleFromVirtualServer {
         }
         Catch {
             Write-Error "Failed to remove the $iRuleName iRule from the $VirtualServer virtual server."
-            Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-            Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
         }
 
     }
@@ -1284,8 +1311,8 @@ Function Remove-ProfileRamCache{
     }
     Catch {
         Write-Error "Failed to clear the ram cache for the $ProfileName profile."
-        Write-Error "StatusCode:" $_.Exception.Response.StatusCode.value__ 
-        Write-Error "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
+        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
     }
 
 }
