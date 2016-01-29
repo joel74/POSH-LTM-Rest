@@ -160,9 +160,9 @@ Function Invoke-RestMethodOverride {
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,
         [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$Credential,
-        $Body=$null,
-        $Headers=$null,
-        $ContentType=$null
+        [Parameter(Mandatory=$false)]$Body=$null,
+        [Parameter(Mandatory=$false)]$Headers=$null,
+        [Parameter(Mandatory=$false)]$ContentType=$null
     )
 
     [SSLValidator]::OverrideValidation()
@@ -315,19 +315,19 @@ Function New-VirtualServer{
 #>
     param (
         [Parameter(Mandatory=$true)]$F5session,
-        $Kind="tm:ltm:virtual:virtualstate",
+        [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate",
         [Parameter(Mandatory=$true)][string]$VirtualServerName,
-        $Description=$null,
+        [Parameter(Mandatory=$false)]$Description=$null,
         [Parameter(Mandatory=$true)]$DestinationIP,
         [Parameter(Mandatory=$true)]$DestinationPort,
-        $Source='0.0.0.0/0',
-        $DefaultPool=$null,
-        [string[]]$ProfileNames=$null,
+        [Parameter(Mandatory=$false)]$Source='0.0.0.0/0',
+        [Parameter(Mandatory=$false)]$DefaultPool=$null,
+        [Parameter(Mandatory=$false)][string[]]$ProfileNames=$null,
         [Parameter(Mandatory=$true,ParameterSetName = 'IpProtocol')]
         [ValidateSet("tcp","udp","sctp")]
-        $ipProtocol=$null,
-        $Mask='255.255.255.255',
-        $ConnectionLimit='0',
+        [Parameter(Mandatory=$false)]$ipProtocol=$null,
+        [Parameter(Mandatory=$false)]$Mask='255.255.255.255',
+        [Parameter(Mandatory=$false)]$ConnectionLimit='0',
         [Parameter(Mandatory=$false)]$Partition='Common'
 
     )
@@ -511,7 +511,7 @@ Function New-Pool {
     param (
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)][string]$PoolName,
-        [string[]]$MemberDefinitionList=$null,
+        [Parameter(Mandatory=$false)][string[]]$MemberDefinitionList=$null,
         [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
@@ -929,8 +929,8 @@ Function Disable-PoolMember{
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        $PoolName=$null,
-        [switch]$Force,
+        [Parameter(Mandatory=$false)]$PoolName=$null,
+        [Parameter(Mandatory=$false)][switch]$Force,
         [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
@@ -1006,7 +1006,7 @@ Function Enable-PoolMember {
     param(
         [Parameter(Mandatory=$true)]$F5session,
         [Parameter(Mandatory=$true)]$ComputerName,
-        $PoolName=$null,
+        [Parameter(Mandatory=$false)]$PoolName=$null,
         [Parameter(Mandatory=$false)]$Partition='Common'
     )
 
