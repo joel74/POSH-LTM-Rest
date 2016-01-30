@@ -24,7 +24,7 @@ Author = 'Joel Newton'
 CompanyName = 'SpringCM'
 
 # Copyright statement for this module
-Copyright = '(c) 2015 Joel Newton. All rights reserved.'
+Copyright = '(c) 2016 Joel Newton. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'This module uses the REST API in the F5 LTM v11.6 to query and manipulate the F5 LTM device.'
