@@ -41,6 +41,7 @@ The module contains the following functions.
    * Remove-ProfileRamCache
    * Remove-VirtualServer
    * Set-PoolMemberDescription
+   * Sync-DeviceToGroup
    * Test-Functionality
    * Test-Pool
    * Test-VirtualServer
