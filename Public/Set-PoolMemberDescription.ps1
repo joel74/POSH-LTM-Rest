@@ -4,11 +4,14 @@
     Set the description value for the specified pool member
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5Session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$ComputerName,
         [Parameter(Mandatory=$true)]$PoolName,
         [Parameter(Mandatory=$true)]$Description
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $PoolName -F5Session $F5session
 

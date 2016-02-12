@@ -6,9 +6,12 @@
     Example profile: "profile/http/ramcache"
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$ProfileName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $ProfileURL = $F5session.BaseURL +$ProfileName
 

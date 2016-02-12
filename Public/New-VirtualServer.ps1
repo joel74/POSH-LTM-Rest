@@ -4,7 +4,7 @@
     Create a new virtual server
 #>
     param (
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate",
         [Parameter(Mandatory=$true)][string]$VirtualServerName,
         [Parameter(Mandatory=$false)]$Description=$null,
@@ -19,6 +19,9 @@
         [Parameter(Mandatory=$false)]$Mask='255.255.255.255',
         [Parameter(Mandatory=$false)]$ConnectionLimit='0'
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $URI = ($F5session.BaseURL + "virtual")
 
