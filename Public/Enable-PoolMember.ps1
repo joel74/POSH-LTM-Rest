@@ -5,10 +5,13 @@
     If no pool is specified, the member will be disabled in all pools
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$ComputerName,
         [Parameter(Mandatory=$false)]$PoolName=$null
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
 

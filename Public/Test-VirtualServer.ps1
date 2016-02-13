@@ -5,11 +5,13 @@
 .NOTES
     Pool names are case-specific.
 #>
-
     param (
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$VirtualServerName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     Write-Verbose "NB: Virtual server names are case-specific."
 

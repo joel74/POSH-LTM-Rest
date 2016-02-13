@@ -1,14 +1,19 @@
-﻿Function Get-PoolList {
+﻿
+
+Function Get-PoolList {
 <#
 .SYNOPSIS
     Get a list of all pools for the specified F5 LTM
 #>
     param (
-        [Parameter(Mandatory=$true)]$F5session
+        $F5Session=$Script:F5Session
     )
 
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
+
     #Only retrieve the pool names
-    $PoolsPage = $F5session.BaseURL + 'pool/?$select=fullPath'
+    $PoolsPage = $F5Session.BaseURL + 'pool/?$select=fullPath'
 
     Try {
 
@@ -20,5 +25,7 @@
         Write-Error ("Failed to get the list of pool names.")
         Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
         Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-    }
+ 
+   }
 }
+

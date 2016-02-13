@@ -4,9 +4,12 @@
     Sync the specified device to the group. This assumes the F5 session object is for the device that will be synced to the group.
 #>
     param (
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$GroupName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $URI = $F5session.BaseURL -replace "/ltm", "/cm"
 

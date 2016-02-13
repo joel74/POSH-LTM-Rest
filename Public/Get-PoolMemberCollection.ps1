@@ -4,9 +4,12 @@
     Get the members of the specified pool
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$PoolName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $PoolMembersPage = $F5session.BaseURL + 'pool/{0}/members/?' -f ($PoolName -replace '[/\\]','~')
 

@@ -5,8 +5,11 @@
 #>
 
     param (
-        [Parameter(Mandatory=$true)]$F5session
+        $F5Session=$Script:F5Session
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     #Only retrieve the pool names
     $VirtualServersPage = $F5session.BaseURL + 'virtual?$select=fullPath'

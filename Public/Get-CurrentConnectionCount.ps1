@@ -4,10 +4,13 @@
     Get the count of the specified pool member's current connections
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$ComputerName,
         [Parameter(Mandatory=$true)]$PoolName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $IPAddress = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
 

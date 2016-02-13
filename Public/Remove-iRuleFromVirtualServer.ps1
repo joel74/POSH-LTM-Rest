@@ -6,10 +6,14 @@
     This function defaults to the /Common partition
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$VirtualServer,
         [Parameter(Mandatory=$true)]$iRuleName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
+
     #Get the existing IRules on the virtual server
     [array]$iRules = Get-VirtualServeriRuleCollection -VirtualServer $VirtualServer -F5session $F5session
 

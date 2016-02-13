@@ -13,10 +13,13 @@
 
 #>   
     param (
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$PoolName,
         [Parameter(Mandatory=$false)][string[]]$MemberDefinitionList=$null
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $URI = ($F5session.BaseURL + "pool")
 

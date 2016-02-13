@@ -4,8 +4,11 @@
     Get all iRules for the specified F5 LTM device
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session
+        $F5Session=$Script:F5Session
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     $iRuleURL = $F5session.BaseURL + "rule"
 

@@ -11,7 +11,8 @@
     Dependencies : It includes a Validation.cs class file (based on code posted by Brian Scholer) to allow for using the REST API 
     with LTM devices using self-signed SSL certificates.
 #>
-$F5LTMSession=$null
+
+$Script:F5Session=$null
 
 Add-Type -Path "${PSScriptRoot}\Validation.cs"
 
