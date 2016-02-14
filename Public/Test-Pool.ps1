@@ -6,9 +6,12 @@
     Pool names are case-specific.
 #>
     param (
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$PoolName
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     Write-Verbose "NB: Pool names are case-specific."
 

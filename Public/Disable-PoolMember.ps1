@@ -5,11 +5,14 @@
     If no pool is specified, the member will be disabled in all pools
 #>
     param(
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$ComputerName,
         [Parameter(Mandatory=$false)]$PoolName=$null,
         [Parameter(Mandatory=$false)][switch]$Force
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     #If the -Force param is specified pool members do not accept any new connections, even if they match an existing persistence session.
     #Otherwise, members will only accept only new connections that match an existing persistence session.

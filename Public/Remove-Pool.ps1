@@ -9,10 +9,13 @@
     [CmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
 
     param (
-        [Parameter(Mandatory=$true)]$F5session,
+        $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$PoolName
 
     )
+
+    #Test that the F5 session is in a valid format
+    Test-F5Session($F5Session)
 
     #Build the URI for this pool
     $URI = $F5session.BaseURL + 'pool/{0}' -f ($PoolName -replace '[/\\]','~')
