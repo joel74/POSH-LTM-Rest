@@ -13,37 +13,44 @@ The module contains the following functions.
 
    * Add-iRuleToVirtualServer
    * Add-PoolMember
+   * Add-PoolMonitor
    * Disable-PoolMember
    * Enable-PoolMember
-   * Get-AllPoolMembersStatus
    * Get-CurrentConnectionCount
    * Get-F5Session (will be deprecated in future versions. Use New-F5Session instead.)
    * Get-F5Status
-   * Get-iRuleCollection
+   * Get-HealthMonitor
+   * Get-HealthMonitorType
+   * Get-iRuleCollection (deprecated; Use Get-iRule)
    * Get-Pool
-   * Get-PoolList
+   * Get-PoolList (deprecated; Use Get-Pool)
    * Get-PoolMember
-   * Get-PoolMemberCollection
-   * Get-PoolMemberDescription
-   * Get-PoolMemberIP
-   * Get-PoolMembers
-   * Get-PoolMemberStatus
+   * Get-PoolMemberCollection (deprecated; Use Get-PoolMember)
+   * Get-PoolMemberDescription (deprecated; Use Get-PoolMember)
+   * Get-PoolMemberIP (deprecated; Use Get-PoolMember)
+   * Get-PoolMembers (deprecated; Use Get-PoolMember)
+   * Get-PoolMemberStatus (deprecated; Use Get-PoolMember)
+   * Get-PoolMonitor
    * Get-PoolsForMember
    * Get-StatusShape
    * Get-VirtualServer
-   * Get-VirtualServeriRuleCollection
-   * Get-VirtualServerList
+   * Get-VirtualServeriRuleCollection (deprecated; Use Get-VirtualServer | Select -ExpandProperty rules)
+   * Get-VirtualServerList (deprecated; Use Get-VirtualServer)
    * New-F5Session
+   * New-HealthMonitor
    * New-Pool
    * New-VirtualServer
+   * Remove-HealthMonitor
    * Remove-iRuleFromVirtualServer
    * Remove-Pool
    * Remove-PoolMember
+   * Remove-PoolMonitor
    * Remove-ProfileRamCache
    * Remove-VirtualServer
    * Set-PoolMemberDescription
    * Sync-DeviceToGroup
    * Test-Functionality
+   * Test-HealthMonitor
    * Test-Pool
    * Test-F5Session
    * Test-VirtualServer
