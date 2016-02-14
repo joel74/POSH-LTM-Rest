@@ -2,75 +2,48 @@
 <#
 .SYNOPSIS
     Enable a pool member in the specified pools
-    If no pool is specified, the member will be disabled in all pools
+    If no pool is specified, the member will be enabled in all pools
 #>
     param(
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$false)]$PoolName=$null
+
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [Alias('PoolMember')]
+        [PSObject[]]$InputObject,
+
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
+        [string[]]$PoolName,
+        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [string]$Partition,
+
+        [Alias("ComputerName")]
+        [string]$Address='*',
+
+        [string]$Name='*'
     )
-
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
-
-    $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
-
-    #If a pool name is passed in, verify the pool exists and enable the member in that pool only
-    If ($PoolName){
-
-        If (Test-Pool -F5session $F5session -PoolName $PoolName){
-
-            $MemberFullName = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
-
-            $Partition = 'Common'
-            if ($PoolName -match '^[/\\](?<Partition>[^/\\]*)[/\\](?<Name>[^/\\]*)$') {
-                $Partition = $matches['Partition']
-                $PoolName = $matches['Name']
+    process {
+        switch($PSCmdLet.ParameterSetName) {
+            InputObject {
+                switch ($InputObject.kind) {
+                    "tm:ltm:pool:poolstate" {
+                        if (!$Address) {
+                            Write-Error 'Address is required when the pipeline object is not a PoolMember'
+                        } else {
+                            $InputObject | Get-PoolMember -F5session $F5session -Address $Address -Name $Name | Enable-PoolMember -F5session $f5
+                        }
+                    }
+                    "tm:ltm:pool:members:membersstate" {
+                        $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
+                        foreach($member in $InputObject) {
+                            $URI = $F5session.GetLink($member.selfLink)
+                            Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ErrorMessage "Failed to enable $Address in the $PoolName pool." -AsBoolean
+                        }
+                    }
+                }
             }
-
-            $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/$MemberFullName"
-
-            Try {
-                $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
-                $true
-            }
-            Catch {
-                Write-Error "Failed to enable $ComputerName in the $PoolName pool."
-                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
+            PoolName {
+                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Enable-PoolMember -F5session $f5
             }
         }
-
-        Else {
-            Write-Verbose "Pool $PoolName not found"
-            Return($false)
-        }
-
     }
-
-    #Otherwise, enable the member in all their pools
-    Else {
-
-        $Pools = Get-PoolsForMember -ComputerName $ComputerName -F5session $F5session
-
-        ForEach ($PoolFullName in $Pools){
-
-            $MemberFullName = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolFullName).FullPath
-
-            $URI = $F5session.BaseURL + ('pool/{0}/members/{1}' -f ($PoolFullName -replace '[/\\]','~'),($MemberFullName -replace '[/\\]','~'))
-
-            Try {
-                $response = Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody
-            }
-            Catch {
-                Write-Error "Failed to disable $ComputerName in the $PoolName pool."
-                Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-                Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-                Return($false)
-            }
-
-        }
-        $true
-    } 
-
 }

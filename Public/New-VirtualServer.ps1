@@ -27,7 +27,7 @@
 
     #Check whether the specified virtual server already exists
     If (Test-VirtualServer -F5session $F5session -VirtualServerName $VirtualServerName){
-        Write-Error "The $VirtualServerName pool already exists."
+        Write-Error "The $VirtualServerName virtual server already exists."
     }
 
     Else {
@@ -53,15 +53,7 @@
 
         Write-Verbose $JSONBody
 
-        Try{
-            Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
-        }
-        Catch {
-            Write-Error ("Failed to retrieve the $VirtualServerName virtual server.")
-            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-        }
-
+        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to retrieve the $VirtualServerName virtual server."
     }
 
 }

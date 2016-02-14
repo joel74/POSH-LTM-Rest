@@ -5,26 +5,40 @@
 #>
     param(
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$PoolName
+
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [Alias('PoolMember')]
+        [PSObject[]]$InputObject,
+        
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
+        [string[]]$PoolName,
+        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [string]$Partition,
+
+        [Alias("ComputerName")]
+        [Parameter(Mandatory=$false)]
+        [string]$Address='*',
+
+        [Parameter(Mandatory=$false)]
+        [string]$Name='*'
     )
-
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
-
-    $IPAddress = (Get-PoolMember -F5session $F5session -ComputerName $ComputerName -PoolName $PoolName).Name
-
-    $Partition = 'Common'
-    if ($PoolName -match '^[/\\](?<Partition>[^/\\]*)[/\\](?<Name>[^/\\]*)$') {
-        $Partition = $matches['Partition']
-        $PoolName = $matches['Name']
+    begin {
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
     }
-
-    $PoolMember = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/~$Partition~$IPAddress/stats"
-
-    $PoolMemberJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMember -Credential $F5session.Credential
-
-    #Return the number of current connections for this member of this pool
-    $PoolMemberJSON.entries.'serverside.curConns'.value
-
+    process {
+        switch($PSCmdLet.ParameterSetName) {
+            PoolName {
+                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Get-CurrentConnectionCount -F5Session $F5Session -Address $Address -Name $Name
+            }
+            InputObject {
+                $InputObject | ForEach-Object {
+                    $StatsLink = $F5session.GetLink(($_.selfLink -replace '\?','/stats?'))
+                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $StatsLink -Credential $F5session.Credential
+                    # TODO: Establish a type for formatting and return more columns, and consider adding a GetStats() ScriptMethod to PoshLTM.PoolMember  
+                    ($JSON.entries,$JSON -ne $null)[0] | Select-Object -ExpandProperty 'serverside.curConns' #| Add-ObjectDetail -TypeName PoshLTM.PoolMemberStats
+                }
+            }
+        }
+    }
 }

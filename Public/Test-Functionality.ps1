@@ -21,9 +21,9 @@
     Get-F5Status -F5Session $F5Session
 
     Write-Host "`r`n* Get a list of all pools" -ForegroundColor $TestNotesColor
-    Get-PoolList -F5Session $F5Session
-
     $pools = Get-PoolList -F5Session $F5Session
+    $pools
+
     Write-Host ("`r`n* Test whether the first pool in the list - " + $pools[0] + " - exists") -ForegroundColor $TestNotesColor
     Test-Pool -F5Session $F5Session -PoolName $pools[0]
 
@@ -75,9 +75,9 @@
     Remove-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PortNumber 80 -PoolName $TestPool
 
     Write-Host "`r`n* Get a list of all virtual servers" -ForegroundColor $TestNotesColor
-    Get-VirtualServerList -F5Session $F5Session
-
     $virtualServers = Get-VirtualServerList -F5Session $F5Session
+    $virtualServers
+
     Write-Host ("`r`n* Test whether the first virtual server in the list - " +  $virtualServers[0] + " - exists") -ForegroundColor $TestNotesColor
     Test-VirtualServer -F5Session $F5Session -VirtualServerName $virtualServers[0]
 

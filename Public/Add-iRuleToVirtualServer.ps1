@@ -7,56 +7,63 @@
 #>
     param(
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)]$VirtualServer,
-        [Parameter(Mandatory=$true)]$iRuleName
+        
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [PSObject[]]$InputObject,
+
+        [Alias("VirtualServer")]
+        [Alias("VirtualServerName")]
+        [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
+        [string[]]$Name,
+        [Parameter(Mandatory=$false)]
+        [string]$Partition,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$iRuleName
     )
+    process {
+        switch($PSCmdLet.ParameterSetName) {
+            InputObject {
+                #Verify that the iRule exists on the F5 LTM
+                $iRule = Get-iRule -F5session $F5session -Name $iRuleName -Partition $Partition
+                If ($iRule -eq $null){
+                    Write-Error "The $iRuleName iRule does not exist in this F5 LTM."
+                    $false
+                } else {
+                    foreach($virtualserver in $InputObject) {
+                        #Get the existing IRules on the virtual server
+                        [array]$iRules = $virtualserver | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue
 
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
+                        #If there are no iRules on this virtual server, then create a new array
+                        If (!$iRules){
+                            $iRules = @()
+                        }        
 
-    #Verify that the iRule exists on the F5 LTM
-    $AlliRules = Get-iRuleCollection -F5session $F5session
-    If ($AlliRules.fullPath -notcontains $iRuleName){
-        Write-Warning "The $iRuleName iRule does not exist in this F5 LTM."
-        Return($false)
-    }
+                        #Check that the specified iRule is not already in the collection 
+                        If ($iRules -match $iRuleName){
+                            Write-Warning "The $Name virtual server already contains the $iRuleName iRule."
+                            $false
+                        }
+                        Else {
+                            $iRules += $iRuleName
 
-    #Verify that this virtual server exists
-    If (!(Test-VirtualServer -F5session $F5session -VirtualServerName $VirtualServer)){
-        Write-Warning "The $VirtualServer virtual server does not exist."
-        Return($false)
-    }
+                            $Uri = $F5Session.GetLink($virtualServer.selfLink)
 
-    #Get the existing IRules on the virtual server
-    [array]$iRules = Get-VirtualServeriRuleCollection -VirtualServer $VirtualServer -F5session $F5session
+                            $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-    #If there are no iRules on this virtual server, then create a new array
-    If (!$iRules){
-        $iRules = @()
-    }        
-
-    #Check that the specified iRule is not already in the collection 
-    If ($iRules -match $iRuleName){
-        Write-Warning "The $VirtualServer virtual server already contains the $iRuleName iRule."
-        Return($false)
-    }
-    Else {
-        $iRules += $iRuleName
-
-        $VirtualserverIRules = $F5session.BaseURL + 'virtual/{0}' -f ($VirtualServer -replace '[/\\]','~')
-
-        $JSONBody = @{rules=$iRules} | ConvertTo-Json
-
-        Try {
-            $response = Invoke-RestMethodOverride -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
-            $true
+                            Invoke-RestMethodOverride -Method PUT -Uri "$Uri" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleName iRule to the $Name virtual server." -AsBoolean 
+                        }
+                    }
+                }
+            }
+            Name {
+                $virtualservers = $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition
+                if ($null -eq $virtualservers) {
+                    Write-Warning "No virtual servers found."
+                    $false
+                }
+                $virtualservers | Add-iRuleToVirtualServer -F5session $F5Session -iRuleName $iRuleName
+            }
         }
-        Catch {
-            Write-Error "Failed to add the $iRuleName iRule to the $VirtualServer virtual server."
-            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-        }
-
     }
-
 }

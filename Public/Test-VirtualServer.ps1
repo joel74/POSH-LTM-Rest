@@ -7,7 +7,9 @@
 #>
     param (
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)][string]$VirtualServerName
+        [Alias("VirtualServerName")]
+	[Parameter(Mandatory=$true)]
+	[string]$Name
     )
 
     #Test that the F5 session is in a valid format
@@ -16,14 +18,7 @@
     Write-Verbose "NB: Virtual server names are case-specific."
 
     #Build the URI for this virtual server
-    $URI = $F5session.BaseURL + 'virtual/{0}' -f ($VirtualServerName -replace '[/\\]','~')
+    $URI = $F5session.BaseURL + 'virtual/{0}' -f ($Name -replace '/','~')
 
-    Try {
-        Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential | out-null
-        $true
-    }
-    Catch{
-        $false
-    }
-
+    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -AsBoolean
 }
