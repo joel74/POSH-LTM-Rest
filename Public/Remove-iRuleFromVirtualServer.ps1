@@ -31,16 +31,7 @@
 
         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-        Try {
-            $response = Invoke-RestMethodOverride -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
-            $true
-        }
-        Catch {
-            Write-Error "Failed to remove the $iRuleName iRule from the $VirtualServer virtual server."
-            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-        }
-
+        Invoke-RestMethodOverride -Method PUT -Uri "$VirtualserverIRules" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to remove the $iRuleName iRule from the $VirtualServer virtual server." -AsBoolean
     }
     Else {
         Write-Warning "The $VirtualServer virtual server does not contain the $iRuleName iRule."
