@@ -22,6 +22,10 @@
         [string]$iRuleName
     )
     process {
+
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
+        
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
                 #Verify that the iRule exists on the F5 LTM
