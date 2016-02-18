@@ -16,7 +16,7 @@
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
         [Parameter(Mandatory=$false)]
-        [string]$Partition,
+        [string]$Partition='Common',
         
         [Parameter(Mandatory=$true)]
         [string]$iRuleName
@@ -29,6 +29,7 @@
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
 
+                $iRulePartitionAndName = "/$Partition/$iRuleName"
                 foreach($VirtualServer in $InputObject) {
                     #Get the existing IRules on the virtual server
                     [array]$iRules = $VirtualServer | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue
@@ -37,10 +38,11 @@
                     If (!$iRules){
                         $iRules = @()
                     }
-                    #Check that the specified iRule is in the collection 
-                    If ($iRules -match $iRuleName){
 
-                        $iRules = $iRules | Where-Object { $_ -ne $iRuleName }
+                    #Check that the specified iRule is in the collection 
+                    If ($iRules -match $iRulePartitionAndName){
+
+                        $iRules = $iRules | Where-Object { $_ -ne $iRulePartitionAndName }
 
                         $Uri = $F5Session.GetLink($virtualServer.selfLink)
 
@@ -50,7 +52,7 @@
 
                     }
                     Else {
-                        Write-Warning "The $VirtualServer virtual server does not contain the $iRuleName iRule."
+                        Write-Warning "The $($VirtualServer.name) virtual server does not contain the $iRuleName iRule."
                         $false
                     }
                 }
