@@ -71,16 +71,7 @@
         $JSONBody.members = $Members
         $JSONBody = $JSONBody | ConvertTo-Json
 
-        Try {
-            $response = Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
-            $true
-        }
-        Catch{
-            Write-Error ("Failed to create the $PoolName pool.")
-            Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-            Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-        }
-
+        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $PoolName pool.") -AsBoolean
     }
 
 }
