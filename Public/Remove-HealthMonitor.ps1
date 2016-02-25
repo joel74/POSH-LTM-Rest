@@ -5,7 +5,7 @@
 .NOTES
     Health monitor names are case-specific.
 #>
-    [cmdletBinding()]
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]    
     param(
         $F5Session=$Script:F5Session,
 
