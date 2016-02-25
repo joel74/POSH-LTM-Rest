@@ -45,7 +45,7 @@
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $f5 -Description $Description
+                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $F5session -Description $Description
             }
         }
     }
