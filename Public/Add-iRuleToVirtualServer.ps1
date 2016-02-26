@@ -16,14 +16,21 @@
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
         [Parameter(Mandatory=$false)]
-        [string]$Partition,
+        [string]$Partition='Common',
         
         [Parameter(Mandatory=$true)]
         [string]$iRuleName
     )
     process {
+
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
+
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
+
+                $iRulePartitionAndName = "/$Partition/$iRuleName"
+
                 #Verify that the iRule exists on the F5 LTM
                 $iRule = Get-iRule -F5session $F5session -Name $iRuleName -Partition $Partition
                 If ($iRule -eq $null){
@@ -40,12 +47,12 @@
                         }        
 
                         #Check that the specified iRule is not already in the collection 
-                        If ($iRules -match $iRuleName){
+                        If ($iRules -match $iRulePartitionAndName){
                             Write-Warning "The $Name virtual server already contains the $iRuleName iRule."
                             $false
                         }
                         Else {
-                            $iRules += $iRuleName
+                            $iRules += $iRulePartitionAndName #$iRuleName
 
                             $Uri = $F5Session.GetLink($virtualServer.selfLink)
 
