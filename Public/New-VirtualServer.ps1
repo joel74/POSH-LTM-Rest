@@ -3,6 +3,7 @@
 .SYNOPSIS
     Create a new virtual server
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate",

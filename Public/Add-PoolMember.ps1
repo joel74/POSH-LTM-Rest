@@ -27,7 +27,7 @@
         [string]$Name,
         [Parameter(Mandatory=$true)]
         $PortNumber,
-	
+    
         [ValidateSet("Enabled","Disabled")]
         [Parameter(Mandatory=$true)]$Status
     )
@@ -36,10 +36,10 @@
         Test-F5Session($F5Session)
 
         $ComputerName = $Address
-		$ip = [IPAddress]::Any
+        $ip = [IPAddress]::Any
         if ([IpAddress]::TryParse($Address,[ref]$ip)) {
-			$Address = $ip.IpAddressToString
-		} else {
+            $Address = $ip.IpAddressToString
+        } else {
             $Address = Get-CimInstance -ComputerName $Address -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
             #If we don't get an IP address for the computer, then fail
             If (!($Address)){

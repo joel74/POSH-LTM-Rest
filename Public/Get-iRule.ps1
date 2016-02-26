@@ -20,7 +20,7 @@
         #Test that the F5 session is in a valid format
         Test-F5Session($F5session)
         
-        Write-Verbose "NB: Pool names are case-specific."
+        Write-Verbose "NB: iRule names are case-specific."
     }
     process {
         foreach ($rulename in $Name) {

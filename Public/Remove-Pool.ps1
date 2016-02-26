@@ -5,9 +5,7 @@
 .NOTES
     Pool names are case-specific.
 #>
-
-    [CmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
-
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
     param (
         $F5Session=$Script:F5Session,
         

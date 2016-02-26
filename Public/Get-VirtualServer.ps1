@@ -3,7 +3,7 @@
 .SYNOPSIS
     Retrieve the specified virtual server
 #>
-
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Alias("VirtualServerName")]

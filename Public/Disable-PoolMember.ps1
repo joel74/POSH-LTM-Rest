@@ -4,6 +4,7 @@
     Disable a pool member in the specified pools
     If no pool is specified, the member will be disabled in all pools
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 

@@ -41,7 +41,7 @@
                     }
                 }
             }
-		}
+        }
     }
     process {
         switch($PSCmdLet.ParameterSetName) {

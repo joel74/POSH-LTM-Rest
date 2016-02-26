@@ -5,6 +5,7 @@
 .NOTES
     HealthMonitor names are case-specific.
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$Name,

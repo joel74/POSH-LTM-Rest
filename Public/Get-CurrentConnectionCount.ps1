@@ -3,6 +3,7 @@
 .SYNOPSIS
     Get the count of the specified pool member's current connections
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 

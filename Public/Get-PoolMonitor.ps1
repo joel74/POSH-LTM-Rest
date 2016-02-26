@@ -3,6 +3,7 @@
 .SYNOPSIS
     Get details about the specified pool monitor
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 

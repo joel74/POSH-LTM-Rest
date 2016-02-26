@@ -3,6 +3,7 @@
 .SYNOPSIS
     Add a health monitor to a pool 
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 

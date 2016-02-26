@@ -12,6 +12,7 @@
     New-Pool -F5Session $F5Session -PoolName "MyPoolName" -MemberDefinitionList @("Server1,80,Web server","Server2,443,Another web server")
 
 #>   
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$PoolName,

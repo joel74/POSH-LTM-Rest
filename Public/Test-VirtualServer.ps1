@@ -3,8 +3,9 @@
 .SYNOPSIS
     Test whether the specified virtual server exists
 .NOTES
-    Pool names are case-specific.
+    Virtual server names are case-specific.
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Alias("VirtualServerName")]

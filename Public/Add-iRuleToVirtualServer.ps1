@@ -5,6 +5,7 @@
 .NOTES
     This function defaults to the /Common partition
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
         
@@ -21,11 +22,11 @@
         [Parameter(Mandatory=$true)]
         [string]$iRuleName
     )
-    process {
-
+    begin {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
-
+    }
+    process {
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
 

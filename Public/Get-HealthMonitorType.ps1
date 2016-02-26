@@ -3,6 +3,7 @@
 .SYNOPSIS
     Get a list of all health monitor types for the specified F5 LTM
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session        
     )

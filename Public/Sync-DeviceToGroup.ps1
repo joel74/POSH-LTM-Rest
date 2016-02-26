@@ -3,6 +3,7 @@
 .SYNOPSIS
     Sync the specified device to the group. This assumes the F5 session object is for the device that will be synced to the group.
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$GroupName

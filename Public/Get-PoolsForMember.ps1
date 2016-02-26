@@ -3,6 +3,7 @@
 .SYNOPSIS
     Determine which pool(s) a server is in
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
