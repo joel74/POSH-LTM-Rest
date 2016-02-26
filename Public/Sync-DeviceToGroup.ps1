@@ -12,7 +12,7 @@
     #Test that the F5 session is in a valid format
     Test-F5Session($F5Session)
 
-    $URI = $F5session.BaseURL -replace "/ltm", "/cm"
+    $URI = $F5Session.BaseURL -replace "/ltm", "/cm"
 
     $JSONBody = @{command='run';utilCmdArgs="config-sync to-group $GroupName"}
     $JSONBody = $JSONBody | ConvertTo-Json

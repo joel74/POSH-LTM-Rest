@@ -63,15 +63,15 @@
                                     $Partition = $pool.partition 
                                 }
                                 $JSONBody = @{name=$Name;partition=$Partition;address=$Address;description=$ComputerName} | ConvertTo-Json
-                                $MembersLink = $F5session.GetLink($pool.membersReference.link)
-                                Invoke-RestMethodOverride -Method POST -Uri "$MembersLink" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add $ComputerName to $PoolName." | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
+                                $MembersLink = $F5Session.GetLink($pool.membersReference.link)
+                                Invoke-RestMethodOverride -Method POST -Uri "$MembersLink" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add $ComputerName to $PoolName." | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
 
                                 #After adding to the pool, make sure the member status is set as specified
                                 If ($Status -eq "Enabled"){
-                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Enable-PoolMember -F5session $F5session 
+                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Enable-PoolMember -F5session $F5Session 
                                 }
                                 ElseIf ($Status -eq "Disabled"){
-                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5session 
+                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session 
                                 }
                             }
                         }

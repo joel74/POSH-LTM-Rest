@@ -6,7 +6,7 @@
     [cmdletBinding(SupportsShouldProcess=$true, ConfirmImpact="Medium")]    
     param(
         [Parameter(Mandatory=$true)]
-        $F5session,
+        $F5Session,
 
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [Alias('Pool')]
@@ -34,13 +34,13 @@
 
                         $monitor = ($pool.monitor -split ' and ' | Where-Object { $_.Trim() -ne $Name }) -join ' and '
                         $JSONBody = @{monitor=$monitor} | ConvertTo-Json
-                        $URI = $F5session.GetLink($pool.selfLink)
-                        Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
+                        $URI = $F5Session.GetLink($pool.selfLink)
+                        Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
                     }
                 }
             }
             PoolName {
-                Get-Pool -F5session $F5session -PoolName $PoolName -Partition $Partition | Remove-PoolMonitor -F5session $F5session -Name $Name
+                Get-Pool -F5session $F5Session -PoolName $PoolName -Partition $Partition | Remove-PoolMonitor -F5session $F5Session -Name $Name
             }
         }
     }

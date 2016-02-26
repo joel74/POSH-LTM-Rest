@@ -28,13 +28,13 @@
     process {
         switch($PSCmdLet.ParameterSetName) {
             Name {
-                $Name | Get-VirtualServer -F5Session $F5session -Partition $Partition | Remove-VirtualServer -F5session $F5Session
+                $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition | Remove-VirtualServer -F5session $F5Session
             }
             InputObject {
                 foreach($virtualserver in $InputObject) {
                     if ($pscmdlet.ShouldProcess($virtualserver.fullPath)){
-                        $URI = $F5session.GetLink($virtualserver.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5session.Credential -AsBoolean
+                        $URI = $F5Session.GetLink($virtualserver.selfLink)
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
                     }
                 }
             }

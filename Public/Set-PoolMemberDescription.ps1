@@ -33,20 +33,20 @@
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
-                            $InputObject | Get-PoolMember -F5session $F5session -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $F5Session
+                            $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $F5Session
                         }
                     }
                     "tm:ltm:pool:members:membersstate" {
                         foreach($member in $InputObject) {
                             $JSONBody = @{description=$Description} | ConvertTo-Json
-                            $URI = $F5session.GetLink($member.selfLink)
-                            Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $ComputerName in the $PoolName pool to $Description." -AsBoolean
+                            $URI = $F5Session.GetLink($member.selfLink)
+                            Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $ComputerName in the $PoolName pool to $Description." -AsBoolean
                         }
                     }
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $F5session -Description $Description
+                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $F5Session -Description $Description
             }
         }
     }

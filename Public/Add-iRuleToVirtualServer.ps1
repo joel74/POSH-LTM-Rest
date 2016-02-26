@@ -33,7 +33,7 @@
                 $iRulePartitionAndName = "/$Partition/$iRuleName"
 
                 #Verify that the iRule exists on the F5 LTM
-                $iRule = Get-iRule -F5session $F5session -Name $iRuleName -Partition $Partition
+                $iRule = Get-iRule -F5session $F5Session -Name $iRuleName -Partition $Partition
                 If ($iRule -eq $null){
                     Write-Error "The $iRuleName iRule does not exist in this F5 LTM."
                     $false
@@ -55,11 +55,11 @@
                         Else {
                             $iRules += $iRulePartitionAndName #$iRuleName
 
-                            $Uri = $F5Session.GetLink($virtualServer.selfLink)
+                            $URI = $F5Session.GetLink($virtualServer.selfLink)
 
                             $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                            Invoke-RestMethodOverride -Method PUT -Uri "$Uri" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleName iRule to the $Name virtual server." -AsBoolean 
+                            Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleName iRule to the $Name virtual server." -AsBoolean 
                         }
                     }
                 }

@@ -17,10 +17,10 @@
     #Test that the F5 session is in a valid format
     Test-F5Session($F5Session)
 
-    $URI = $F5session.BaseURL + "monitor/$Type"
+    $URI = $F5Session.BaseURL + "monitor/$Type"
 
     #Check whether the specified pool already exists
-    If (Test-HealthMonitor -F5session $F5session -Name $Name -Type $Type){
+    If (Test-HealthMonitor -F5session $F5Session -Name $Name -Type $Type){
         Write-Error "The $Name pool already exists."
     }
 
@@ -34,6 +34,6 @@
         $JSONBody = @{name=$Name;partition=$Partition;recv=$Receive;send=$Send;interval=5;timeout=16}
         $JSONBody = $JSONBody | ConvertTo-Json
 
-        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $Name health monitor." -AsBoolean
+        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $Name health monitor." -AsBoolean
     }
 }

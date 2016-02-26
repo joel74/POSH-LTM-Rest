@@ -24,10 +24,10 @@
     #Test that the F5 session is in a valid format
     Test-F5Session($F5Session)
 
-    $URI = ($F5session.BaseURL + "virtual")
+    $URI = ($F5Session.BaseURL + "virtual")
 
     #Check whether the specified virtual server already exists
-    If (Test-VirtualServer -F5session $F5session -VirtualServerName $VirtualServerName){
+    If (Test-VirtualServer -F5session $F5Session -VirtualServerName $VirtualServerName){
         Write-Error "The $VirtualServerName virtual server already exists."
     }
 

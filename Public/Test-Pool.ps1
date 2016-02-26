@@ -18,6 +18,6 @@
     Write-Verbose "NB: Pool names are case-specific."
 
     #Build the URI for this pool
-    $URI = $F5session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Partition $Partition)
-    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue -AsBoolean
+    $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Partition $Partition)
+    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction SilentlyContinue -AsBoolean
 }

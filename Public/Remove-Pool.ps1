@@ -34,8 +34,8 @@
             InputObject {
                 foreach($pool in $InputObject) {
                     if ($pscmdlet.ShouldProcess($pool.fullPath)){
-                        $URI = $F5session.GetLink($pool.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5session.Credential -AsBoolean
+                        $URI = $F5Session.GetLink($pool.selfLink)
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
                     }
                 }
             }

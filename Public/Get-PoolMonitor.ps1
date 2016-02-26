@@ -28,7 +28,7 @@
                 $InputObject | ForEach-Object { ($_ | Select-Object -ExpandProperty monitor) -split ' and ' }
             }
             PoolName {
-                Get-Pool -F5Session $F5session -Name $Name -Partition $Partition | Get-PoolMonitor -F5Session $F5Session 
+                Get-Pool -F5Session $F5Session -Name $Name -Partition $Partition | Get-PoolMonitor -F5Session $F5Session 
             }
         }
     }

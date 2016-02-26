@@ -55,8 +55,8 @@
                     $InputObject = Get-Pool -F5Session $F5Session
                 }
                 foreach($pool in $InputObject) {
-                    $MembersLink = $F5session.GetLink($pool.membersReference.link)
-                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -Credential $F5session.Credential
+                    $MembersLink = $F5Session.GetLink($pool.membersReference.link)
+                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -Credential $F5Session.Credential
                     ($JSON.items,$JSON -ne $null)[0] | Where-Object { $_.address -like $Address -and $_.name -like $Name } | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
                 }
             }
