@@ -3,37 +3,63 @@
 .SYNOPSIS
     Get details about the specified pool member
 #>
+    [cmdletBinding(DefaultParameterSetName='InputObject')]
     param(
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$PoolName
+
+        [Parameter(ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [Alias('Pool')]
+        [PSObject[]]$InputObject,
+        
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
+        [string[]]$PoolName,
+        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [string]$Partition,
+
+        [Alias("ComputerName")]
+        [Parameter(Mandatory=$false)]
+        [string]$Address='*',
+
+        [Parameter(Mandatory=$false)]
+        [string]$Name='*'
     )
+    begin {
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
+        Write-Verbose "NB: Pool names are case-specific."
 
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
-
-    $PoolMember = $null
-
-    $IPAddress = Get-PoolMemberIP -F5Session $F5session -ComputerName $ComputerName -PoolName $PoolName
-
-    $Partition = 'Common'
-    if ($PoolName -match '^[/\\](?<Partition>[^/\\]*)[/\\](?<Name>[^/\\]*)$') {
-        $Partition = $matches['Partition']
-        $PoolName = $matches['Name']
+        if ($PSCmdLet.ParameterSetName -eq 'InputObject') {
+            if ($Address -ne '*') {
+                $ip = [IPAddress]::Any
+                if ([IpAddress]::TryParse($Address,[ref]$ip)) {
+                    $Address = $ip.IpAddressToString
+                } else {
+                    $Address = Get-CimInstance -ComputerName $Address -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
+                    #If we don't get an IP address for the computer, then fail
+                    If (!($Address)){
+                        Write-Error "Failed to obtain IP address for $Address. The error returned was:`r`n$Error[0]"
+                    }
+                }
+            }
+		}
     }
-
-    $PoolMemberURI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/~$Partition~$IPAddress`?"
-
-    Try {
-        $PoolMemberJSON = Invoke-RestMethodOverride -Method Get -Uri $PoolMemberURI -Credential $F5session.Credential
-        $PoolMemberJSON
+    process {
+        switch($PSCmdLet.ParameterSetName) {
+            PoolName {
+                foreach($pName in $PoolName) {
+                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name
+                }
+            }
+            InputObject {
+                if ($null -eq $InputObject) {
+                    $InputObject = Get-Pool -F5Session $F5Session
+                }
+                foreach($pool in $InputObject) {
+                    $MembersLink = $F5session.GetLink($pool.membersReference.link)
+                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -Credential $F5session.Credential
+                    ($JSON.items,$JSON -ne $null)[0] | Where-Object { $_.address -like $Address -and $_.name -like $Name } | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
+                }
+            }
+        }
     }
-    Catch {
-        Write-Error "Failed to get the details for the pool member $ComputerName in the $PoolName pool."
-        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-    }
-
-    $PoolMember
-
 }

@@ -16,6 +16,7 @@ $Script:F5Session=$null
 
 Add-Type -Path "${PSScriptRoot}\Validation.cs"
 
+Update-FormatData "${PSScriptRoot}\TypeData\PoshLTM.Format.ps1xml"
 $ScriptPath = Split-Path $MyInvocation.MyCommand.Path
 
 #region Load Public Functions
@@ -34,14 +35,14 @@ try {
 
 #region Load Private Functions
 
-#try {
-#    Get-ChildItem "$ScriptPath\Private" -Filter *.ps1 -Recurse | Select -Expand FullName | ForEach {
-#        $Function = Split-Path $_ -Leaf
-#        . $_
-#    }
-#} catch {
-#    Write-Warning ("{0}: {1}" -f $Function,$_.Exception.Message)
-#    Continue
-#}
+try {
+   Get-ChildItem "$ScriptPath\Private" -Filter *.ps1 -Recurse | Select -Expand FullName | ForEach {
+       $Function = Split-Path $_ -Leaf
+       . $_
+   }
+} catch {
+   Write-Warning ("{0}: {1}" -f $Function,$_.Exception.Message)
+   Continue
+}
 
 #endregion

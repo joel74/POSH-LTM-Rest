@@ -5,34 +5,48 @@
 #>
     param(
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)]$ComputerName,
-        [Parameter(Mandatory=$true)]$PoolName,
+
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [Alias('PoolMember')]
+        [PSObject[]]$InputObject,
+
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
+        [string[]]$PoolName,
+        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [string]$Partition,
+
+        [Alias("ComputerName")]
+        [Parameter(Mandatory=$false,ParameterSetName='InputObject')]
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName')]
+        [string]$Address='*',
+
+        [string]$Name='*',
+        
         [Parameter(Mandatory=$true)]$Description
     )
-
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
-
-    $IPAddress = Get-PoolMemberIP -ComputerName $ComputerName -PoolName $PoolName -F5Session $F5session
-
-    $Partition = 'Common'
-    if ($PoolName -match '^[/\\](?<Partition>[^/\\]*)[/\\](?<Name>[^/\\]*)$') {
-        $Partition = $matches['Partition']
-        $PoolName = $matches['Name']
+    process {
+        switch($PSCmdLet.ParameterSetName) {
+            InputObject {
+                switch ($InputObject.kind) {
+                    "tm:ltm:pool:poolstate" {
+                        if (!$Address) {
+                            Write-Error 'Address is required when the pipeline object is not a PoolMember'
+                        } else {
+                            $InputObject | Get-PoolMember -F5session $F5session -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $f5
+                        }
+                    }
+                    "tm:ltm:pool:members:membersstate" {
+                        foreach($member in $InputObject) {
+                            $JSONBody = @{description=$Description} | ConvertTo-Json
+                            $URI = $F5session.GetLink($member.selfLink)
+                            Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $ComputerName in the $PoolName pool to $Description." -AsBoolean
+                        }
+                    }
+                }
+            }
+            PoolName {
+                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Set-PoolMemberDescription -F5session $f5 -Description $Description
+            }
+        }
     }
-
-    $URI = $F5session.BaseURL + "pool/~$Partition~$PoolName/members/~$Partition~$IPAddress"
-
-    $JSONBody = @{description=$Description} | ConvertTo-Json
-
-    Try {
-        $response = Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
-        $true
-    }
-    Catch {
-        Write-Error "Failed to set the description on $ComputerName in the $PoolName pool to $Description."
-        Write-Error ("StatusCode:" + $_.Exception.Response.StatusCode.value__)
-        Write-Error ("StatusDescription:" + $_.Exception.Response.StatusDescription)
-    }
-
 }
