@@ -5,7 +5,8 @@
 .NOTES
     Health monitor names are case-specific.
 #>
-    [cmdletBinding()]
+    [cmdletBinding(SupportsShouldProcess=$true, ConfirmImpact="Low")]  
+
     param(
         $F5Session=$Script:F5Session,
 
@@ -43,7 +44,7 @@
                 }
             }
             Name {
-                Get-HealthMonitor -F5Session $f5 -Name $Name -Type $Type -Partition $Partition | Remove-HealthMonitor -F5session $F5session
+                Get-HealthMonitor -F5Session $F5session -Name $Name -Type $Type -Partition $Partition | Remove-HealthMonitor -F5session $F5session
             }
         }
     }

@@ -3,6 +3,8 @@
 .SYNOPSIS
     Removes a health monitor from a pool 
 #>
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]  
+
     param(
         [Parameter(Mandatory=$true)]
         $F5session,
@@ -39,7 +41,7 @@
                 }
             }
             PoolName {
-                Get-Pool -F5session $F5session -PoolName $PoolName -Partition $Partition | Remove-PoolMonitor -F5session $f5 -Name $Name
+                Get-Pool -F5session $F5session -PoolName $PoolName -Partition $Partition | Remove-PoolMonitor -F5session $F5session -Name $Name
             }
         }
     }
