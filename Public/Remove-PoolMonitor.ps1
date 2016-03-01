@@ -3,6 +3,8 @@
 .SYNOPSIS
     Removes a health monitor from a pool 
 #>
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]  
+
     param(
         [Parameter(Mandatory=$true)]
         $F5session,
