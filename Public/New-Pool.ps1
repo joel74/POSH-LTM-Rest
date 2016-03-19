@@ -49,7 +49,12 @@
                 Throw("All member definitions should consist of a string containing at least a computer name and a port, comma-separated.")
             }
 
-            $IPAddress = Get-CimInstance -ComputerName $MemberObject[0] -Class Win32_NetworkAdapterConfiguration | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
+            $ip = [IPAddress]::Any
+            if ([IpAddress]::TryParse($MemberObject[0],[ref]$ip)) {
+	    		$IPAddress = $MemberObject[0]
+    		} 
+
+            $IPAddress = [string]([System.Net.Dns]::GetHostAddresses($MemberObject[0]).IPAddressToString)
 
             Try {
                 $PortNumber = [int]$MemberObject[1]

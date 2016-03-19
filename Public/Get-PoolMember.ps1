@@ -34,7 +34,7 @@
                 if ([IpAddress]::TryParse($Address,[ref]$ip)) {
                     $Address = $ip.IpAddressToString
                 } else {
-                    $Address = Get-CimInstance -ComputerName $Address -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
+                    $Address = [string]([System.Net.Dns]::GetHostAddresses($Address).IPAddressToString)
                     #If we don't get an IP address for the computer, then fail
                     If (!($Address)){
                         Write-Error "Failed to obtain IP address for $Address. The error returned was:`r`n$Error[0]"
