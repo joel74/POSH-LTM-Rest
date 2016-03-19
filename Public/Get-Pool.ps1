@@ -24,8 +24,8 @@
     }
     process {
         foreach ($poolname in $Name) {
-            $Uri = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $poolname -Partition $Partition)
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $Uri -Credential $F5Session.Credential -ErrorMessage "Failed to get the /$Partition*/$PoolName*' pool(s)."
+            $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $poolname -Partition $Partition)
+            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorMessage "Failed to get the /$Partition*/$PoolName*' pool(s)."
             ($JSON.items,$JSON -ne $null)[0] | Add-ObjectDetail -TypeName 'PoshLTM.Pool'
         }
     }

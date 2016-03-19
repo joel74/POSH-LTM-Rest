@@ -5,6 +5,7 @@
 .NOTES
     This function defaults to the /Common partition
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 
@@ -21,11 +22,11 @@
         [Parameter(Mandatory=$true)]
         [string]$iRuleName
     )
-    process {
-
+    begin {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
-
+    }
+    process {
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
 
@@ -44,11 +45,11 @@
 
                         $iRules = $iRules | Where-Object { $_ -ne $iRulePartitionAndName }
 
-                        $Uri = $F5Session.GetLink($virtualServer.selfLink)
+                        $URI = $F5Session.GetLink($virtualServer.selfLink)
 
                         $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                        Invoke-RestMethodOverride -Method PUT -Uri "$Uri" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to remove the $iRuleName iRule from the $Name virtual server." -AsBoolean 
+                        Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to remove the $iRuleName iRule from the $Name virtual server." -AsBoolean 
 
                     }
                     Else {

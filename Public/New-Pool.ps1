@@ -12,6 +12,7 @@
     New-Pool -F5Session $F5Session -PoolName "MyPoolName" -MemberDefinitionList @("Server1,80,Web server","Server2,443,Another web server")
 
 #>   
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$PoolName,
@@ -21,10 +22,10 @@
     #Test that the F5 session is in a valid format
     Test-F5Session($F5Session)
 
-    $URI = ($F5session.BaseURL + "pool")
+    $URI = ($F5Session.BaseURL + "pool")
 
     #Check whether the specified pool already exists
-    If (Test-Pool -F5session $F5session -PoolName $PoolName){
+    If (Test-Pool -F5session $F5Session -PoolName $PoolName){
         Write-Error "The $PoolName pool already exists."
     }
 
@@ -76,7 +77,7 @@
         $JSONBody.members = $Members
         $JSONBody = $JSONBody | ConvertTo-Json
 
-        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $PoolName pool.") -AsBoolean
+        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $PoolName pool.") -AsBoolean
     }
 
 }

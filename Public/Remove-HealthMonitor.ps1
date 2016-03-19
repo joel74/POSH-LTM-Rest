@@ -5,8 +5,7 @@
 .NOTES
     Health monitor names are case-specific.
 #>
-    [cmdletBinding(SupportsShouldProcess=$true, ConfirmImpact="Low")]  
-
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]    
     param(
         $F5Session=$Script:F5Session,
 
@@ -27,10 +26,10 @@
     begin {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
-	
+    
         Write-Verbose "NB: Health monitor names are case-specific."
         if ([string]::IsNullOrEmpty($Type)) {
-            $Type = Get-HealthMonitorType -F5Session $F5session
+            $Type = Get-HealthMonitorType -F5Session $F5Session
         }
     }
     process {
@@ -38,13 +37,13 @@
             InputObject {
                 foreach($monitor in $InputObject) {
                     if ($pscmdlet.ShouldProcess($monitor.fullPath)){
-                        $URI = $F5session.GetLink($monitor.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5session.Credential -AsBoolean
+                        $URI = $F5Session.GetLink($monitor.selfLink)
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
                     }
                 }
             }
             Name {
-                Get-HealthMonitor -F5Session $F5session -Name $Name -Type $Type -Partition $Partition | Remove-HealthMonitor -F5session $F5session
+                Get-HealthMonitor -F5Session $F5Session -Name $Name -Type $Type -Partition $Partition | Remove-HealthMonitor -F5session $F5Session
             }
         }
     }

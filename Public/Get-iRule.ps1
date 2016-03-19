@@ -7,7 +7,7 @@
 #>
     [cmdletBinding()]
     param(
-        $F5session=$Script:F5Session,
+        $F5Session=$Script:F5Session,
         
         [Alias("iRuleName")]
         [Parameter(Mandatory=$false,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
@@ -18,14 +18,14 @@
     )
     begin {
         #Test that the F5 session is in a valid format
-        Test-F5Session($F5session)
+        Test-F5Session($F5Session)
         
-        Write-Verbose "NB: Pool names are case-specific."
+        Write-Verbose "NB: iRule names are case-specific."
     }
     process {
         foreach ($rulename in $Name) {
-            $Uri = $F5session.BaseURL + 'rule/{0}' -f (Get-ItemPath -Name $rulename -Partition $Partition)
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $Uri -Credential $F5session.Credential -ErrorMessage "Failed to get the /$Partition*/$rulename*' iRule(s)."
+            $URI = $F5Session.BaseURL + 'rule/{0}' -f (Get-ItemPath -Name $rulename -Partition $Partition)
+            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorMessage "Failed to get the /$Partition*/$rulename*' iRule(s)."
             ($JSON.items,$JSON -ne $null)[0] | Add-ObjectDetail -TypeName 'PoshLTM.iRule'
         }
     }
