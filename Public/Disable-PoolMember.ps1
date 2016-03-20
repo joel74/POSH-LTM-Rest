@@ -4,6 +4,7 @@
     Disable a pool member in the specified pools
     If no pool is specified, the member will be disabled in all pools
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 
@@ -36,7 +37,7 @@
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
-                            $InputObject | Get-PoolMember -F5session $F5session -Address $Address -Name $Name | Disable-PoolMember -F5session $f5
+                            $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session
                         }
                     }
                     "tm:ltm:pool:members:membersstate" {
@@ -48,14 +49,14 @@
                         }
                         $JSONBody = @{state=$AcceptNewConnections;session='user-disabled'} | ConvertTo-Json
                         foreach($member in $InputObject) {
-                            $URI = $F5session.GetLink($member.selfLink)
-                            Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ErrorMessage "Failed to disable $Address in the $PoolName pool." -AsBoolean
+                            $URI = $F5Session.GetLink($member.selfLink)
+                            Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ErrorMessage "Failed to disable $Address in the $PoolName pool." -AsBoolean
                         }
                     }
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Disable-PoolMember -F5session $f5
+                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session
             }
         }
     }

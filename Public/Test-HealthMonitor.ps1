@@ -5,6 +5,7 @@
 .NOTES
     HealthMonitor names are case-specific.
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)][string]$Name,
@@ -16,7 +17,7 @@
     Write-Verbose "NB: HealthMonitor names are case-specific."
 
     #Build the URI for this health monitor
-    $URI = $F5session.BaseURL + 'monitor/{0}/{1}' -f $Type,($Name -replace '/','~')
+    $URI = $F5Session.BaseURL + 'monitor/{0}/{1}' -f $Type,($Name -replace '/','~')
 
-    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction SilentlyContinue -AsBoolean
+    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction SilentlyContinue -AsBoolean
 }

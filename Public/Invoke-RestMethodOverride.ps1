@@ -1,4 +1,5 @@
 ﻿Function Invoke-RestMethodOverride {
+    [cmdletBinding()]
     param ( 
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,

@@ -3,6 +3,7 @@
 .SYNOPSIS
     Get a list of all health monitor types for the specified F5 LTM
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session        
     )
@@ -10,8 +11,8 @@
     Test-F5Session($F5Session)
 
     #Only retrieve the Health monitor types
-    $Uri = $F5session.BaseURL + "monitor/"
+    $URI = $F5Session.BaseURL + "monitor/"
 
-    $monitors = Invoke-RestMethodOverride -Method Get -Uri $Uri -Credential $F5session.Credential -ErrorMessage "Failed to get the list of healt monitor types."
+    $monitors = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorMessage "Failed to get the list of healt monitor types."
     $monitors.items.reference | ForEach-Object { [Regex]::Match($_.Link,'(?<=/)[^/?]*(?=\?)').Value }
 }
