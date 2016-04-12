@@ -5,7 +5,6 @@
 .NOTES
     Health monitor names are case-specific.
 #>
-    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$false,ValueFromPipeline=$true)]
@@ -23,14 +22,14 @@
         $TypeSearchErrorAction = 'Continue'
         if ([string]::IsNullOrEmpty($Type)) {
             $TypeSearchErrorAction = 'SilentlyContinue'
-            $Type = Get-HealthMonitorType -F5Session $F5Session
+            $Type = Get-HealthMonitorType -F5Session $F5session
         }
     }
     process {
         foreach ($t in $Type) {
             foreach ($n in $Name) {
-                $URI = $F5Session.BaseURL + 'monitor/{0}/{1}' -f $t,(Get-ItemPath -Name $n -Partition $Partition)
-                $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction $TypeSearchErrorAction
+                $URI = $F5session.BaseURL + 'monitor/{0}/{1}' -f $t,(Get-ItemPath -Name $n -Partition $Partition)
+                $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -ErrorAction $TypeSearchErrorAction
                 if ($JSON.items -or $JSON.defaultsFrom) {
                     ($JSON.items,$JSON -ne $null)[0] |
                         Add-Member -MemberType NoteProperty -Name type -Value $t -PassThru | Add-ObjectDetail -TypeName 'PoshLTM.HealthMonitor'

@@ -3,7 +3,7 @@
 .SYNOPSIS
     Retrieve the specified virtual server
 #>
-    [cmdletBinding()]
+
     param (
         $F5Session=$Script:F5Session,
         [Alias("VirtualServerName")]
@@ -22,8 +22,8 @@
     }
     process {
         foreach ($virtualserver in $Name) {
-            $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $virtualserver -Partition $Partition)
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
+            $Uri = $F5session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $virtualserver -Partition $Partition)
+            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential
             if ($JSON.items -or $JSON.name) {
                 ($JSON.items,$JSON -ne $null)[0] | Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
             }

@@ -34,14 +34,14 @@
                 if ([IpAddress]::TryParse($Address,[ref]$ip)) {
                     $Address = $ip.IpAddressToString
                 } else {
-                    $Address = [string]([System.Net.Dns]::GetHostAddresses($Address).IPAddressToString)
+                    $Address = Get-CimInstance -ComputerName $Address -Class Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object DefaultIPGateway | Select-Object -exp IPaddress | Select-Object -first 1
                     #If we don't get an IP address for the computer, then fail
                     If (!($Address)){
                         Write-Error "Failed to obtain IP address for $Address. The error returned was:`r`n$Error[0]"
                     }
                 }
             }
-        }
+		}
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
@@ -55,8 +55,8 @@
                     $InputObject = Get-Pool -F5Session $F5Session
                 }
                 foreach($pool in $InputObject) {
-                    $MembersLink = $F5Session.GetLink($pool.membersReference.link)
-                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -Credential $F5Session.Credential
+                    $MembersLink = $F5session.GetLink($pool.membersReference.link)
+                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -Credential $F5session.Credential
                     ($JSON.items,$JSON -ne $null)[0] | Where-Object { $_.address -like $Address -and $_.name -like $Name } | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
                 }
             }

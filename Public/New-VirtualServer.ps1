@@ -3,7 +3,6 @@
 .SYNOPSIS
     Create a new virtual server
 #>
-    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate",
@@ -24,10 +23,10 @@
     #Test that the F5 session is in a valid format
     Test-F5Session($F5Session)
 
-    $URI = ($F5Session.BaseURL + "virtual")
+    $URI = ($F5session.BaseURL + "virtual")
 
     #Check whether the specified virtual server already exists
-    If (Test-VirtualServer -F5session $F5Session -VirtualServerName $VirtualServerName){
+    If (Test-VirtualServer -F5session $F5session -VirtualServerName $VirtualServerName){
         Write-Error "The $VirtualServerName virtual server already exists."
     }
 

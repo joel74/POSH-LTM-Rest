@@ -7,7 +7,6 @@
     for a user with permissions to work with the REST API. Based on the scope value, it either returns the 
     session object (local scope) or adds the session object to the script scope
 #>
-    [cmdletBinding()]
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
         [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials,

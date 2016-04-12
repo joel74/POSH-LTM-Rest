@@ -5,7 +5,8 @@
 .NOTES
     Virtual server names are case-specific.
 #>
-    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
+    [CmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
+
     param (
         $F5Session=$Script:F5Session,
         
@@ -28,13 +29,13 @@
     process {
         switch($PSCmdLet.ParameterSetName) {
             Name {
-                $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition | Remove-VirtualServer -F5session $F5Session
+                $Name | Get-VirtualServer -F5Session $F5session -Partition $Partition | Remove-VirtualServer -F5session $F5Session
             }
             InputObject {
                 foreach($virtualserver in $InputObject) {
                     if ($pscmdlet.ShouldProcess($virtualserver.fullPath)){
-                        $URI = $F5Session.GetLink($virtualserver.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
+                        $URI = $F5session.GetLink($virtualserver.selfLink)
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5session.Credential -AsBoolean
                     }
                 }
             }

@@ -4,7 +4,6 @@
     Enable a pool member in the specified pools
     If no pool is specified, the member will be enabled in all pools
 #>
-    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 
@@ -30,20 +29,20 @@
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
-                            $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Enable-PoolMember -F5session $F5Session
+                            $InputObject | Get-PoolMember -F5session $F5session -Address $Address -Name $Name | Enable-PoolMember -F5session $f5
                         }
                     }
                     "tm:ltm:pool:members:membersstate" {
                         $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
                         foreach($member in $InputObject) {
-                            $URI = $F5Session.GetLink($member.selfLink)
-                            Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ErrorMessage "Failed to enable $Address in the $PoolName pool." -AsBoolean
+                            $URI = $F5session.GetLink($member.selfLink)
+                            Invoke-RestMethodOverride -Method Put -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ErrorMessage "Failed to enable $Address in the $PoolName pool." -AsBoolean
                         }
                     }
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Enable-PoolMember -F5session $F5Session
+                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Enable-PoolMember -F5session $f5
             }
         }
     }

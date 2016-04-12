@@ -98,7 +98,7 @@
     .LINK
         https://raw.githubusercontent.com/RamblingCookieMonster/PSStash/master/PSStash/Private/Add-ObjectDetail.ps1
     #>
-    [cmdletBinding()] 
+    [CmdletBinding()] 
     param(
            [Parameter( Mandatory = $false,
                        Position=0,

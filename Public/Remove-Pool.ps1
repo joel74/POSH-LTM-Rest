@@ -5,7 +5,9 @@
 .NOTES
     Pool names are case-specific.
 #>
-    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
+
+    [CmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
+
     param (
         $F5Session=$Script:F5Session,
         
@@ -34,8 +36,8 @@
             InputObject {
                 foreach($pool in $InputObject) {
                     if ($pscmdlet.ShouldProcess($pool.fullPath)){
-                        $URI = $F5Session.GetLink($pool.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
+                        $URI = $F5session.GetLink($pool.selfLink)
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5session.Credential -AsBoolean
                     }
                 }
             }
