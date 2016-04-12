@@ -1,23 +1,31 @@
 ﻿Function Test-Pool {
 <#
 .SYNOPSIS
-    Test whether the specified pool exists
+    Test whether the specified pool(s) exist
 .NOTES
     Pool names are case-specific.
 #>
     [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
-        [Alias("PoolName")]
-        [Parameter(Mandatory=$true)][string]$Name,
-        [Parameter(Mandatory=$false)][string]$Partition
+
+        [Alias('PoolName')]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [string[]]$Name,
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Partition
     )
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
+    begin {
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
 
-    Write-Verbose "NB: Pool names are case-specific."
-
-    #Build the URI for this pool
-    $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Partition $Partition)
-    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction SilentlyContinue -AsBoolean
+        Write-Verbose "NB: Pool names are case-specific."
+    }
+    process {
+        foreach ($itemname in $Name) {
+            $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
+            Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -AsBoolean
+        }
+    }
 }
