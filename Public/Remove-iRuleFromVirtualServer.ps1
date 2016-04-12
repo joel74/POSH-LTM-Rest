@@ -11,14 +11,14 @@
 
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
-        
+
         [Alias("VirtualServer")]
         [Alias("VirtualServerName")]
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
         [Parameter(Mandatory=$false)]
         [string]$Partition='Common',
-        
+
         [Parameter(Mandatory=$true)]
         [string]$iRuleName
     )
@@ -29,37 +29,39 @@
     process {
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
+                #Verify that the iRule exists on the F5 LTM
+                $iRule = Get-iRule -F5session $F5Session -Name $iRuleName -Partition $Partition
+                If ($iRule -eq $null){
+                    Write-Error "The $iRuleName iRule does not exist in this F5 LTM."
+                    $false
+                } else {
+                    $iRuleFullName = $iRule.fullPath
+                    foreach($virtualserver in $InputObject) {
+                        #Get the existing IRules on the virtual server
+                        [array]$iRules = $virtualserver | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue
 
-                $iRulePartitionAndName = "/$Partition/$iRuleName"
-                foreach($VirtualServer in $InputObject) {
-                    #Get the existing IRules on the virtual server
-                    [array]$iRules = $VirtualServer | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue
+                        #If there are no iRules on this virtual server, then create a new array
+                        If (!$iRules){
+                            $iRules = @()
+                        }
 
-                    #If there are no iRules on this virtual server, then create a new array
-                    If (!$iRules){
-                        $iRules = @()
-                    }
+                        #Check that the specified iRule is not already in the collection
+                        If ($iRules -match $iRuleFullName){
+                            $iRules = $iRules | Where-Object { $_ -ne $iRuleFullName }
 
-                    #Check that the specified iRule is in the collection 
-                    If ($iRules -match $iRulePartitionAndName){
+                            $URI = $F5Session.GetLink($virtualServer.selfLink)
 
-                        $iRules = $iRules | Where-Object { $_ -ne $iRulePartitionAndName }
+                            $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                        $URI = $F5Session.GetLink($virtualServer.selfLink)
-
-                        $JSONBody = @{rules=$iRules} | ConvertTo-Json
-
-                        Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to remove the $iRuleName iRule from the $Name virtual server." -AsBoolean 
-
-                    }
-                    Else {
-                        Write-Warning "The $($VirtualServer.name) virtual server does not contain the $iRuleName iRule."
-                        $false
+                            Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to remove the $iRuleFullName iRule from the $Name virtual server." -AsBoolean
+                        }
+                        Else {
+                            Write-Warning "The $($VirtualServer.name) virtual server does not contain the $iRuleFullName iRule."
+                           $false
+                        }
                     }
                 }
-
             }
-
             Name {
                 $virtualservers = $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition
 
@@ -67,7 +69,7 @@
                     Write-Warning "No virtual servers found."
                     $false
                 }
-                $virtualservers | Remove-iRuleFromVirtualServer -F5session $F5Session -iRuleName $iRuleName
+                $virtualservers | Remove-iRuleFromVirtualServer -F5session $F5Session -iRuleName $iRuleName -Partition $Partition
             }
         }
     }
