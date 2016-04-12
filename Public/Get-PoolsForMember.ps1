@@ -17,6 +17,21 @@
     begin {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
+
+        if ($PSCmdLet.ParameterSetName -eq 'Address') {
+            if ($Address -ne '*') {
+                $ip = [IPAddress]::Any
+                if ([IpAddress]::TryParse($Address,[ref]$ip)) {
+                    $Address = $ip.IpAddressToString
+                } else {
+                    $ip = [string]([System.Net.Dns]::GetHostAddresses($Address).IPAddressToString)
+                    #If we don't get an IP address for the computer, try the value specified
+                    If ($ip) {
+                        $Address = $ip
+                    }
+                }
+            }
+        }
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
