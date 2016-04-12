@@ -12,14 +12,14 @@
         [PSObject[]]$InputObject,
         
         [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
-        [Alias('PoolName')]
-        [string[]]$Name,
+        [string[]]$PoolName,
 
         [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
         [string]$Partition,
         
+        [Alias('MonitorName')]
         [Parameter(Mandatory=$true)]
-        [string[]]$Monitor
+        [string[]]$Name
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -30,15 +30,14 @@
             InputObject {
                 $InputObject | ForEach-Object {
                     $JSONBody = @{
-                        monitor=(($($_.monitor.Trim() -split ' and ') + $Monitor | Where-Object { $_ } | Select-Object -Unique) -join ' and ')
+                        monitor=(($($_.monitor -split ' and ') + $Name | Where-Object { $_ } | ForEach-Object { [Regex]::Match($_.Trim(), '[^/\s]*$').Value } | Select-Object -Unique) -join ' and ')
                     } | ConvertTo-Json
-                    $JSONBody
                     $URI = $F5Session.GetLink($InputObject.selfLink)
-                    Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
+                    Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
                 }
             }
             PoolName {
-                Get-Pool -F5Session $F5Session -Name $Name -Partition $Partition | Add-PoolMonitor -F5Session $F5Session -Monitor $Monitor 
+                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition | Add-PoolMonitor -F5Session $F5Session -Name $Name 
             }
         }
     }
