@@ -3,6 +3,7 @@
 .SYNOPSIS
     Determine the shape to display for a member's current state and session values
 #>
+    [cmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]$state,
         [Parameter(Mandatory=$true)]$session

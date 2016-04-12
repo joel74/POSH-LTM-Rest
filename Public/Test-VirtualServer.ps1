@@ -3,8 +3,9 @@
 .SYNOPSIS
     Test whether the specified virtual server exists
 .NOTES
-    Pool names are case-specific.
+    Virtual server names are case-specific.
 #>
+    [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Alias("VirtualServerName")]
@@ -18,7 +19,7 @@
     Write-Verbose "NB: Virtual server names are case-specific."
 
     #Build the URI for this virtual server
-    $URI = $F5session.BaseURL + 'virtual/{0}' -f ($Name -replace '/','~')
+    $URI = $F5Session.BaseURL + 'virtual/{0}' -f ($Name -replace '/','~')
 
-    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5session.Credential -AsBoolean
+    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -AsBoolean
 }

@@ -3,6 +3,7 @@
 .SYNOPSIS
     Add a health monitor to a pool 
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
 
@@ -32,12 +33,12 @@
                         monitor=(($($_.monitor.Trim() -split ' and ') + $Monitor | Where-Object { $_ } | Select-Object -Unique) -join ' and ')
                     } | ConvertTo-Json
                     $JSONBody
-                    $URI = $F5session.GetLink($InputObject.selfLink)
-                    Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5session.Credential -Body $JSONBody -ContentType 'application/json'
+                    $URI = $F5Session.GetLink($InputObject.selfLink)
+                    Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
                 }
             }
             PoolName {
-                Get-Pool -F5Session $F5session -Name $Name -Partition $Partition | Add-PoolMonitor -F5Session $F5Session -Monitor $Monitor 
+                Get-Pool -F5Session $F5Session -Name $Name -Partition $Partition | Add-PoolMonitor -F5Session $F5Session -Monitor $Monitor 
             }
         }
     }

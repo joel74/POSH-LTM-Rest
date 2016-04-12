@@ -33,21 +33,21 @@
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
-                            $InputObject | Get-PoolMember -F5session $F5session -Address $Address -Name $Name | Remove-PoolMember -F5session $f5
+                            $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Remove-PoolMember -F5session $F5Session
                         }
                     }
                     "tm:ltm:pool:members:membersstate" {
                         foreach($member in $InputObject) {
                             if ($pscmdlet.ShouldProcess($member.fullPath)){
-                                $URI = $F5session.GetLink($member.selfLink)
-                                Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5session.Credential -AsBoolean
+                                $URI = $F5Session.GetLink($member.selfLink)
+                                Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
                             }
                         }
                     }
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Remove-PoolMember -F5session $f5
+                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Remove-PoolMember -F5session $F5Session
             }
         }
     }

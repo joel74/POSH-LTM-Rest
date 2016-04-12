@@ -3,6 +3,7 @@
 .SYNOPSIS
     Determine which pool(s) a server is in
 #>
+    [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
@@ -20,9 +21,9 @@
     process {
         switch($PSCmdLet.ParameterSetName) {
             Address {
-                $pools = Get-Pool -F5Session $F5session
+                $pools = Get-Pool -F5Session $F5Session
                 foreach ($pool in $pools) {
-                    $members = $pool | Get-PoolMember -F5session $F5session | Where-Object { $_.address -like $Address }
+                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $_.address -like $Address }
                     if ($members) {
                         $pool
                     }    
