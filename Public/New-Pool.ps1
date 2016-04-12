@@ -15,69 +15,39 @@
     [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)][string]$PoolName,
-        [Parameter(Mandatory=$false)][string[]]$MemberDefinitionList=$null
+        [Alias('PoolName')]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [string[]]$Name,
+        
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Partition,
+        
+        [Parameter(Mandatory=$false)]
+        [string[]]$MemberDefinitionList=$null
     )
+    begin {
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
 
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
-
-    $URI = ($F5Session.BaseURL + "pool")
-
-    #Check whether the specified pool already exists
-    If (Test-Pool -F5session $F5Session -PoolName $PoolName){
-        Write-Error "The $PoolName pool already exists."
+        $URI = ($F5Session.BaseURL + "pool")
     }
+    process {
+        foreach ($poolname in $Name) {
+            $newitem = New-F5Item -Name $poolname -Partition $Partition 
+            #Check whether the specified pool already exists
+            If (Test-Pool -F5session $F5Session -Name $newitem.Name -Partition $newitem.Partition){
+                Write-Error "The $($newitem.FullPath) pool already exists."
+            }
+            Else {
+                #Start building the JSON for the action
+                $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;members=@()} | ConvertTo-Json
 
-    Else {
-        $Partition = 'Common'
-        if ($PoolName -match '^[/\\](?<Partition>[^/\\]*)[/\\](?<Name>[^/\\]*)$') {
-            $Partition = $matches['Partition']
-            $PoolName = $matches['Name']
+                Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
+                ForEach ($MemberDefinition in $MemberDefinitionList){
+                    $Address,$PortNumber = $MemberDefinition -split ','
+                    Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Address -PortNumber $PortNumber -Status Enabled
+                }
+            }
         }
-        #Start building the JSON for the action
-        $JSONBody = @{name=$PoolName;partition=$Partition;members=@()}
-
-        $Members = @()
-
-        ForEach ($MemberDefinition in $MemberDefinitionList){
-
-            #Build the member name from the IP address and the port
-            $MemberObject = $MemberDefinition.Split(",")
-
-            If ($MemberObject.Length -lt 2){
-                Throw("All member definitions should consist of a string containing at least a computer name and a port, comma-separated.")
-            }
-
-            $ip = [IPAddress]::Any
-            if ([IpAddress]::TryParse($MemberObject[0],[ref]$ip)) {
-	    		$IPAddress = $MemberObject[0]
-    		} 
-
-            $IPAddress = [string]([System.Net.Dns]::GetHostAddresses($MemberObject[0]).IPAddressToString)
-
-            Try {
-                $PortNumber = [int]$MemberObject[1]
-            }
-            Catch {
-                $ThrowMessage = $MemberObject[1] + " is not a valid value for a port number."
-                Throw($ThrowMessage)
-            }
-
-            If (($PortNumber -lt 0) -or ($PortNumber -gt 65535)){
-                $ThrowMessage = $MemberObject[1] + " is not a valid value for a port number."
-                Throw($ThrowMessage)
-            }
-
-            $Member = @{name=$($IPAddress + ":" + $PortNumber);address=$IPAddress;description=$($MemberObject[2])}
-            $Members += $Member
-
-        }
-
-        $JSONBody.members = $Members
-        $JSONBody = $JSONBody | ConvertTo-Json
-
-        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $PoolName pool.") -AsBoolean
     }
-
 }
