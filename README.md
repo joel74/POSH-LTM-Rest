@@ -8,10 +8,12 @@ It includes a Validation.cs class file (based on code posted by Brian Scholer on
 
 To use:
 Download all the files and place them in a F5-LTM folder beneath your PowerShell modules folder. By default, this is %USERPROFILE%\Documents\WindowsPowerShell\Modules or $env:UserProfile\Documents\WindowsPowerShell\Modules
+This module is also available in the PowerShellGallery (https://www.powershellgallery.com/packages/f5-ltm)
 
-The module contains the following functions. 
+The module contains the following functions.
 
    * Add-iRuleToVirtualServer
+   * Add-ObjectDetail
    * Add-PoolMember
    * Add-PoolMonitor
    * Disable-PoolMember
@@ -21,7 +23,9 @@ The module contains the following functions.
    * Get-F5Status
    * Get-HealthMonitor
    * Get-HealthMonitorType
+   * Get-iRule
    * Get-iRuleCollection (deprecated; Use Get-iRule)
+   * Get-ItemPath
    * Get-Pool
    * Get-PoolList (deprecated; Use Get-Pool)
    * Get-PoolMember
@@ -36,6 +40,7 @@ The module contains the following functions.
    * Get-VirtualServer
    * Get-VirtualServeriRuleCollection (deprecated; Use Get-VirtualServer | Select -ExpandProperty rules)
    * Get-VirtualServerList (deprecated; Use Get-VirtualServer)
+   * Invoke-RestMethodOverride
    * New-F5Session
    * New-HealthMonitor
    * New-Pool
@@ -49,17 +54,18 @@ The module contains the following functions.
    * Remove-VirtualServer
    * Set-PoolMemberDescription
    * Sync-DeviceToGroup
+   * Test-F5Session
    * Test-Functionality
    * Test-HealthMonitor
    * Test-Pool
    * Test-F5Session
    * Test-VirtualServer
 
-Nearly all of the functions require an F5 session object to manipulate the F5 LTM via the REST API. 
+Nearly all of the functions require an F5 session object to manipulate the F5 LTM via the REST API.
 Use the New-F5Session function to create this object. This function expects the following parameters:
    * The name or IP address of the F5 LTM device
-   * A credential object for a user with rights to use the REST API. 
-   
+   * A credential object for a user with rights to use the REST API.
+
 You can create a credential object using 'Get-Credential' and entering the username and password at the prompts, or programmatically like this:
 ```
 $secpasswd = ConvertTo-SecureString "PlainTextPassword" -AsPlainText -Force
