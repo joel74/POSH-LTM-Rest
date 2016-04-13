@@ -15,20 +15,8 @@ The module contains the following functions.
    * Add-iRuleToVirtualServer
    * Add-PoolMember
    * Add-PoolMonitor
-   * CompleteMonitorName
-   * CompleteMonitorType
-   * CompleteNodeAddress
-   * CompleteNodeName
-   * CompletePartition
-   * CompletePoolMemberAddress
-   * CompletePoolMemberName
-   * CompletePoolMonitorName
-   * CompletePoolName
-   * CompleteRuleName
-   * CompleteVirtualServerName
    * Disable-PoolMember
    * Enable-PoolMember
-   * Get-CompleteSession
    * Get-CurrentConnectionCount (deprecated; use __Get-PoolMemberStats | Select-Object -ExpandProperty 'serverside.curConns'__)
    * Get-F5Session (will be deprecated in future versions. use __New-F5Session__)
    * Get-F5Status
@@ -46,6 +34,7 @@ The module contains the following functions.
    * Get-PoolMemberDescription (deprecated; use __Get-PoolMember__)
    * Get-PoolMemberIP (deprecated; use __Get-PoolMember__)
    * Get-PoolMembers (deprecated; use __Get-PoolMember__)
+   * Get-PoolMemberStats
    * Get-PoolMemberStatus (deprecated; use __Get-PoolMember__)
    * Get-PoolMonitor
    * Get-PoolsForMember
