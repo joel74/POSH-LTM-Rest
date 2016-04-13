@@ -1,23 +1,24 @@
 ﻿Function Remove-PoolMonitor {
 <#
 .SYNOPSIS
-    Removes a health monitor from a pool 
+    Remove health monitor(s) from a pool 
+.NOTES
+    Health monitor names are case-specific.
 #>
     [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]  
     param(
-        [Parameter(Mandatory=$true)]
-        $F5Session,
+        $F5Session=$Script:F5Session,
 
-        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [Alias('Pool')]
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
 
-        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipelineByPropertyName=$true)]
         [string[]]$PoolName,
-        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [Parameter(Mandatory=$false,ParameterSetName='PoolName',ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name
     )
     begin {
@@ -31,16 +32,15 @@
             InputObject {
                 foreach($pool in $InputObject) {
                     if ($pscmdlet.ShouldProcess($pool.fullPath)){
-
-                        $monitor = ($pool.monitor -split ' and ' | Where-Object { $_.Trim() -ne $Name }) -join ' and '
+                        $monitor = ($pool.monitor -split ' and ' | Where-Object { $Name -notcontains $_.Trim() }) -join ' and '
                         $JSONBody = @{monitor=$monitor} | ConvertTo-Json
                         $URI = $F5Session.GetLink($pool.selfLink)
-                        Invoke-RestMethodOverride -Method PUT -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
+                        Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
                     }
                 }
             }
             PoolName {
-                Get-Pool -F5session $F5Session -PoolName $PoolName -Partition $Partition | Remove-PoolMonitor -F5session $F5Session -Name $Name
+                Get-Pool -F5session $F5Session -Name $PoolName -Partition $Partition | Remove-PoolMonitor -F5session $F5Session -Name $Name
             }
         }
     }

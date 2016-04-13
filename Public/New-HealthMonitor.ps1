@@ -9,31 +9,53 @@
     [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)][string]$Name,
-        [Parameter(Mandatory=$true)][string]$Type,
-        [Parameter(Mandatory=$false)][string]$Receive,
-        [Parameter(Mandatory=$false)][string]$Send
+        
+        [Alias('HealthMonitorName')]
+        [Alias('MonitorName')]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [string[]]$Name,
+        
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Partition,
+        
+        [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true)]
+        [string]$Type,
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Receive,
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Send,
+
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [int]$Interval=5,
+
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [int]$Timeout=16,
+
+        [switch]
+        $Passthru
     )
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
-
-    $URI = $F5Session.BaseURL + "monitor/$Type"
-
-    #Check whether the specified pool already exists
-    If (Test-HealthMonitor -F5session $F5Session -Name $Name -Type $Type){
-        Write-Error "The $Name pool already exists."
+    begin {
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
     }
-
-    Else {
-        $Partition = 'Common'
-        if ($Name -match '^/(?<Partition>[^/]*)/(?<Name>[^/]*)$') {
-            $Partition = $matches['Partition']
-            $Name = $matches['Name']
+    process {
+        $URI = $F5Session.BaseURL + "monitor/$Type"
+        foreach($monitorname in $Name) {
+            $newitem = New-F5Item -Name $monitorname -Partition $Partition 
+            #Check whether the specified pool already exists
+            If (Test-HealthMonitor -F5session $F5Session -Name $newitem.Name -Partition $newitem.Partition -Type $Type){
+                Write-Error "The /$Type$($newitem.FullPath) health monitor already exists."
+            } else {
+                #Start building the JSON for the action
+                $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;recv=$Receive;send=$Send;interval=$Interval;timeout=$Timeout} | 
+                    ConvertTo-Json
+                $newmonitor = Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the /$Type$($newitem.FullPath) health monitor."
+                if ($Passthru) {
+                    Get-HealthMonitor -F5Session $F5Session -Name $newmonitor.name -Partition $newmonitor.partition -Type $Type
+                }
+            }
         }
-        #Start building the JSON for the action
-        $JSONBody = @{name=$Name;partition=$Partition;recv=$Receive;send=$Send;interval=5;timeout=16}
-        $JSONBody = $JSONBody | ConvertTo-Json
-
-        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $Name health monitor." -AsBoolean
     }
 }

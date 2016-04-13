@@ -1,26 +1,25 @@
-﻿Function Remove-HealthMonitor {
+﻿Function Remove-Node {
 <#
 .SYNOPSIS
-    Remove the specified health monitor(s). Confirmation is needed.
+    Remove the specified node(s)
 .NOTES
-    Health monitor names are case-specific.
+    Node names are case-specific.
 #>
-    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]    
-    param(
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    param (
         $F5Session=$Script:F5Session,
 
-        [Alias('HealthMonitor')]
-        [Alias('Monitor')]
+        [Alias('Node')]
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
 
-        [Alias('HealthMonitorName')]
-        [Alias('MonitorName')]
+        [Parameter(Mandatory=$true,ParameterSetName='Address',ValueFromPipelineByPropertyName=$true)]
+        [string[]]$Address='*',
+
+        [Alias('ComputerName')]
+        [Alias('NodeName')]
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name,
-
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Type,
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition
@@ -29,13 +28,16 @@
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
 
-        Write-Verbose "NB: Health monitor names are case-specific."
-        if ([string]::IsNullOrEmpty($Type)) {
-            $Type = Get-HealthMonitorType -F5Session $F5Session
-        }
+        Write-Verbose "NB: Node names are case-specific."
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
+            Address {
+                Get-Node -F5Session $F5Session -Address $Address -Partition $Partition | Remove-Node -F5session $F5Session
+            }
+            Name {
+                $Name | Get-Node -F5Session $F5Session -Address $Address -Partition $Partition | Remove-Node -F5session $F5Session
+            }
             InputObject {
                 foreach($item in $InputObject) {
                     if ($pscmdlet.ShouldProcess($item.fullPath)){
@@ -43,9 +45,6 @@
                         Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential
                     }
                 }
-            }
-            Name {
-                $Name | Get-HealthMonitor -F5Session $F5Session -Type $Type -Partition $Partition | Remove-HealthMonitor -F5session $F5Session
             }
         }
     }

@@ -1,23 +1,34 @@
 ﻿Function Test-HealthMonitor {
 <#
 .SYNOPSIS
-    Test whether the specified health monitor exists
+    Test whether the specified health monitor(s) exist
 .NOTES
     HealthMonitor names are case-specific.
 #>
     [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$true)][string]$Name,
-        [Parameter(Mandatory=$true)][string]$Type        
+
+        [Alias('MonitorName')]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [string[]]$Name,
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Partition,
+        
+        [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true)]
+        [string]$Type
     )
-    #Test that the F5 session is in a valid format
-    Test-F5Session($F5Session)
+    begin {
+        #Test that the F5 session is in a valid format
+        Test-F5Session($F5Session)
 
-    Write-Verbose "NB: HealthMonitor names are case-specific."
-
-    #Build the URI for this health monitor
-    $URI = $F5Session.BaseURL + 'monitor/{0}/{1}' -f $Type,($Name -replace '/','~')
-
-    Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction SilentlyContinue -AsBoolean
+        Write-Verbose "NB: HealthMonitor names are case-specific."
+    }
+    process {
+        foreach ($itemname in $Name) {
+            $URI = $F5Session.BaseURL + 'monitor/{0}/{1}' -f $Type,(Get-ItemPath -Name $itemname -Partition $Partition)
+            Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -AsBoolean
+        }
+    }
 }
