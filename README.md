@@ -7,7 +7,7 @@ It requires PowerShell v3 or higher.
 It includes a Validation.cs class file (based on code posted by Brian Scholer on www.briantist.com) to allow for using the REST API with LTM devices using self-signed SSL certificates.
 
 To use:
-Download all the files and place them in a F5-LTM folder beneath your PowerShell modules folder. By default, this is %USERPROFILE%\Documents\WindowsPowerShell\Modules or $env:UserProfile\Documents\WindowsPowerShell\Modules
+Download all the files and place them in a F5-LTM folder beneath your PowerShell modules folder. By default, this is %USERPROFILE%\Documents\WindowsPowerShell\Modules or $env:userProfile\Documents\WindowsPowerShell\Modules
 This module is also available in the PowerShellGallery (https://www.powershellgallery.com/packages/f5-ltm)
 
 The module contains the following functions.
@@ -15,32 +15,48 @@ The module contains the following functions.
    * Add-iRuleToVirtualServer
    * Add-PoolMember
    * Add-PoolMonitor
+   * CompleteMonitorName
+   * CompleteMonitorType
+   * CompleteNodeAddress
+   * CompleteNodeName
+   * CompletePartition
+   * CompletePoolMemberAddress
+   * CompletePoolMemberName
+   * CompletePoolMonitorName
+   * CompletePoolName
+   * CompleteRuleName
+   * CompleteVirtualServerName
    * Disable-PoolMember
    * Enable-PoolMember
-   * Get-CurrentConnectionCount
-   * Get-F5Session (will be deprecated in future versions. Use New-F5Session instead.)
+   * Get-CompleteSession
+   * Get-CurrentConnectionCount (deprecated; use __Get-PoolMemberStats | Select-Object -ExpandProperty 'serverside.curConns'__)
+   * Get-F5Session (will be deprecated in future versions. use __New-F5Session__)
    * Get-F5Status
    * Get-HealthMonitor
    * Get-HealthMonitorType
    * Get-iRule
-   * Get-iRuleCollection (deprecated; Use Get-iRule)
+   * Get-iRuleCollection (deprecated; use __Get-iRule__)
+   * Get-Node
+   * Get-Partition
    * Get-Pool
-   * Get-PoolList (deprecated; Use Get-Pool)
+   * Get-PoolList (deprecated; use __Get-Pool__)
    * Get-PoolMember
-   * Get-PoolMemberCollection (deprecated; Use Get-PoolMember)
-   * Get-PoolMemberDescription (deprecated; Use Get-PoolMember)
-   * Get-PoolMemberIP (deprecated; Use Get-PoolMember)
-   * Get-PoolMembers (deprecated; Use Get-PoolMember)
-   * Get-PoolMemberStatus (deprecated; Use Get-PoolMember)
+   * Get-PoolMemberCollection (deprecated; use __Get-PoolMember__)
+   * Get-PoolMemberCollectionStatus
+   * Get-PoolMemberDescription (deprecated; use __Get-PoolMember__)
+   * Get-PoolMemberIP (deprecated; use __Get-PoolMember__)
+   * Get-PoolMembers (deprecated; use __Get-PoolMember__)
+   * Get-PoolMemberStatus (deprecated; use __Get-PoolMember__)
    * Get-PoolMonitor
    * Get-PoolsForMember
    * Get-StatusShape
    * Get-VirtualServer
-   * Get-VirtualServeriRuleCollection (deprecated; Use Get-VirtualServer | Select -ExpandProperty rules)
-   * Get-VirtualServerList (deprecated; Use Get-VirtualServer)
+   * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Select -ExpandProperty rules__)
+   * Get-VirtualServerList (deprecated; use __Get-VirtualServer__)
    * Invoke-RestMethodOverride
    * New-F5Session
    * New-HealthMonitor
+   * New-Node
    * New-Pool
    * New-VirtualServer
    * Remove-HealthMonitor
@@ -49,6 +65,7 @@ The module contains the following functions.
    * Remove-PoolMember
    * Remove-PoolMonitor
    * Remove-ProfileRamCache
+   * Remove-Node
    * Remove-VirtualServer
    * Set-PoolMemberDescription
    * Sync-DeviceToGroup
@@ -60,7 +77,7 @@ The module contains the following functions.
    * Test-VirtualServer
 
 Nearly all of the functions require an F5 session object to manipulate the F5 LTM via the REST API.
-Use the New-F5Session function to create this object. This function expects the following parameters:
+use the New-F5Session function to create this object. This function expects the following parameters:
    * The name or IP address of the F5 LTM device
    * A credential object for a user with rights to use the REST API.
 
