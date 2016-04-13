@@ -4,6 +4,52 @@
     <View>
       <Name>Default</Name>
       <ViewSelectedBy>
+        <TypeName>PoshLTM.HealthMonitor</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>Name</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Partition</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Type</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Recv</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Send</Label>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>name</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>partition</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>type</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>recv</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>send</PropertyName>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Default</Name>
+      <ViewSelectedBy>
         <TypeName>PoshLTM.iRule</TypeName>
       </ViewSelectedBy>
       <TableControl>
@@ -29,6 +75,46 @@
               </TableColumnItem>
               <TableColumnItem>
                 <PropertyName>apiAnonymous</PropertyName>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Default</Name>
+      <ViewSelectedBy>
+        <TypeName>PoshLTM.Node</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>Name</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Partition</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Address</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Description</Label>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>name</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>partition</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>address</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>description</PropertyName>
               </TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
@@ -92,7 +178,7 @@
             <Label>Description</Label>
           </TableColumnHeader>
           <TableColumnHeader>
-            <Label>Monitors</Label>
+            <Label>Monitor</Label>
           </TableColumnHeader>
           <TableColumnHeader>
             <Label>Session</Label>
