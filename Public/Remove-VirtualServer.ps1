@@ -1,22 +1,23 @@
 ﻿Function Remove-VirtualServer{
 <#
 .SYNOPSIS
-    Remove the specified virtual server. Confirmation is needed.
+    Remove the specified virtual server(s). Confirmation is needed.
 .NOTES
     Virtual server names are case-specific.
 #>
     [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="High")]    
     param (
         $F5Session=$Script:F5Session,
-        
+
         [Alias('VirtualServer')]
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
 
         [Alias('VirtualServerName')]
-        [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name,
-        [Parameter(Mandatory=$false)]
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition
     )
     begin {
@@ -27,16 +28,16 @@
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
-            Name {
-                $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition | Remove-VirtualServer -F5session $F5Session
-            }
             InputObject {
                 foreach($virtualserver in $InputObject) {
                     if ($pscmdlet.ShouldProcess($virtualserver.fullPath)){
                         $URI = $F5Session.GetLink($virtualserver.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential -AsBoolean
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential
                     }
                 }
+            }
+            Name {
+                $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition | Remove-VirtualServer -F5session $F5Session
             }
         }
     }
