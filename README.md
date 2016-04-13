@@ -13,7 +13,6 @@ This module is also available in the PowerShellGallery (https://www.powershellga
 The module contains the following functions.
 
    * Add-iRuleToVirtualServer
-   * Add-ObjectDetail
    * Add-PoolMember
    * Add-PoolMonitor
    * Disable-PoolMember
@@ -25,7 +24,6 @@ The module contains the following functions.
    * Get-HealthMonitorType
    * Get-iRule
    * Get-iRuleCollection (deprecated; Use Get-iRule)
-   * Get-ItemPath
    * Get-Pool
    * Get-PoolList (deprecated; Use Get-Pool)
    * Get-PoolMember
@@ -57,8 +55,8 @@ The module contains the following functions.
    * Test-F5Session
    * Test-Functionality
    * Test-HealthMonitor
+   * Test-Node
    * Test-Pool
-   * Test-F5Session
    * Test-VirtualServer
 
 Nearly all of the functions require an F5 session object to manipulate the F5 LTM via the REST API.
