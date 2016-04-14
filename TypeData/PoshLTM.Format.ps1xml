@@ -38,6 +38,43 @@
     <View>
       <Name>Default</Name>
       <ViewSelectedBy>
+        <TypeName>PoshLTM.Node</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>Name</Label>
+            <Width>30</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Partition</Label>
+            <Width>20</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Address</Label>
+            <Width>30</Width>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>name</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>partition</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>address</PropertyName>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Default</Name>
+      <ViewSelectedBy>
         <TypeName>PoshLTM.Pool</TypeName>
       </ViewSelectedBy>
       <TableControl>

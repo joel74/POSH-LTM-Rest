@@ -33,3 +33,5 @@
         $newSession
     }
 }
+
+New-Alias -Name Connect-F5Session -Value New-F5Session;
