@@ -1,3 +1,4 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/s2x4t6fk9enreh8n/branch/master?svg=true)](https://ci.appveyor.com/project/vercellone/posh-ltm-rest/branch/master)
 # POSH-LTM-Rest
 This PowerShell module uses the F5 LTM REST API to manipulate and query pools, pool members, virtual servers and iRules.
 It is built to work with version 11.6 and higher
