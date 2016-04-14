@@ -58,4 +58,4 @@ test_script:
 
 # This will be redundant once Publish-Module is implemented.  But should zip everything up as a single appveyor artifact in the meantime
 artifacts:
-  - path: $(APPVEYOR_BUILD_FOLDER)
+  - path: **/*.*
