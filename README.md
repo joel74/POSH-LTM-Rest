@@ -4,7 +4,7 @@ It is built to work with version 11.6 and higher
 
 It requires PowerShell v3 or higher.
 
-It includes a Validation.cs class file (based on code posted by Brian Scholer on www.briantist.com) to allow for using the REST API with LTM devices using self-signed SSL certificates.
+It includes a Validation.cs class file (based on [code](https://www.briantist.com/errors/could-not-establish-trust-relationship-for-the-ssltls-secure-channel/) posted by Brian Scholer on [www.briantist.com](www.briantist.com)) to allow for using the REST API with LTM devices using self-signed SSL certificates.
 
 To use:
 Download all the files and place them in a F5-LTM folder beneath your PowerShell modules folder. By default, this is %USERPROFILE%\Documents\WindowsPowerShell\Modules or $env:UserProfile\Documents\WindowsPowerShell\Modules
