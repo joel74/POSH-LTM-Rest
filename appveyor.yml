@@ -51,5 +51,5 @@ test_script:
 #  - ps: Publish-Module -NugetApiKey $env:POWERSHELLGALLERY_APIKEY -Path $env:APPVEYOR_BUILD_FOLDER -ProjectUri 'https://github.com/joel74/POSH-LTM-Rest' Tags @('F5', 'LTM', 'REST', 'API')
 
 # This will be redundant once Publish-Module is implemented.  But should zip everything up as a single appveyor artifact in the meantime
-artifact:
+artifacts:
   - path: $env:APPVEYOR_BUILD_FOLDER
