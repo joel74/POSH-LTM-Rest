@@ -7,17 +7,15 @@
 # Skip on updates to the readme.
 # [skip ci] or [ci skip] anywhere in commit message will also prevent a ci build 
 skip_commits:
-    message: /updated readme.*/
+    message: /update readme.*/
   
 build: false
 os: Unstable # Allow WMF5 (i.e. PowerShellGallery functionality)
 version: 1.3.{build}
 
-install:
+#install:
 # Install pester PowerShell Unit Testing module
 #    - cinst -y pester
-# Install PSScriptAnalyzer module for enforcing best practices
-    - ps: Install-Module -Name PSScriptAnalyzer -Force
 
 # Dynamically set FunctionsToExport in F5-LTM.psd1
 # Fixes #37 Do not export Private\*.ps1 functions
@@ -30,6 +28,8 @@ before_test:
             Set-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER F5-LTM.psd1)
         
 test_script:
+# Install PSScriptAnalyzer module for enforcing best practices
+    - ps: Install-Module -Name PSScriptAnalyzer -Force
 # Invoke PSScriptAnalyzer against the module to make sure it's not failing any tests
     - ps: Invoke-ScriptAnalyzer -Path $env:APPVEYOR_BUILD_FOLDER
 # Invoke-Pester unit tests
