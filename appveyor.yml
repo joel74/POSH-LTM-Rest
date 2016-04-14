@@ -10,7 +10,7 @@ skip_commits:
     message: /update readme.*/
   
 build: false
-os: Unstable # Allow WMF5 (i.e. PowerShellGallery functionality)
+os: WMF 5
 version: 1.3.{build}
 
 install:
