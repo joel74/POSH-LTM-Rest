@@ -14,6 +14,7 @@ The module contains the following functions.
    * Add-iRuleToVirtualServer
    * Add-PoolMember
    * Add-PoolMonitor
+   * Connect-F5Session (Aliased to New-F5Session)
    * Disable-PoolMember
    * Enable-PoolMember
    * Get-CurrentConnectionCount
@@ -22,6 +23,7 @@ The module contains the following functions.
    * Get-HealthMonitor
    * Get-HealthMonitorType
    * Get-iRuleCollection (deprecated; Use Get-iRule)
+   * Get-Node
    * Get-Pool
    * Get-PoolList (deprecated; Use Get-Pool)
    * Get-PoolMember
@@ -38,10 +40,13 @@ The module contains the following functions.
    * Get-VirtualServerList (deprecated; Use Get-VirtualServer)
    * New-F5Session
    * New-HealthMonitor
+   * New-Node
    * New-Pool
    * New-VirtualServer
+   * Rename-Node (fails if node is in use)
    * Remove-HealthMonitor
    * Remove-iRuleFromVirtualServer
+   * Remove-Node
    * Remove-Pool
    * Remove-PoolMember
    * Remove-PoolMonitor
