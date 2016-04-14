@@ -1,0 +1,53 @@
+﻿# Set your PowerShellGallery API Key to facilitate publishing
+#environment:
+#    POWERSHELLGALLERY_APIKEY:
+#        # Don't store your API Key in the clear, encrypt it: https://ci.appveyor.com/tools/encrypt
+#        secure: [TBD]
+
+# Skip on updates to the readme.
+# [skip ci] or [ci skip] anywhere in commit message will also prevent a ci build 
+skip_commits:
+    message: /updated readme.*/
+  
+build: false
+version: 1.3.{build}
+
+install:
+# Install pester PowerShell Unit Testing module
+#    - cinst -y pester
+# Install PSScriptAnalyzer module for enforcing best practices
+    - ps: Install-Module -Name PSScriptAnalyzer -Force
+  
+before_test:
+    - ps: |
+        $FunctionsToExport = ((Get-ChildItem (Join-Path $env:APPVEYOR_BUILD_FOLDER Public) -Filter *.ps1 -Recurse).BaseName) -join ','
+        (Get-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER F5-LTM.psd1) -Raw) -replace 
+            "FunctionsToExport = '.*'","FunctionsToExport = '$FunctionsToExport'" -replace 
+            "ModuleVersion = '.*'", "ModuleVersion = '$env:APPVEYOR_BUILD_VERSION'" | 
+            Set-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER F5-LTM.psd1)
+        
+test_script:
+# Invoke PSScriptAnalyzer against the module to make sure it's not failing any tests
+    - ps: Invoke-ScriptAnalyzer -Path $env:APPVEYOR_BUILD_FOLDER
+# Invoke-Pester unit tests
+#   - ps: |
+#       $testResultsFile = '.\TestsResults.xml'
+#        
+#       # run tests
+#       $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
+#        
+#       # upload results to AppVeyor
+#       (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $testResultsFile))
+#        
+#       # if failures, quit to prevent publish
+#       if ($res.FailedCount -gt 0) { 
+#           throw "$($res.FailedCount) tests failed."
+#       }
+
+# to run your custom scripts instead of provider deployments
+#deploy_script:
+#  - ps: Publish-Module -NugetApiKey $env:POWERSHELLGALLERY_APIKEY -Path $env:APPVEYOR_BUILD_FOLDER -ProjectUri 'https://github.com/joel74/POSH-LTM-Rest' Tags @('F5', 'LTM', 'REST', 'API')
+
+# This will be redundant once Publish-Module is implemented.  But should zip everything up as a single appveyor artifact in the meantime
+artifact:
+  - path: $env:APPVEYOR_BUILD_FOLDER
