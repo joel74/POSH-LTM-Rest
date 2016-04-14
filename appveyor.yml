@@ -17,7 +17,9 @@ install:
 #    - cinst -y pester
 # Install PSScriptAnalyzer module for enforcing best practices
     - ps: Install-Module -Name PSScriptAnalyzer -Force
-  
+
+# Dynamically set FunctionsToExport in F5-LTM.psd1
+# Fixes #37 Do not export Private\*.ps1 functions
 before_test:
     - ps: |
         $FunctionsToExport = ((Get-ChildItem (Join-Path $env:APPVEYOR_BUILD_FOLDER Public) -Filter *.ps1 -Recurse).BaseName) -join ','
