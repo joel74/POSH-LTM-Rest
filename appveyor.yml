@@ -26,7 +26,7 @@ before_test:
   #  cmd /c start /wait msiexec /i $msiPath /quiet
   # Set FunctionsToExport and ModuleVersion in the module manifest (F5-LTM.psd1); Fixes #37 Do not export Private\*.ps1 functions
   - ps: $FunctionsToExport = ((Get-ChildItem (Join-Path $env:APPVEYOR_BUILD_FOLDER 'Public') -Filter '*.ps1' -Recurse).BaseName) -join ','
-      (Get-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER F5-LTM.psd1) -Raw) -replace 
+  - ps: (Get-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER F5-LTM.psd1) -Raw) -replace 
       "FunctionsToExport = '.*'","FunctionsToExport = '$FunctionsToExport'" -replace 
       "ModuleVersion = '.*'", "ModuleVersion = '$env:APPVEYOR_BUILD_VERSION'" | 
       Set-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER F5-LTM.psd1)
