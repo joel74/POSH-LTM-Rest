@@ -30,7 +30,7 @@ test_script:
   # Install PSScriptAnalyzer module for enforcing best practices
   - ps: Install-Module -Name PSScriptAnalyzer -Force
   # Invoke PSScriptAnalyzer against the module to make sure it's not failing any tests
-  - ps: Invoke-ScriptAnalyzer -Path $env:APPVEYOR_BUILD_FOLDER
+  - ps: Invoke-ScriptAnalyzer -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM Module')
   # Invoke-Pester unit tests
   #- ps: |
   #  $testResultsFile = '.\TestsResults.xml'
