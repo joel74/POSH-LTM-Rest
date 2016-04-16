@@ -1,0 +1,51 @@
+build: false
+environment:
+  # Set your PowerShellGallery API Key to facilitate publishing
+  # Don't store it in the clear, encrypt it: https://ci.appveyor.com/tools/encrypt
+  secure: NvJlPynne4N7tJ/8DM2LFAKoZu5v9e35PvbAJNOCiXbXJRHrJ+OetTQsO/bYjNo5
+  
+os: WMF 5
+skip_commits:
+  # Skip on updates to the readme. [skip ci] or [ci skip] anywhere in commit message will also prevent a ci build 
+  message: /update readme.*/
+  
+version: 1.3.{build}
+
+install:
+  # Force bootstrap of the Nuget PackageManagement Provider; Reference: http://www.powershellgallery.com/GettingStarted?section=Get%20Started
+  - ps: Get-PackageProvider -Name NuGet -Force
+  # Install pester PowerShell Unit Testing module
+  #- cinst -y pester
+
+before_test:
+  # Set FunctionsToExport and ModuleVersion in the module manifest (F5-LTM.psd1); Fixes #37 Do not export Private\*.ps1 functions
+  - ps: |
+      $FunctionsToExport = ((Get-ChildItem (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM Module\Public') -Filter '*.ps1' -Recurse).BaseName) -join ','
+      (Get-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM Module\F5-LTM.psd1') -Raw) -replace 
+      "FunctionsToExport = '.*'","FunctionsToExport = '$FunctionsToExport'" -replace 
+      "ModuleVersion = '.*'", "ModuleVersion = '$env:APPVEYOR_BUILD_VERSION'" | 
+      Set-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM Module\F5-LTM.psd1')
+
+test_script:
+  # Install PSScriptAnalyzer module for enforcing best practices
+  - ps: Install-Module -Name PSScriptAnalyzer -Force
+  # Invoke PSScriptAnalyzer against the module to make sure it's not failing any tests
+  - ps: Invoke-ScriptAnalyzer -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM Module')
+  # Invoke-Pester unit tests
+  #- ps: |
+  #  $testResultsFile = '.\TestsResults.xml'
+  #
+  #  # run tests
+  #     $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
+  #
+  #  # upload results to AppVeyor
+  #  (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $testResultsFile))
+  #
+  #  # if failures, quit to prevent publish
+  #  if ($res.FailedCount -gt 0) { 
+  #    throw "$($res.FailedCount) tests failed."
+  #  }
+
+deploy_script:
+  # Publish module to the PowerShellGallery
+  #- ps: Publish-Module -NugetApiKey $env:POWERSHELLGALLERY_APIKEY -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM Module') -ProjectUri 'https://github.com/joel74/POSH-LTM-Rest' Tags @('F5', 'LTM', 'REST', 'API')

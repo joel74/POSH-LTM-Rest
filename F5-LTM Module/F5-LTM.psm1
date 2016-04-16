@@ -22,7 +22,7 @@ $ScriptPath = Split-Path $MyInvocation.MyCommand.Path
 #region Load Public Functions
 
 try {
-    Get-ChildItem "$ScriptPath\Public" -Filter *.ps1 -Recurse| Select -Expand FullName | ForEach {
+    Get-ChildItem "$ScriptPath\Public" -Filter *.ps1 -Recurse| Select-Object -Expand FullName | ForEach-Object {
         $Function = Split-Path $_ -Leaf
         . $_
     }
@@ -36,7 +36,7 @@ try {
 #region Load Private Functions
 
 try {
-   Get-ChildItem "$ScriptPath\Private" -Filter *.ps1 -Recurse | Select -Expand FullName | ForEach {
+   Get-ChildItem "$ScriptPath\Private" -Filter *.ps1 -Recurse | Select-Object -Expand FullName | ForEach-Object {
        $Function = Split-Path $_ -Leaf
        . $_
    }
