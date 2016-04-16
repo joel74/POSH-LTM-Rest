@@ -15,7 +15,7 @@ version: 1.3.{build}
 #install:
   # Force bootstrap of the Nuget PackageManagement Provider
   # Reference: http://www.powershellgallery.com/GettingStarted?section=Get%20Started
-  #- ps: Get-PackageProvider -Name NuGet -Force
+  - ps: Get-PackageProvider -Name NuGet -Force
   # Install pester PowerShell Unit Testing module
   #- cinst -y pester
 
