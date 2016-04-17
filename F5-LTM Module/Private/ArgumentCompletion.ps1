@@ -1,6 +1,6 @@
 function Get-CompleteSession {
     param($boundSession)
-    ($boundSession,$Script:F5Session -ne $null)[0]
+    Invoke-NullCoalesing {$boundSession} {$Script:F5Session}
 }
 function CompleteMonitorName {
     param($commandName,
@@ -80,7 +80,7 @@ function CompletePoolMemberAddress {
     if ($fakeBoundParameters.PoolName) {
         $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
         if ($Session) {
-            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Name ($fakeBoundParameters.Name,'*' -ne $null)[0]  | 
+            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Name (Invoke-NullCoalescing {$fakeBoundParameters.Name} {'*'})  | 
                 Where-Object { $_.address -like "$wordToComplete*" } | 
                 Select-Object -ExpandProperty address
         }
@@ -95,7 +95,7 @@ function CompletePoolMemberName {
     if ($fakeBoundParameters.PoolName) {
         $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
         if ($Session) {
-            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Address ($fakeBoundParameters.Address,'*' -ne $null)[0]  | 
+            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Address (Invoke-NullCoalescing {$fakeBoundParameters.Name} {'*'})  | 
                 Where-Object { $_.name -like "$wordToComplete*" } | 
                 Select-Object -ExpandProperty name
         }

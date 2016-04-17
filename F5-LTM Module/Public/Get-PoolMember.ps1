@@ -55,7 +55,7 @@
                 foreach($pool in $InputObject) {
                     $MembersLink = $F5Session.GetLink($pool.membersReference.link)
                     $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -Credential $F5Session.Credential
-                    ($JSON.items,$JSON -ne $null)[0] | Where-Object { ($Address -eq '*' -and $Name -eq '*') -or $Address -contains $_.address -or $Name -contains $_.name } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { ($Address -eq '*' -and $Name -eq '*') -or $Address -contains $_.address -or $Name -contains $_.name } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
                         [Regex]::Match($this.selfLink, '(?<=pool/)[^/]*') -replace '~','/'
                     } -Force -PassThru | Add-Member -Name GetFullName -MemberType ScriptMethod {
                         '{0}{1}' -f $this.GetPoolName(),$this.fullPath
