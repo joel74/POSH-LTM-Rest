@@ -1,4 +1,4 @@
-﻿Function Add-iRuleToVirtualServer {
+Function Add-iRuleToVirtualServer {
 <#
 .SYNOPSIS
     Add an iRule to the specified virtual server
@@ -17,10 +17,12 @@
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
         [Parameter(Mandatory=$false)]
-        [string]$Partition='Common',
+        [string]$VirtualServerPartition='Common',
         
         [Parameter(Mandatory=$true)]
-        [string]$iRuleName
+        [string]$iRuleName,
+        [Parameter(Mandatory=$false)]
+        [string]$Partition='Common'
     )
     begin {
         #Test that the F5 session is in a valid format
