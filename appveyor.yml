@@ -2,7 +2,8 @@ build: false
 environment:
   # Set your PowerShellGallery API Key to facilitate publishing
   # Don't store it in the clear, encrypt it: https://ci.appveyor.com/tools/encrypt
-  secure: NvJlPynne4N7tJ/8DM2LFAKoZu5v9e35PvbAJNOCiXbXJRHrJ+OetTQsO/bYjNo5
+  POWERSHELLGALLERY_APIKEY:
+    secure: NvJlPynne4N7tJ/8DM2LFAKoZu5v9e35PvbAJNOCiXbXJRHrJ+OetTQsO/bYjNo5
   
 os: WMF 5
 skip_commits:
@@ -48,4 +49,4 @@ test_script:
 
 deploy_script:
   # Publish module to the PowerShellGallery
-  #- ps: Publish-Module -NugetApiKey $env:POWERSHELLGALLERY_APIKEY -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM') -ProjectUri 'https://github.com/joel74/POSH-LTM-Rest' Tags @('F5', 'LTM', 'REST', 'API')
+  - ps: Publish-Module -NugetApiKey $env:POWERSHELLGALLERY_APIKEY -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM')
