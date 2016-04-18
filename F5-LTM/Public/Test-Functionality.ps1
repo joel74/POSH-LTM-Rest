@@ -5,6 +5,7 @@
 .EXAMPLE
     Test-Functionality -F5Session $F5session -TestVirtualServer 'virt123' -TestVirtualServerIP '10.1.1.240' -TestPool 'testpool123' -PoolMember 'Server1'
 #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingWriteHost", "")]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$true)]$TestVirtualServer,

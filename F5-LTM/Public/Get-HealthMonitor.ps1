@@ -36,7 +36,7 @@
                 $URI = $F5Session.BaseURL + 'monitor/{0}' -f ($typename,(Get-ItemPath -Name $itemname -Partition $Partition) -join '/')
                 $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction $TypeSearchErrorAction
                 if ($JSON.items -or $JSON.name) {
-                    ($JSON.items,$JSON -ne $null)[0] |
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
                         Add-ObjectDetail -TypeName 'PoshLTM.HealthMonitor' -PropertyToAdd @{type=$typename}
                 }
             }

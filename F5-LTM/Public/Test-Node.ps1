@@ -6,6 +6,7 @@
     Node names are case-specific.
 #>
     [cmdletBinding()]
+    [OutputType([bool])]
     param (
         $F5Session=$Script:F5Session,
 
@@ -33,7 +34,7 @@
                     $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Partition $Partition)
                     $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
                     [bool](
-                        ($JSON.items,$JSON -ne $null)[0] | 
+                        Invoke-NullCoalescing {$JSON.items} {$JSON} | 
                         Where-Object { $Address -eq '*' -or $Address -contains $_.address}
                     )
                 }

@@ -25,7 +25,7 @@
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
             if ($JSON.items -or $JSON.name) {
-                ($JSON.items,$JSON -ne $null)[0] |
+                Invoke-NullCoalescing {$JSON.items} {$JSON} |
                     Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
             }
         }

@@ -28,7 +28,7 @@
             }
             $URI = ($F5Session.BaseURL -replace 'ltm/','sys/folder') + '/{0}?$select=name,subPath' -f $itemname
             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
-            ($JSON.items,$JSON -ne $null)[0] | 
+            Invoke-NullCoalescing {$JSON.items} {$JSON} | 
                 Where-Object { $_.subPath -eq '/' -and ([string]::IsNullOrEmpty($Name) -or $Name -contains $_.name) } |
                     Select-Object -ExpandProperty name
          }

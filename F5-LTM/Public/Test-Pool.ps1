@@ -6,6 +6,7 @@
     Pool names are case-specific.
 #>
     [cmdletBinding()]
+    [OutputType([bool])]
     param (
         $F5Session=$Script:F5Session,
 

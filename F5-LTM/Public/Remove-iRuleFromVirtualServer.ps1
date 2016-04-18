@@ -31,9 +31,8 @@
             InputObject {
                 #Verify that the iRule exists on the F5 LTM
                 $iRule = Get-iRule -F5session $F5Session -Name $iRuleName -Partition $Partition
-                If ($iRule -eq $null){
+                If ($null -eq $iRule){
                     Write-Error "The $iRuleName iRule does not exist in this F5 LTM."
-                    $false
                 } else {
                     $iRuleFullName = $iRule.fullPath
                     foreach($virtualserver in $InputObject) {
@@ -57,7 +56,6 @@
                         }
                         Else {
                             Write-Warning "The $($VirtualServer.name) virtual server does not contain the $iRuleFullName iRule."
-                           $false
                         }
                     }
                 }
@@ -67,7 +65,6 @@
 
                 if ($null -eq $virtualservers) {
                     Write-Warning "No virtual servers found."
-                    $false
                 }
                 $virtualservers | Remove-iRuleFromVirtualServer -F5session $F5Session -iRuleName $iRuleName -Partition $Partition
             }
