@@ -33,7 +33,7 @@ Function Invoke-NullCoalescing {
             }
             else {
                 $result = Foreach-Object $PrimaryExpr -input $InputObject
-                if ($result -eq $null) {
+                if ($null -eq $result) {
                     Foreach-Object $AlternateExpr -InputObject $InputObject
                 }
                 else {
@@ -47,7 +47,7 @@ Function Invoke-NullCoalescing {
             }
             else {
                 $result = &$PrimaryExpr
-                if ($result -eq $null) {
+                if ($null -eq $result) {
                     &$AlternateExpr
                 }
                 else {
