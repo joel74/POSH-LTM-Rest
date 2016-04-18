@@ -33,7 +33,7 @@ Function Add-iRuleToVirtualServer {
             InputObject {
                 #Verify that the iRule exists on the F5 LTM
                 $iRule = Get-iRule -F5session $F5Session -Name $iRuleName -Partition $Partition
-                If ($iRule -eq $null){
+                If ($null -eq $iRule){
                     Write-Error "The $iRuleName iRule does not exist in this F5 LTM."
                     $false
                 } else {

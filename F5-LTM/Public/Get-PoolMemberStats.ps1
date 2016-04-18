@@ -47,7 +47,7 @@
                         "tm:ltm:pool:members:membersstate" {
                             $URI = $F5Session.GetLink(($item.selfLink -replace '\?','/stats?'))
                             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
-                            ($JSON.entries,$JSON -ne $null)[0] #|
+                            Invoke-NullCoalescing {$JSON.entries} {$JSON} #|
                                 # Add-ObjectDetail -TypeName 'PoshLTM.PoolMemberStats'
                                 # TODO: Establish a type for formatting and return more columns, and consider adding a GetStats() ScriptMethod to PoshLTM.PoolMember  
                         }

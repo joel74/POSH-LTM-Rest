@@ -8,6 +8,7 @@
     session object (local scope) or adds the session object to the script scope
 #>
     [cmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
         [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials,
