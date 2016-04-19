@@ -16,8 +16,8 @@
     )
     process {
         $JSONBody = "{`"enabled`":true}"
-		
-		foreach ($itemname in $Name) {
+        
+        foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-RestMethodOverride -Method PATCH -Uri $URI -Credential $F5Session.Credential -Body $JSONBody -ErrorMessage "Failed to enable VirtualServer $itemname." -AsBoolean
         }
