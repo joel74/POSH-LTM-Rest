@@ -16,7 +16,9 @@ The module contains the following functions.
    * Add-PoolMember
    * Add-PoolMonitor
    * Disable-PoolMember
+   * Disable-VirtualServer
    * Enable-PoolMember
+   * Enable-VirtualServer
    * Get-CurrentConnectionCount (deprecated; use __Get-PoolMemberStats | Select-Object -ExpandProperty 'serverside.curConns'__)
    * Get-F5Session (will be deprecated in future versions. use __New-F5Session__)
    * Get-F5Status
