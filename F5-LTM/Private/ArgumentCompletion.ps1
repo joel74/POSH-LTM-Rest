@@ -167,68 +167,70 @@ function CompleteVirtualServerName {
         } 
     }
 }
+if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
+{
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-PoolMember' -Module F5-LTM) `
+        -ParameterName Address `
+        -ScriptBlock $function:CompletePoolMemberAddress
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-PoolMember' -Module F5-LTM) `
-    -ParameterName Address `
-    -ScriptBlock $function:CompletePoolMemberAddress
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-PoolMember' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompletePoolMemberName
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-PoolMember' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompletePoolMemberName
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-PoolMonitor' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompletePoolMonitorName
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-PoolMonitor' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompletePoolMonitorName
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-HealthMonitor' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompleteMonitorName
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-HealthMonitor' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompleteMonitorName
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-HealthMonitor' -Module F5-LTM) `
+        -ParameterName Type `
+        -ScriptBlock $function:CompleteMonitorType
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-HealthMonitor' -Module F5-LTM) `
-    -ParameterName Type `
-    -ScriptBlock $function:CompleteMonitorType
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-Node' -Module F5-LTM) `
+        -ParameterName Address `
+        -ScriptBlock $function:CompleteNodeAddress
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-Node' -Module F5-LTM) `
-    -ParameterName Address `
-    -ScriptBlock $function:CompleteNodeAddress
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-Node' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompleteNodeName
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-Node' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompleteNodeName
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-Pool' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompletePoolName
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-Pool' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompletePoolName
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*' -Module F5-LTM) `
+        -ParameterName Partition `
+        -ScriptBlock $function:CompletePartition
+        
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command 'Get-Partition' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompletePartition
+        
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-Pool*' -Module F5-LTM) `
+        -ParameterName PoolName `
+        -ScriptBlock $function:CompletePoolName
+        
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command 'Get-iRule' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompleteRuleName
 
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*' -Module F5-LTM) `
-    -ParameterName Partition `
-    -ScriptBlock $function:CompletePartition
-    
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command 'Get-Partition' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompletePartition
-    
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-Pool*' -Module F5-LTM) `
-    -ParameterName PoolName `
-    -ScriptBlock $function:CompletePoolName
-    
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command 'Get-iRule' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompleteRuleName
-
-Register-ArgumentCompleter `
-    -CommandName @(Get-Command '*-VirtualServer' -Module F5-LTM) `
-    -ParameterName Name `
-    -ScriptBlock $function:CompleteVirtualServerName
+    Register-ArgumentCompleter `
+        -CommandName @(Get-Command '*-VirtualServer' -Module F5-LTM) `
+        -ParameterName Name `
+        -ScriptBlock $function:CompleteVirtualServerName
+}
