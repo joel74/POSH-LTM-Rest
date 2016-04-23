@@ -14,7 +14,7 @@
         [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name,
 
-        [Alias('App')]
+        [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Application,
 

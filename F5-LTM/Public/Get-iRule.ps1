@@ -13,6 +13,10 @@
         [Parameter(Mandatory=$false,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name='',
 
+        [Alias('iApp')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Application,
+
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition
     )
@@ -24,7 +28,7 @@
     }
     process {
         foreach ($itemname in $Name) {
-            $URI = $F5Session.BaseURL + 'rule/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
+            $URI = $F5Session.BaseURL + 'rule/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
             Invoke-NullCoalescing {$JSON.items} {$JSON} |
                 Add-ObjectDetail -TypeName 'PoshLTM.iRule'
