@@ -35,7 +35,3 @@
         }
     }
 }
-
-#https://ltm1.example.com/mgmt/tm/ltm/pool/~dev~sharepoint-2010-bmr-443.app~sharepoint-2010-bmr-443_pool
-
-#The URL format is $F5Session.BaseURL + '/pool/~$($Partition)~$($iApp).app~$($Pool)". It looks like Get-VirtualServer and other functions may have a similar problem.

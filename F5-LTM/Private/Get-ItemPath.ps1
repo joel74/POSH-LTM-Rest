@@ -15,7 +15,6 @@
             }
         } else {
             if ([string]::IsNullOrEmpty($Partition)) {
-                
                 if ([string]::IsNullOrEmpty($Application)) {
                     "~Common~$Name"
                 }
