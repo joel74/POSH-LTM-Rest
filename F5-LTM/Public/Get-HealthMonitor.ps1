@@ -13,6 +13,10 @@
         [Parameter(Mandatory=$false,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name='',
 
+        [Alias('iApp')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Application,
+
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
         
@@ -33,7 +37,7 @@
     process {
         foreach ($typename in $Type) {
             foreach ($itemname in $Name) {
-                $URI = $F5Session.BaseURL + 'monitor/{0}' -f ($typename,(Get-ItemPath -Name $itemname -Partition $Partition) -join '/')
+                $URI = $F5Session.BaseURL + 'monitor/{0}' -f ($typename,(Get-ItemPath -Name $itemname -Application $Application -Partition $Partition) -join '/')
                 $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction $TypeSearchErrorAction
                 if ($JSON.items -or $JSON.name) {
                     Invoke-NullCoalescing {$JSON.items} {$JSON} |
