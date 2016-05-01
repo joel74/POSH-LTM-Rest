@@ -15,7 +15,7 @@
 
         [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string]$Application,
+        [string]$Application='',
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition
@@ -30,8 +30,16 @@
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
-            Invoke-NullCoalescing {$JSON.items} {$JSON} |
-                Add-ObjectDetail -TypeName 'PoshLTM.Pool'
+            if ($JSON.items -or $JSON.name) {
+                if(![string]::IsNullOrWhiteSpace($Application)) {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
+                        Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"} | 
+                            Add-ObjectDetail -TypeName 'PoshLTM.Pool'
+                } else {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
+                        Add-ObjectDetail -TypeName 'PoshLTM.Pool'
+                }
+            }
         }
     }
 }

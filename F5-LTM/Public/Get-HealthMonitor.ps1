@@ -15,7 +15,7 @@
 
         [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string]$Application,
+        [string]$Application='',
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,

@@ -13,7 +13,7 @@
 
         [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string]$Application,
+        [string]$Application='',
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition
@@ -29,8 +29,14 @@
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
             if ($JSON.items -or $JSON.name) {
-                Invoke-NullCoalescing {$JSON.items} {$JSON} |
-                    Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
+                if(![string]::IsNullOrWhiteSpace($Application)) {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
+                        Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"} | 
+                            Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
+                } else {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
+                        Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
+                }
             }
         }
     }
