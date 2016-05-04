@@ -15,7 +15,7 @@
 
         [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string]$Application,
+        [string]$Application='',
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
@@ -40,8 +40,11 @@
                 $URI = $F5Session.BaseURL + 'monitor/{0}' -f ($typename,(Get-ItemPath -Name $itemname -Application $Application -Partition $Partition) -join '/')
                 $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction $TypeSearchErrorAction
                 if ($JSON.items -or $JSON.name) {
-                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
-                        Add-ObjectDetail -TypeName 'PoshLTM.HealthMonitor' -PropertyToAdd @{type=$typename}
+                    $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
+                    if(![string]::IsNullOrWhiteSpace($Application) -and ![string]::IsNullOrWhiteSpace($Partition)) {
+                        $items = $items | Where-Object {$_.fullPath -like "/$Partition/$Application.app/*"}
+                    }
+                    $items | Add-ObjectDetail -TypeName 'PoshLTM.HealthMonitor' -PropertyToAdd @{type=$typename}
                 }
             }
         }

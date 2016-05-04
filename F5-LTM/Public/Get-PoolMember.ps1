@@ -36,14 +36,13 @@
         if ($Address -ne '*') {
             for ([int]$a=0; $a -lt $Address.Count; $a++) {
                 $ip = [IPAddress]::Any
-                if ([IpAddress]::TryParse($Address[$a],[ref]$ip)) {
+                if($Address[$a] -match "[\d\.]+%\d+") {
+                    # Do not alter $Address[$a] if in format of IP%Partition
+                } elseif ([IpAddress]::TryParse($Address[$a],[ref]$ip)) {
                     $Address[$a] = $ip.IpAddressToString
                 } else {
                     $Address = [string]([System.Net.Dns]::GetHostAddresses($Address).IPAddressToString)
-                    #If we don't get an IP address for the computer, try the value specified
-                    If ($ip) {
-                        $Address[$a] = $ip
-                    }
+                    $Address[$a] = $ip
                 }
             }
         }
