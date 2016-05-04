@@ -31,14 +31,11 @@
             $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
             $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
             if ($JSON.items -or $JSON.name) {
+                $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
                 if(![string]::IsNullOrWhiteSpace($Application)) {
-                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
-                        Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"} | 
-                            Add-ObjectDetail -TypeName 'PoshLTM.Pool'
-                } else {
-                    Invoke-NullCoalescing {$JSON.items} {$JSON} |
-                        Add-ObjectDetail -TypeName 'PoshLTM.Pool'
+                    $items = $items | Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"}
                 }
+                $items | Add-ObjectDetail -TypeName 'PoshLTM.Pool'
             }
         }
     }

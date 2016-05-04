@@ -32,7 +32,7 @@
                 foreach($vs in $InputObject) {
                     $URI = $F5Session.GetLink($vs.selfLink)
                     $FullPath = $vs.fullPath
-                    $JSON = Invoke-RestMethodOverride -Method PATCH -Uri $URI -Credential $F5Session.Credential -Body $JSONBody -ErrorMessage "Failed to enable VirtualServer $itemname." -AsBoolean
+                    $JSON = Invoke-RestMethodOverride -Method PATCH -Uri $URI -Credential $F5Session.Credential -Body $JSONBody
                     Get-VirtualServer -F5Session $F5Session -Name $FullPath
                 }
             }
