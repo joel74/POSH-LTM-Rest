@@ -234,3 +234,8 @@ if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
         -ParameterName Name `
         -ScriptBlock $function:CompleteVirtualServerName
 }
+Else {
+
+    Write-Verbose "The Register-ArgumentCompleter cmdlet requires either PowerShell v5+ or the installation of the TabExpansionPlusPlus module (https://github.com/lzybkr/TabExpansionPlusPlus)"
+
+}

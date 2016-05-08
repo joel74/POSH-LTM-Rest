@@ -84,8 +84,6 @@ The first time New-F5Session is called, it creates a script-scoped $F5Session ob
 To create a F5 session object to store locally, instead of in the script scope, use the -PassThrough switch when calling New-F5Session, and the function will return the object.
 To overwrite the F5 session in the script scope, use the -Default switch when calling New-F5Session.
 
-Currently, the Get-F5session function only allows for basic authentication, so the user must be a local admin on the LTM device, and cannot be an external (i.e. LDAP, Active Directory, RADIUS) user. There is an open issue (#24) for updating the module to allow token-based authentication to accomadate AD users, in addition to basic authentication.
-
 There is a function called Test-Functionality that takes a pool name, a virtual server name, an IP address for the virtual server, and a computer as a pool member, and validates nearly all the functions in the module. Make sure that you don't use an existing pool name or virtual server name.
 Here is an example of how to use this function:
 

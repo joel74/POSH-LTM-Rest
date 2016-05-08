@@ -1,6 +1,7 @@
 ﻿Function Get-ItemPath {
     param (
         [Parameter(Mandatory=$false)][string]$Name,
+        [Parameter(Mandatory=$false)][string]$Application,
         [Parameter(Mandatory=$false)][string]$Partition
     )
     if ($Name -match '^/.*/.*$') {
@@ -14,9 +15,19 @@
             }
         } else {
             if ([string]::IsNullOrEmpty($Partition)) {
-                "~Common~$Name"
+                if ([string]::IsNullOrEmpty($Application)) {
+                    "~Common~$Name"
+                }
+                else {
+                    "~Common~$Application.app~$Name"
+                }
             } else {
-               "~$Partition~$Name"
+                if ([string]::IsNullOrEmpty($Application)) {
+                    "~$Partition~$Name"
+                }
+                else {
+                    "~$Partition~$Application.app~$Name"
+                }
             }
         }
     }
