@@ -1,0 +1,286 @@
+{
+  "Sessions":
+  [
+    {
+      "name": "internal",
+      "LTMName": "192.168.1.20",
+      "UserName": "testuser",
+      "Password": "01000000d08c9ddf0115d1118c7a00c04fc297eb01000000982ca39bdb0e524aa8b7307e1e23254c0000000002000000000003660000c000000010000000fba9d942ad134ec1957d16c1e21991ce0000000004800000a00000001000000053e1c27c3b13b9f471d44e3e88fa844618000000ca3a01fdd1eb45da17f0d6e3c14171963f08e358e2ee04e61400000071eb9c131efadc030d9460871bcb1dc4703cde26",
+      "HealthMonitorTypes":
+      [
+        { "name": "http" },
+        { "name": "tcp" }
+      ],
+      "Partitions":
+      [
+        { 
+          "name": "Common", 
+          "HealthMonitors":
+          [
+            { "name": "http" },
+            { "name": "tcp" }
+          ],
+          "iRules":
+          [
+            { "name": "HTTP_Redirect" }
+          ]
+        },
+        {
+          "name": "Development", 
+          "HealthMonitors":
+          [
+            { "name": "irs-test.contoso.com" },
+            { "name": "irs-test.contoso.com" }
+          ],
+          "iRules":
+          [
+            { "name": "irsapi-test.contoso.com" }
+          ],
+          "Nodes":
+          [
+            {
+              "address": "192.168.48.124",
+              "name": "CONTOEIATST01"
+            },
+            {
+              "address": "192.168.48.125",
+              "name": "CONTOEIATST02"
+            },
+            {
+              "address": "172.19.8.56",
+              "name": "arm4-d00i14515",
+              "remove": "true"
+            },
+            {
+              "address": "172.19.8.57",
+              "name": "CONTOSO0030234",
+              "remove": "true"
+            }
+          ],
+          "Pools": [
+            { 
+              "name": "irs-test.contoso.com",
+              "PoolMembers":
+              [
+                {
+                  "address": "192.168.48.124",
+                  "computername": "CONTOEIATST01",
+                  "name": "CONTOEIATST01:80",
+                  "port": "80"
+                },
+                {
+                  "address": "192.168.48.125",
+                  "computername": "CONTOEIATST02",
+                  "name": "CONTOEIATST02:80",
+                  "port": "80"
+                }
+              ]
+            },
+            {
+              "name": "eaa-test.contoso.com",
+              "PoolMembers":
+              [
+                {
+                  "address": "192.168.48.124",
+                  "computername": "CONTOEIATST01",
+                  "name": "CONTOEIATST01:80",
+                  "port": "80"
+                },
+                {
+                  "address": "192.168.48.125",
+                  "computername": "CONTOEIATST02",
+                  "name": "CONTOEIATST02:80",
+                  "port": "80"
+                },
+                {
+                  "address": "172.19.8.56",
+                  "computername": "arm4-d00i14515",
+                  "name": "arm4-d00i14515:80",
+                  "port": "80",
+                  "addremove": "true"
+                },
+                {
+                  "address": "172.19.8.57",
+                  "computername": "CONTOSO0030234",
+                  "name": "CONTOSO0030234:80",
+                  "port": "80",
+                  "addremove": "true"
+                }
+              ]
+            }
+          ],
+          "PoolMonitors":
+          [
+            { "poolname": "irs-test.contoso.com" },
+            { "poolname": "eaa-dev.contoso.com" }
+          ],
+          "VirtualServers":
+          [
+            { "name": "irs-test.contoso.com" },
+            { "name": "eaa-dev.contoso.com" }
+          ]
+        },
+        {
+          "name": "Production",
+          "Nodes":
+          [
+            {
+              "address": "192.168.46.91",
+              "name": "CONTOadfs2"
+            }
+          ], 
+          "Pools":
+            [
+              {
+                "name": "adfs.contoso.com",
+                "PoolMembers":
+                [
+                  {
+                    "address": "192.168.46.91",
+                    "computername": "CONTOadfs2",
+                    "name": "CONTOadfs2:443",
+                    "port": "443"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+    },
+    {
+      "name": "edge",
+      "LTMName": "192.168.1.22",
+      "UserName": "testuser",
+      "Password": "01000000d08c9ddf0115d1118c7a00c04fc297eb01000000982ca39bdb0e524aa8b7307e1e23254c0000000002000000000003660000c000000010000000fba9d942ad134ec1957d16c1e21991ce0000000004800000a00000001000000053e1c27c3b13b9f471d44e3e88fa844618000000ca3a01fdd1eb45da17f0d6e3c14171963f08e358e2ee04e61400000071eb9c131efadc030d9460871bcb1dc4703cde26",
+      "HealthMonitorTypes":
+      [
+        { "name": "http" },
+        { "name": "tcp" }
+      ],
+      "Partitions":
+      [
+        { 
+          "name": "Common", 
+          "HealthMonitors":
+          [
+            { "name": "http" }
+          ],
+          "iRules":
+          [
+            { "name": "HTTP_Redirect" }
+          ]
+        },
+        {
+          "name": "Development", 
+          "iRules":
+          [
+            { "name": "irsapi-test.contoso.com" }
+          ],
+          "Nodes":
+          [
+            {
+              "address": "192.168.48.124",
+              "name": "CONTOEIATST01"
+            },
+            {
+              "address": "192.168.48.125",
+              "name": "CONTOEIATST02"
+            }
+          ],
+          "Pools": 
+          [
+            { 
+              "name": "irs-test.contoso.com",
+              "PoolMembers":
+              [
+                {
+                  "address": "192.168.48.124",
+                  "computername": "CONTOEIATST01",
+                  "name": "CONTOEIATST01:80",
+                  "port": "80"
+                },
+                {
+                  "address": "192.168.48.125",
+                  "computername": "CONTOEIATST02",
+                  "name": "CONTOEIATST02:80",
+                  "port": "80"
+                }
+              ]
+            },
+            {
+              "name": "eaa-test.contoso.com",
+              "PoolMembers":
+              [
+                {
+                  "address": "192.168.48.124",
+                  "computername": "CONTOEIATST01",
+                  "name": "CONTOEIATST01:80",
+                  "port": "80"
+                },
+                {
+                  "address": "192.168.48.125",
+                  "computername": "CONTOEIATST02",
+                  "name": "CONTOEIATST02:80",
+                  "port": "80"
+                }
+              ]
+            },
+            {
+              "name": "dynmro-preprod.contoso.com",
+              "PoolMembers":
+              [
+                {
+                  "address": "172.19.8.56",
+                  "computername": "arm4-d00i14515",
+                  "name": "arm4-d00i14515:80",
+                  "port": "80"
+                },
+                {
+                  "address": "172.19.8.57",
+                  "computername": "CONTOSO0030234",
+                  "name": "CONTOSO0030234:80",
+                  "port": "80"
+                }
+              ]
+            }
+          ],
+          "PoolMonitors":
+          [
+            { "poolname": "irs-test.contoso.com" },
+            { "poolname": "eaa-dev.contoso.com" }
+          ],
+          "VirtualServers": 
+          [
+            { "name": "irs-test.contoso.com" },
+            { "name": "eaa-dev.contoso.com" }
+          ]
+        },
+        {
+          "name": "Production",
+          "Nodes":
+          [
+            {
+              "address": "192.168.46.91",
+              "name": "CONTOadfs2"
+            }
+          ], 
+          "Pools":
+          [
+            {
+              "name": "adfs.contoso.com",
+              "PoolMembers":
+              [
+                {
+                  "address": "192.168.46.91",
+                  "computername": "CONTOadfs2",
+                  "name": "CONTOadfs2:443",
+                  "port": "443"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
