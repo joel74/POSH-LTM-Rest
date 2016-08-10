@@ -2,641 +2,727 @@ $scriptroot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Pat
 
 Import-Module (Join-Path $scriptroot 'F5-LTM\F5-LTM.psm1') -Force
 
-#$secpasswd = ConvertTo-SecureString "YourPassword" -AsPlainText -Force
-$Config = Get-Content (Join-Path $HOME F5-LTM.json) | ConvertFrom-Json
-function ConvertPSObjectToHashtable
-{
-    param (
-        [Parameter(ValueFromPipeline)]
-        $InputObject
-    )
-
-    process
-    {
-        if ($null -eq $InputObject) { return $null }
-
-        if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string])
-        {
-            $collection = @(
-                foreach ($object in $InputObject) { ConvertPSObjectToHashtable $object }
-            )
-
-            Write-Output -NoEnumerate $collection
-        }
-        elseif ($InputObject -is [psobject])
-        {
-            $hash = @{}
-
-            foreach ($property in $InputObject.PSObject.Properties)
-            {
-                $hash[$property.Name] = ConvertPSObjectToHashtable $property.Value
-            }
-
-            $hash
-        }
-        else
-        {
-            $InputObject
-        }
-    }
+if (Test-Path -Path (Join-Path $HOME F5-LTM.json)) {
+    . (Join-Path $HOME F5-LTM.TestCases.ps1)
 }
-function Set-FullPathAndPartition {
-    param(
-        [Parameter(Mandatory=$true)]
-        $InputObject
-    )
-    begin {
-        Function Set-FullPathAndPartitionInternal {
-            param(
-                [Parameter(Mandatory=$true)]
-                $InputObject,
-                $ParentPath,
-                $Partition
-            )
-            process {
-                foreach ($item in $InputObject) {
-                    $fullPath = ($ParentPath,$item.name | Where-Object { $_ }) -join '/'
-                    if ($item.Name) {
-                        if ($item.name -notmatch ':\d+$') {
-                            $item = $item | Add-Member -MemberType NoteProperty -Name fullPath -Value "/$fullPath" -PassThru
-                        }
-                        $item = $item | Add-Member -MemberType NoteProperty -Name partition -Value $Partition -PassThru
-                    }
-                    foreach ($prop in $item.PSObject.Properties) {
-                        Set-FullPathAndPartitionInternal -InputObject $item."$($prop.Name)" -ParentPath $fullPath -Partition $Partition
-                    }
+Describe 'HealthMonitor' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_HealthMonitor) {
+                It "Gets health monitors * on '<session>'" -TestCases $Get_HealthMonitor {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-HealthMonitor -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+            If ($Get_HealthMonitor_ByType) {
+                It "Gets health monitors of type '<type>' on '<session>'" -TestCases $Get_HealthMonitor_ByType {
+                    param($session, $type)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-HealthMonitor -F5Session $Sessions[$session] -Type $type |
+                        Select-Object -ExpandProperty type | 
+                        Should Be $type
+                }
+            }
+            If ($Get_HealthMonitor_ByPartition) {
+                It "Gets health monitors in partition '<partition>' on '<session>'" -TestCases $Get_HealthMonitor_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-HealthMonitor -F5Session $Sessions[$session] -Partition $partition |
+                        Select-Object -ExpandProperty partition | 
+                        Should Be $partition
+                }
+            }            
+            If ($Get_HealthMonitor_ByNameAndPartition) {
+                It "Gets health monitors in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_HealthMonitor_ByNameAndPartition {
+                    param($session, $partition, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-HealthMonitor -F5Session $Sessions[$session] -Partition $partition -Name $name |
+                        Select-Object -ExpandProperty name | 
+                        Should Be $Name
+                }
+            }
+            If ($Get_HealthMonitor_ByFullpath) {
+                It "Gets health monitors by fullPath '<fullPath>' on '<session>'" -TestCases $Get_HealthMonitor_ByFullpath {
+                    param($session, $partition, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-HealthMonitor -F5Session $Sessions[$session] -Name $fullPath |
+                        Select-Object -ExpandProperty fullPath | 
+                        Should Be $fullPath
+                }
+            }
+            If ($Get_HealthMonitor_ByNameArray) {
+                It "Gets health monitors by Name[] on '<session>'" -TestCases $Get_HealthMonitor_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-HealthMonitor -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_HealthMonitor_ByNameFromPipeline) {
+                It "Gets health monitors by Name From Pipeline on '<session>'" -TestCases $Get_HealthMonitor_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-HealthMonitor -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_HealthMonitor_ByNameAndPartitionFromPipeline) {
+                It "Gets health monitors by Name and Partition From Pipeline on '<session>'" -TestCases $Get_HealthMonitor_ByNameAndPartitionFromPipeline {
+                    param($session, $object)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $object | Get-HealthMonitor -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $object.Count
                 }
             }
         }
     }
-    process {
-        foreach ($item in $InputObject) {
-            foreach ($prop in $item.PSObject.Properties) {
-                if ($prop.Name -eq 'Partitions') {
-                    foreach($partition in $item.Partitions) {
-                        Set-FullPathAndPartitionInternal -InputObject $partition -Partition $partition.name
-                    }
-                } else {
-                    Set-FullPathAndPartition -InputObject $item."$($prop.Name)"
+}
+Describe 'HealthMonitorType' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_HealthMonitorType) {
+                It "Gets health monitor types * on '<session>'" -TestCases $Get_HealthMonitorType {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-HealthMonitorType -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+            If ($Get_HealthMonitorType_ByName) {
+                It "Gets health monitor types by Name '<name>' on '<session>'" -TestCases $Get_HealthMonitorType_ByName {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-HealthMonitorType -F5Session $Sessions[$session] -Name $name |
+                        Should Be $name
+                }
+            }
+            If ($Get_HealthMonitorType_ByNameArray) {
+                It "Gets health monitor types by Name[] on '<session>'" -TestCases $Get_HealthMonitorType_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-HealthMonitorType -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_HealthMonitorType_ByNameFromPipeline) {
+                It "Gets health monitor types by Name From Pipeline on '<session>'" -TestCases $Get_HealthMonitorType_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-HealthMonitorType -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
                 }
             }
         }
     }
 }
-Set-FullPathAndPartition -InputObject $Config
+Describe 'iRule' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_iRule) {
+                It "Gets irules* on '<session>'" -TestCases $Get_iRule {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
 
-foreach ($session in $Config.Sessions) {
-    $password = $session.Password | ConvertTo-SecureString
-    $credentials = New-Object System.Management.Automation.PSCredential ($session.UserName, $password)
-    New-F5Session -LTMName $session.LTMName -LTMCredentials $credentials -Default
-    
-    $HealthMonitorTestCases = @($session.Partitions.HealthMonitors | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable }) 
-    $HealthMonitorTypeTestCases = @($session.HealthMonitorTypes | Where-Object { -not $_.addremove } | Where-Object { -not $_.addremove }  | % { $_ | ConvertPSObjectToHashtable }) 
-    $iRuleTestCases = @($session.Partitions.iRules | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $PartitionTestCases = @($session.Partitions | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $PoolTestCases = @($session.Partitions.Pools | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $PoolMemberTestCases = @($session.Partitions.Pools.PoolMembers | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $PoolMonitorTestCases = @($session.Partitions.PoolMonitors | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $NodeTestCases = @($session.Partition.Nodes | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $VirtualServerTestCases = @($session.Partition.VirtualServers | Where-Object { -not $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
+                    Get-iRule -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+            If ($Get_iRule_ByName) {
+                It "Gets irules by Name '<name>' on '<session>'" -TestCases $Get_iRule_ByName {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
 
-    $TempNodeTestCases = @($session.Partitions.Nodes | Where-Object { $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
-    $TempPoolMemberTestCases = @($session.Partitions.Pools.PoolMembers | Where-Object { $_.addremove } | % { $_ | ConvertPSObjectToHashtable })
+                    Get-iRule -F5Session $Sessions[$session] -Name $name |
+                        Select-Object -ExpandProperty name | 
+                        Should Be $name
+                }
+            }
+             If ($Get_iRule_ByPartition) {
+                It "Gets irules in partition '<partition>' on '<session>'" -TestCases $Get_iRule_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-iRule -F5Session $Sessions[$session] -Partition $partition |
+                        Select-Object -ExpandProperty partition | 
+                        Should Be $partition
+                }
+            }            
+            If ($Get_iRule_ByNameAndPartition) {
+                It "Gets irules in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_iRule_ByNameAndPartition {
+                    param($session, $partition, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-iRule -F5Session $Sessions[$session] -Partition $partition -Name $name |
+                        Select-Object -ExpandProperty name | 
+                        Should Be $Name
+                }
+            }
+            If ($Get_iRule_ByFullpath) {
+                It "Gets irules by fullPath '<fullPath>' on '<session>'" -TestCases $Get_iRule_ByFullpath {
+                    param($session, $partition, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-iRule -F5Session $Sessions[$session] -Name $fullPath |
+                        Select-Object -ExpandProperty fullPath | 
+                        Should Be $fullPath
+                }
+            }
+           If ($Get_iRule_ByNameArray) {
+                It "Gets irules by Name[] on '<session>'" -TestCases $Get_iRule_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-iRule -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_iRule_ByNameFromPipeline) {
+                It "Gets irules by Name From Pipeline on '<session>'" -TestCases $Get_iRule_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-iRule -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+             If ($Get_iRule_ByNameAndPartitionFromPipeline) {
+                It "Gets irules by Name and Partition From Pipeline on '<session>'" -TestCases $Get_iRule_ByNameAndPartitionFromPipeline {
+                    param($session, $object)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $object | Get-iRule -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $object.Count
+                }
+            }
+       }
+    }
+}
+Describe 'Node' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_Node) {
+                It "Gets nodes * on '<session>'" -TestCases $Get_Node {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
 
-Describe "HealthMonitor" {
-    Context "Get" {
-        It "Gets health monitors *" {
-            Get-HealthMonitor |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets health monitors of type '<name>'" -TestCases $HealthMonitorTypeTestCases {
-            param($Name)
-            
-            Get-HealthMonitor -Type $Name |
-                Select-Object -ExpandProperty type | 
-                Should Be $Name
-        }
-        It "Gets health monitors in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            Get-HealthMonitor -Partition $Name |
-                Select-Object -ExpandProperty partition | 
-                Should Be $Name
-        }
-#        It "Gets health monitors in partition '<partition>' by Name '<name>'" -TestCases $HealthMonitorTestCases {
-#            param($Name,$Partition)
-#            
-#            Get-HealthMonitor -Name $Name -Partition $Partition |
-#                Select-Object -ExpandProperty name | 
-#                Should Be $Name
-#        }
-#        It "Gets health monitors by fullPath '<fullPath>'" -TestCases $HealthMonitorTestCases {
-#            param($fullPath)
-#            
-#            Get-HealthMonitor -Name $fullPath |
-#                Select-Object -ExpandProperty fullPath | 
-#                Should Be $fullPath
-#        }
-        It "Gets health monitors by Name[]" {
-            Get-HealthMonitor -Name ($session.Partitions.HealthMonitors | Where-Object { -not $_.addremove }).fullPath |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.HealthMonitors | Where-Object { $_ -and -not $_.addremove }).Count
-        }
-        It "Gets health monitors by Name ValueFromPipeline" {
-            ($session.Partitions.HealthMonitors | Where-Object { $_ -and -not $_.addremove }).fullPath | 
-                Get-HealthMonitor |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.HealthMonitors | Where-Object { $_ -and -not $_.addremove }).Count
-        }
-        It "Gets health monitors by Name,Partition ValueFromPipelineByPropertyName" {
-            $session.Partitions.HealthMonitors | Where-Object { $_ -and -not $_.addremove } |
-                Get-HealthMonitor |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.HealthMonitors | Where-Object { $_ -and -not $_.addremove }).Count
+                    Get-Node -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+             If ($Get_Node_ByPartition) {
+                It "Gets nodes in partition '<partition>' on '<session>'" -TestCases $Get_Node_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Node -F5Session $Sessions[$session] -Partition $partition |
+                        Select-Object -ExpandProperty partition | 
+                        Should Be $partition
+                }
+            }            
+            If ($Get_Node_ByNameAndPartition) {
+                It "Gets nodes in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_Node_ByNameAndPartition {
+                    param($session, $partition, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Node -F5Session $Sessions[$session] -Partition $partition -Name $name |
+                        Select-Object -ExpandProperty name | 
+                        Should Be $Name
+                }
+            }
+            If ($Get_Node_ByFullpath) {
+                It "Gets nodes by fullPath '<fullPath>' on '<session>'" -TestCases $Get_Node_ByFullpath {
+                    param($session, $partition, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Node -F5Session $Sessions[$session] -Name $fullPath |
+                        Select-Object -ExpandProperty fullPath | 
+                        Should Be $fullPath
+                }
+            }
+           If ($Get_Node_ByNameArray) {
+                It "Gets nodes by Name[] on '<session>'" -TestCases $Get_Node_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Node -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_Node_ByNameFromPipeline) {
+                It "Gets nodes by Name From Pipeline on '<session>'" -TestCases $Get_Node_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-Node -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+             If ($Get_Node_ByNameAndPartitionFromPipeline) {
+                It "Gets nodes by Name and Partition From Pipeline on '<session>'" -TestCases $Get_Node_ByNameAndPartitionFromPipeline {
+                    param($session, $object)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $object | Get-Node -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $object.Count
+                }
+            }
+       }
+    }
+}
+Describe 'Partition' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_Partition) {
+                It "Gets partitions * on '<session>'" -TestCases $Get_Partition {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-Partition -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+            If ($Get_Partition_ByName) {
+                It "Gets partitions by Name '<name>' on '<session>'" -TestCases $Get_Partition_ByName {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-Partition -F5Session $Sessions[$session] -Name $name |
+                        Should Be $name
+                }
+            }
+            If ($Get_Partition_ByNameArray) {
+                It "Gets partitions by Name[] on '<session>'" -TestCases $Get_Partition_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Partition -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_Partition_ByNameFromPipeline) {
+                It "Gets partitions by Name From Pipeline on '<session>'" -TestCases $Get_Partition_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-Partition -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
         }
     }
 }
-Describe "HealthMonitorType" {
-    Context "Get" {
-        It "Gets health monitor types *" {
-            Get-HealthMonitorType |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets health monitor types by Name '<name>'" -TestCases $HealthMonitorTypeTestCases {
-            param($Name)
-            
-            Get-HealthMonitorType -Name $Name |
-                Should Be $Name
-        }
-        It "Gets health monitor types by Name[]" {
-            Get-HealthMonitorType -Name (($session.HealthMonitorTypes | Where-Object { -not $_.addremove }).name) |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be (($session.HealthMonitorTypes | Where-Object { -not $_.addremove }).Count)
-        }
-        It "Gets health monitor types by Name ValueFromPipeline" {
-            ($session.HealthMonitorTypes | Where-Object { -not $_.addremove }).name | 
-                Get-HealthMonitorType |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be (($session.HealthMonitorTypes | Where-Object { -not $_.addremove }).Count)
-        }
-        It "Gets health monitor types by Name ValueFromPipelineByPropertyName" {
-            ($session.HealthMonitorTypes | Where-Object { -not $_.addremove }).name | 
-                Get-HealthMonitorType |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.HealthMonitorTypes | Where-Object { -not $_.addremove }).Count
-        }
-    }
-}
-Describe "iRule" {
-    Context "Get" {
-        It "Gets irules *" {
-            Get-iRule |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets irules in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            Get-iRule -Partition $Name |
-                Select-Object -ExpandProperty partition | 
-                Should Be $Name
-        }
-        It "Gets irules in partition '<partition>' by Name '<name>'" -TestCases $iRuleTestCases {
-            param($Name,$Partition)
-            
-            Get-iRule -Name $Name -Partition $Partition |
-                Select-Object -ExpandProperty name | 
-                Should Be $Name
-        }
-        It "Gets irules by fullPath '<fullPath>'" -TestCases $iRuleTestCases {
-            param($fullPath)
-            
-            Get-iRule -Name $fullPath |
-                Select-Object -ExpandProperty fullPath | 
-                Should Be $fullPath
-        }
-        It "Gets irules by Name[]" {
-            Get-iRule -Name (($session.Partitions.iRules | Where-Object { -not $_.addremove }).fullPath) |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.iRules | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets irules by Name ValueFromPipeline" {
-            ($session.Partitions.iRules | Where-Object { -not $_.addremove }).fullPath | 
-                Get-iRule |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.iRules | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets irules by Name,Partition ValueFromPipelineByPropertyName" {
-            $session.Partitions.iRules | Where-Object { -not $_.addremove } |
-                Get-iRule |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.iRules | Where-Object { -not $_.addremove }).Count
-        }
-    }
-}
-Describe "Node" {
-    Context "Get" {
-        It "Gets nodes *" {
-            Get-Node |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets nodes in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            Get-Node -Partition $Name |
-                Select-Object -ExpandProperty partition | 
-                Should Be $Name
-        }
-        It "Gets nodes in partition '<partition>' by Name '<name>'" -TestCases $NodeTestCases {
-            param($Name,$Partition)
-            
-            Get-Node -Name $Name -Partition $Partition |
-                Select-Object -ExpandProperty name | 
-                Should Be $Name
-        }
-        It "Gets nodes by fullPath '<fullPath>'" -TestCases $NodeTestCases {
-            param($fullPath)
-            
-            Get-Node -Name $fullPath |
-                Select-Object -ExpandProperty fullPath | 
-                Should Be $fullPath
-        }
-        It "Gets nodes by Name[]" {
-            Get-Node -Name (($session.Partitions.Nodes | Where-Object { -not $_.addremove }).fullPath) |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.Nodes | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets nodes by Name ValueFromPipeline" {
-            ($session.Partitions.Nodes | Where-Object { -not $_.addremove }).fullPath | 
-                Get-Node |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.Nodes | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets nodes by Name,Partition ValueFromPipelineByPropertyName" {
-            $session.Partitions.Nodes | Where-Object { -not $_.addremove } |
-                Get-Node |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.Nodes | Where-Object { -not $_.addremove }).Count
-        }
-    }
-    Context "Add" {
-        It "Adds nodes by Address" -TestCases ($TempNodeTestCases | Select -First 1) {
-            param($Partition,$Address)
-            New-Node -Partition $Partition -Address $Address
-        }
-        It "Adds nodes by Address +Name" -TestCases ($TempNodeTestCases | Select -Last 1) {
-            param($Partition,$Address,$Name)
-            New-Node -Partition $Partition -Name $Name -Address $Address
-        }
-    }
-    Context "Remove" {
-        It "Removes node by Address" -TestCases ($TempNodeTestCases | Select -First 1) {
-            param($Partition,$Address)
-            Test-Node -Partition $Partition -Address $Address |
-                Should Be True
-            Remove-Node -Partition $Partition -Address $Address -Confirm:$false
-            Test-Node -Partition $Partition -Address $Address |
-                Should Be False
-        }
-        It "Removes node by Name" -TestCases ($TempNodeTestCases | Select -Last 1) {
-            param($Partition,$Address,$Name)
-            Test-Node -Partition $Partition -Name $Name |
-                Should Be True
-            Remove-Node -Partition $Partition -Name $Name -Confirm:$false
-            Test-Node -Partition $Partition -Name $Name |
-                Should Be False
-        }
-    }
-}
-Describe "Partition" {
-    Context "Get" {
-        It "Gets partitions *" {
-            Get-Partition |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets partitions by Name '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            Get-Partition -Name $Name |
-                Should Be $Name
-        }
-        It "Gets partitions by Name[]" {
-            Get-Partition -Name $session.Partitions.name |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be $session.Partitions.Count
-        }
-        It "Gets partitions by Name ValueFromPipeline" {
-            $session.Partitions.name | 
-                Get-Partition |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be $session.Partitions.Count
-        }
-        It "Gets partitions by Name ValueFromPipelineByPropertyName" {
-            $session.Partitions |
-                Get-Partition |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be $session.Partitions.Count
-        }
-    }
-}
-Describe "Pool" {
-    Context "Get" {
-        It "Gets pools *" {
-            Get-Pool |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets pools in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            Get-Pool -Partition $Name |
-                Select-Object -ExpandProperty partition | 
-                Should Be $Name
-        }
-        It "Gets pools in partition '<partition>' by Name '<name>'" -TestCases $PoolTestCases {
-            param($Name,$Partition)
-            
-            Get-Pool -Name $Name -Partition $Partition |
-                Select-Object -ExpandProperty name | 
-                Should Be $Name
-        }
-        It "Gets pools by fullPath '<fullPath>'" -TestCases $PoolTestCases {
-            param($fullPath)
-            
-            Get-Pool -Name $fullPath |
-                Select-Object -ExpandProperty fullPath | 
-                Should Be $fullPath
-        }
-        It "Gets pools by Name[]" {
-            Get-Pool -Name (($session.Partitions.Pools | Where-Object { -not $_.addremove }).fullPath) |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.Pools | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets pools by Name ValueFromPipeline" {
-            ($session.Partitions.Pools | Where-Object { -not $_.addremove }).fullPath | 
-                Get-Pool |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.Pools | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets pools by Name,Partition ValueFromPipelineByPropertyName" {
-            $session.Partitions.Pools | Where-Object { -not $_.addremove } |
-                Get-Pool |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.Pools | Where-Object { -not $_.addremove }).Count
-        }
+Describe 'Pool' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_Pool) {
+                It "Gets pools * on '<session>'" -TestCases $Get_Pool {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-Pool -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+             If ($Get_Pool_ByPartition) {
+                It "Gets pools in partition '<partition>' on '<session>'" -TestCases $Get_Pool_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Pool -F5Session $Sessions[$session] -Partition $partition |
+                        Select-Object -ExpandProperty partition | 
+                        Should Be $partition
+                }
+            }            
+            If ($Get_Pool_ByNameAndPartition) {
+                It "Gets pools in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_Pool_ByNameAndPartition {
+                    param($session, $partition, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Pool -F5Session $Sessions[$session] -Partition $partition -Name $name |
+                        Select-Object -ExpandProperty name | 
+                        Should Be $Name
+                }
+            }
+            If ($Get_Pool_ByFullpath) {
+                It "Gets pools by fullPath '<fullPath>' on '<session>'" -TestCases $Get_Pool_ByFullpath {
+                    param($session, $partition, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Pool -F5Session $Sessions[$session] -Name $fullPath |
+                        Select-Object -ExpandProperty fullPath | 
+                        Should Be $fullPath
+                }
+            }
+           If ($Get_Pool_ByNameArray) {
+                It "Gets pools by Name[] on '<session>'" -TestCases $Get_Pool_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Pool -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_Pool_ByNameFromPipeline) {
+                It "Gets pools by Name From Pipeline on '<session>'" -TestCases $Get_Pool_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-Pool -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+             If ($Get_Pool_ByNameAndPartitionFromPipeline) {
+                It "Gets pools by Name and Partition From Pipeline on '<session>'" -TestCases $Get_Pool_ByNameAndPartitionFromPipeline {
+                    param($session, $object)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $object | Get-Pool -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $object.Count
+                }
+            }
+       }
     }
 }
 Describe "PoolMember" {
-    Context "Add" {
-        It "Adds pool member by Address <poolname> <address> <port>" -TestCases ($TempPoolMemberTestCases | Select-Object -First 1) {
-            param($PoolName,$Address,$Port)
-            { Add-PoolMember -PoolName $PoolName -Status Disabled -Port $Port -Address $Address } |
-                Should Not Throw
-        }
-        It "Adds pool member by ComputerName <poolname> <computername> <port>" -TestCases ($TempPoolMemberTestCases | Select-Object -Last 1) {
-            param($PoolName,$ComputerName,$Port)
-            { Add-PoolMember -PoolName $PoolName -Status Disabled -ComputerName $ComputerName -Name "$ComputerName`:$Port" -Port $Port } |
-                Should Not Throw
-        }
-    }
     Context "Get" {
-        It "Gets pool members *" {
-            Get-PoolMember |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets pool members in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            # Pool members can be from a different partition than the pool.  Check GetPoolName() partition matches instead.
-            Get-PoolMember -Partition $Name |
-                ForEach-Object { [Regex]::Match($_.GetPoolName(),'(?<=^/)[^/]*').Value } |
-                Should Be $Name
-        }
-        It "Gets pool members in partition '<partition>' and pool '<name>'" -TestCases $PoolTestCases {
-            param($Name,$Partition)
+        if ($Sessions) {
+            if ($Get_PoolMember) {
+                It "Gets pool members * on '<session>'" -TestCases $Get_PoolMember {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
 
-            # Pool members can be from a different partition than the pool.  Check GetPoolName() partition matches instead.
-            Get-PoolMember -PoolName $Name -Partition $Partition |
-                ForEach-Object { [Regex]::Match($_.GetPoolName(),'(?<=^/)[^/]*').Value } |
-                Should Be $Partition
-        }
-        It "Gets pool members in pool '<fullPath>'" -TestCases $PoolTestCases {
-            param($fullPath)
-            
-            Get-PoolMember -PoolName $fullPath |
-                ForEach-Object { $_.GetPoolName() } |
-                Should Be $fullPath
-        }
-        It "Gets pool members by Address[]" -TestCases $PoolMemberTestCases {
-            param($PoolName,$Address)
-            Get-Pool -PoolName $PoolName |
-                Get-PoolMember -Address $Address |
-                Select-Object -ExpandProperty Address | 
-                Should Match '^\d+\.\d+\.\d+\.\d+'
-        }
-        It "Gets pool members by Name[]" -TestCases $PoolMemberTestCases {
-            param($PoolName,$Name)
-            Get-Pool -PoolName $PoolName |
-                Get-PoolMember -Name $Name |
-                Select-Object -ExpandProperty Name | 
-                Should Match '^.+:\d+'
-        }
-    }
-    Context "Remove" {
-        It "Removes pool member by Address <poolname> <address>" -TestCases ($TempPoolMemberTestCases | Select-Object -First 1) {
-            param($PoolName,$Partition,$Address)
-            Remove-PoolMember -PoolName $PoolName -Address $Address -Confirm:$false
-            # TODO: This raises the question: Should Remove-Poolmember remove the node?
-            Remove-Node -Partition $Partition -Address $Address -Confirm:$false
-        }
-        It "Removes pool member by ComputerName <poolname> <name>" -TestCases ($TempPoolMemberTestCases | Select-Object -Last 1) {
-            param($PoolName,$Partition,$Address,$Name)
-            Remove-PoolMember -PoolName $PoolName -Name $Name -Confirm:$false
-            Remove-Node -Partition $Partition -Address $Address -Confirm:$false
-            #Remove-Node -Partition $Partition -Name $Name -Confirm:$false
+                    Get-PoolMember -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+             If ($Get_PoolMember_ByPartition) {
+                It "Gets pool members in partition '<partition> on '<session>'" -TestCases $Get_PoolMember_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-PoolMember -F5Session $Sessions[$session] -Partition $partition |
+                        ForEach-Object { [Regex]::Match($_.GetPoolName(),'(?<=^/)[^/]*').Value } |
+                        Should Be $partition
+                }
+            }
+            If ($Get_PoolMember_ByPoolnameAndPartition) {
+                It "Gets pool members in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $Get_PoolMember_ByPoolnameAndPartition {
+                    param($session, $partition, $poolname)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    # Pool members can be from a different partition than the pool.  Check GetPoolName() partition matches instead.
+                    Get-PoolMember -F5Session $Sessions[$session] -PoolName $poolname -Partition $Partition |
+                        ForEach-Object { [Regex]::Match($_.GetPoolName(),'(?<=^/)[^/]*').Value } |
+                        Should Be $partition
+                }
+            }
+            If ($Get_PoolMember_ByPoolnameFullpath) {
+                It "Gets pool members in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $Get_PoolMember_ByPoolnameFullpath {
+                    param($session, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-PoolMember -F5Session $Sessions[$session] -PoolName $fullPath |
+                        ForEach-Object { $_.GetPoolName() } |
+                        Should Be $fullPath
+                }
+            }
+            If ($Get_PoolMember_ByAddressArray) {
+                It "Gets pool members in pool '<poolname>' by Address[] on '<session>'" -TestCases $Get_PoolMember_ByAddressArray {
+                    param($session, $address, $poolname)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
+                        Get-PoolMember -F5Session $Sessions[$session] -Address $address |
+                        Select-Object -ExpandProperty Address | 
+                        Should Match '^\d+\.\d+\.\d+\.\d+'
+                }
+            }
+            If ($Get_PoolMember_ByNameArray) {
+                It "Gets pool members in pool '<poolname>' by Name[] on '<session>'" -TestCases $Get_PoolMember_ByNameArray {
+                    param($session, $name, $poolname)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
+                        Get-PoolMember -F5Session $Sessions[$session] -Name $name |
+                        Select-Object -ExpandProperty Name | 
+                        Should Match '^.+:\d+'
+                }
+            }
         }
     }
 }
 Describe "PoolMemberStats" {
     Context "Get" {
-        It "Gets pool member statistics in partition '<partition>' and pool '<name>'" -TestCases $PoolTestCases {
-            param($Name,$Partition)
-
-            Get-PoolMemberStats -PoolName $Name -Partition $Partition |
-                Select-Object -ExpandProperty 'serverside.curConns' |
-                Should Not Be Null
-        }
-        It "Gets pool member statistics in pool '<fullPath>'" -TestCases $PoolTestCases {
-            param($fullPath)
-            
-            Get-PoolMemberStats -PoolName $fullPath |
-                Select-Object -ExpandProperty 'serverside.curConns' |
-                Should Not Be Null
-        }
-        It "Gets pool member statistics by Address[]" -TestCases $PoolMemberTestCases {
-            param($PoolName,$Address)
-            $memberstats = Get-Pool -PoolName $PoolName |
-                Get-PoolMemberStats -Address $Address
-            $memberstats |
-                Select-Object -ExpandProperty 'serverside.curConns' |
-                Should Not Be Null
-            $memberstats |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be 1
-        }
-        It "Gets pool member statistics by Name[]" -TestCases $PoolMemberTestCases {
-            param($PoolName,$Name)
-            $memberstats = Get-Pool -PoolName $PoolName |
-                Get-PoolMemberStats -Name $Name
-            $memberstats |
-                Select-Object -ExpandProperty 'serverside.curConns' |
-                Should Not Be Null
-            $memberstats |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be 1
+        if ($Sessions) {
+            if ($Get_PoolMemberStats) {
+                It "Gets pool member statistics in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $Get_PoolMemberStats {
+                    param($session, $poolname, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-PoolMemberStats -F5Session $Sessions[$session] -PoolName $poolname -Partition $partition |
+                        Select-Object -ExpandProperty 'serverside.curConns' |
+                        Should Not Be Null
+                }
+            }
+            if ($Get_PoolMemberStats_ByPoolnameFullpath) {
+                It "Gets pool member statistics in pool '<fullpath>' on '<session>'" -TestCases $Get_PoolMemberStats_ByPoolnameFullpath {
+                    param($session, $fullPath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-PoolMemberStats -F5Session $Sessions[$session] -PoolName $fullPath |
+                        Select-Object -ExpandProperty 'serverside.curConns' |
+                        Should Not Be Null
+                }
+            }
+            if ($Get_PoolMemberStats_ByAddressArray) {
+                It "Gets pool member statistics in pool '<fullpath>' and Address[] on '<session>'" -TestCases $Get_PoolMemberStats_ByAddressArray {
+                    param($session, $address, $poolname)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $memberstats = Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
+                        Get-PoolMemberStats -F5Session $Sessions[$session] -Address $address
+                    $memberstats |
+                        Select-Object -ExpandProperty 'serverside.curConns' |
+                        Should Not Be Null
+                    $memberstats |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $address.Count
+                }
+            }
+            if ($Get_PoolMemberStatsByNameArray) {
+                It "Gets pool member statistics in pool '<poolname>' and Name[] on '<session>'" -TestCases $Get_PoolMemberStatsByNameArray {
+                    param($session, $name, $poolname)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $memberstats = Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
+                        Get-PoolMemberStats -F5Session $Sessions[$session] -name $name
+                    $memberstats |
+                        Select-Object -ExpandProperty 'serverside.curConns' |
+                        Should Not Be Null
+                    $memberstats |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
         }
     }
 }
 Describe "PoolMonitor" {
     Context "Get" {
-        It "Gets pool monitors *" {
-            Get-PoolMonitor |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets pool monitors in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Partition)
-            
-            # Pool monitors can be from a different partition than the pool.  Check GetPoolName() partition matches instead.
-            $monitors = Get-PoolMonitor -Partition $Partition
-            $monitors |
-                Measure-Object -Sum Count | 
-                Select-Object -ExpandProperty Sum | 
-                Should Not Be 0
-            $monitors |
-                Select-Object -ExpandProperty name | 
-                Should Match '/[^/]*/.*'
-        }
-        It "Gets pool monitors in partition '<partition>' and pool '<poolname>'" -TestCases $PoolMonitorTestCases {
-            param($PoolName,$Partition)
+        if ($Sessions) {
+            if ($Get_PoolMonitor) {
+                It "Gets pool monitors * on '<session>'" -TestCases $Get_PoolMonitor {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
 
-            $monitors = Get-PoolMonitor -PoolName $PoolName -Partition $Partition
-            $monitors |
-                Measure-Object -Sum Count | 
-                Select-Object -ExpandProperty Sum | 
-                Should Not Be 0
-            $monitors |
-                Select-Object -ExpandProperty name | 
-                Should Match '/[^/]*/.*'
-        }
-        It "Gets pool monitors in pool '<fullPath>'" -TestCases $PoolMonitorTestCases {
-            param($fullPath)
-            
-            $monitors = Get-PoolMonitor -PoolName $fullPath
-            $monitors |
-                Measure-Object -Sum Count | 
-                Select-Object -ExpandProperty Sum | 
-                Should Not Be 0
-            $monitors |
-                Select-Object -ExpandProperty name | 
-                Should Match '/[^/]*/.*'
-        }
-        It "Gets pool monitors by Name[]" {
-            $monitors = Get-Pool -PoolName (($session.Partitions.Pools | Where-Object { -not $_.addremove }).fullPath) |
-                Get-PoolMonitor -Name (($session.Partitions.PoolMonitors | Where-Object { -not $_.addremove }).fullPath)
-            $monitors |
-                Measure-Object -Sum Count | 
-                Select-Object -ExpandProperty Sum | 
-                Should Not Be 0
-            $monitors |
-                Select-Object -ExpandProperty name | 
-                Should Match '/[^/]*/.*'
-        }
-    }
-}
-Describe "VirtualServer" {
-    Context "Get" {
-        It "Gets virtual servers *" {
-            $virtualservers = Get-VirtualServer
-            $virtualservers |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Not Be 0
-        }
-        It "Gets virtual servers in partition '<name>'" -TestCases $PartitionTestCases {
-            param($Name)
-            
-            Get-VirtualServer -Partition $Name |
-                Select-Object -ExpandProperty partition | 
-                Should Be $Name
-        }
-        It "Gets virtual servers in partition '<partition>' by Name '<name>'" -TestCases $VirtualServerTestCases {
-            param($Name,$Partition)
-            
-            Get-VirtualServer -Name $Name -Partition $Partition |
-                Select-Object -ExpandProperty name | 
-                Should Be $Name
-        }
-        It "Gets virtual servers by fullPath '<fullPath>'" -TestCases $VirtualServerTestCases {
-            param($fullPath)
-            
-            Get-VirtualServer -Name $fullPath |
-                Select-Object -ExpandProperty fullPath | 
-                Should Be $fullPath
-        }
-        It "Gets virtual servers by Name[]" {
-            Get-VirtualServer -Name (($session.Partitions.VirtualServers | Where-Object { -not $_.addremove }).fullPath) |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.VirtualServers | Where-Object { -not $_.addremove })Count
-        }
-        It "Gets virtual servers by Name ValueFromPipeline" {
-            ($session.Partitions.VirtualServers | Where-Object { -not $_.addremove }).fullPath | 
-                Get-VirtualServer |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.VirtualServers | Where-Object { -not $_.addremove }).Count
-        }
-        It "Gets virtual servers by Name,Partition ValueFromPipelineByPropertyName" {
-            $session.Partitions.VirtualServers | Where-Object { -not $_.addremove } |
-                Get-VirtualServer |
-                Measure-Object | 
-                Select-Object -ExpandProperty Count | 
-                Should Be ($session.Partitions.VirtualServers | Where-Object { -not $_.addremove }).Count
+                    Get-PoolMonitor -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+             If ($Get_PoolMonitor_ByPartition) {
+                It "Gets pool monitors in partition '<partition> on '<session>'" -TestCases $Get_PoolMonitor_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -Partition $partition
+                    $monitors |
+                        Measure-Object -Sum Count | 
+                        Select-Object -ExpandProperty Sum | 
+                        Should Not Be 0
+                    $monitors |
+                        Select-Object -ExpandProperty name | 
+                        Should Match '/[^/]*/.*'
+                }
+            }
+            If ($Get_PoolMonitor_ByPoolnameAndPartition) {
+                It "Gets pool monitors in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $Get_PoolMonitor_ByPoolnameAndPartition {
+                    param($session, $partition, $poolname)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -PoolName $poolname -Partition $partition
+                    $monitors |
+                        Measure-Object -Sum Count | 
+                        Select-Object -ExpandProperty Sum | 
+                        Should Not Be 0
+                    $monitors |
+                        Select-Object -ExpandProperty name | 
+                        Should Match '/[^/]*/.*'
+                }
+            }
+            If ($Get_PoolMonitor_ByPoolnameFullpath) {
+                It "Gets pool monitors in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $Get_PoolMonitor_ByPoolnameFullpath {
+                    param($session, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -PoolName $fullpath
+                    $monitors |
+                        Measure-Object -Sum Count | 
+                        Select-Object -ExpandProperty Sum | 
+                        Should Not Be 0
+                    $monitors |
+                        Select-Object -ExpandProperty name | 
+                        Should Match '/[^/]*/.*'
+                }
+            }
+            If ($Get_PoolMonitor_ByFullpathArray) {
+                It "Gets pool monitors in pool by Fullpath[] on '<session>'" -TestCases $Get_PoolMonitor_ByFullpathArray {
+                    param($session, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -PoolName $fullpath
+                    $monitors |
+                        Measure-Object -Sum Count | 
+                        Select-Object -ExpandProperty Sum | 
+                        Should Not Be 0
+                    $monitors |
+                        Select-Object -ExpandProperty name | 
+                        Should Match '/[^/]*/.*'
+                }
+            }
         }
     }
 }
+Describe 'VirtualServer' {
+    Context 'Get' {
+        If ($Sessions) {
+            If ($Get_VirtualServer) {
+                It "Gets virtual servers * on '<session>'" -TestCases $Get_VirtualServer {
+                    param($session)
+                    $Sessions.ContainsKey($session) | Should Be $true
+
+                    Get-VirtualServer -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Not Be 0
+                }
+            }
+             If ($Get_VirtualServer_ByPartition) {
+                It "Gets virtual servers in partition '<partition>' on '<session>'" -TestCases $Get_VirtualServer_ByPartition {
+                    param($session, $partition)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-VirtualServer -F5Session $Sessions[$session] -Partition $partition |
+                        Select-Object -ExpandProperty partition | 
+                        Should Be $partition
+                }
+            }            
+            If ($Get_VirtualServer_ByNameAndPartition) {
+                It "Gets virtual servers in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_VirtualServer_ByNameAndPartition {
+                    param($session, $partition, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-VirtualServer -F5Session $Sessions[$session] -Partition $partition -Name $name |
+                        Select-Object -ExpandProperty name | 
+                        Should Be $Name
+                }
+            }
+            If ($Get_VirtualServer_ByFullpath) {
+                It "Gets virtual servers by fullPath '<fullPath>' on '<session>'" -TestCases $Get_VirtualServer_ByFullpath {
+                    param($session, $partition, $fullpath)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-VirtualServer -F5Session $Sessions[$session] -Name $fullPath |
+                        Select-Object -ExpandProperty fullPath | 
+                        Should Be $fullPath
+                }
+            }
+           If ($Get_VirtualServer_ByNameArray) {
+                It "Gets virtual servers by Name[] on '<session>'" -TestCases $Get_VirtualServer_ByNameArray {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    Get-VirtualServer -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+            If ($Get_VirtualServer_ByNameFromPipeline) {
+                It "Gets virtual servers by Name From Pipeline on '<session>'" -TestCases $Get_VirtualServer_ByNameFromPipeline {
+                    param($session, $name)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $name | Get-VirtualServer -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $name.Count
+                }
+            }
+             If ($Get_VirtualServer_ByNameAndPartitionFromPipeline) {
+                It "Gets virtual servers by Name and Partition From Pipeline on '<session>'" -TestCases $Get_VirtualServer_ByNameAndPartitionFromPipeline {
+                    param($session, $object)
+                    $Sessions.ContainsKey($session) | Should Be $true
+                    
+                    $object | Get-VirtualServer -F5Session $Sessions[$session] |
+                        Measure-Object | 
+                        Select-Object -ExpandProperty Count | 
+                        Should Be $object.Count
+                }
+            }
+       }
+    }
 }
