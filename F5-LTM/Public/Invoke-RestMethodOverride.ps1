@@ -4,10 +4,10 @@
     [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
     [OutputType([String])]
     [OutputType([bool])]
-    param ( 
+    param (
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$false)]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
         $Credential,
@@ -15,12 +15,15 @@
         [Parameter(Mandatory=$false)]$Headers=$null,
         [Parameter(Mandatory=$false)]$ContentType=$null,
         [Parameter(Mandatory=$false)]$ErrorMessage=$null,
+        [Parameter(Mandatory=$false)]
+        [Microsoft.PowerShell.Commands.WebRequestSession]
+        $WebSession,
         [switch]$AsBoolean
     )
     try {
         [SSLValidator]::OverrideValidation()
 
-        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType 
+        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession 
 
         [SSLValidator]::RestoreValidation()
         

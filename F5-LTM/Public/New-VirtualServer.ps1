@@ -51,6 +51,6 @@
 
         Write-Verbose $JSONBody
 
-        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $($newitem.FullPath) virtual server."
+        Invoke-RestMethodOverride -Method POST -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $($newitem.FullPath) virtual server."
     }
 }

@@ -27,7 +27,7 @@
     process {
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
+            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -WebSession $F5Session.WebSession
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
                 if(![string]::IsNullOrWhiteSpace($Application)) {
