@@ -12,17 +12,36 @@
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
         [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials,
+        [Parameter(Mandatory=$false)]$LoginReference,
         [switch]$Default,
         [switch]$PassThrough
     )
 
     $BaseURL = "https://$LTMName/mgmt/tm/ltm/"
-    
-    
-    $newSession = [pscustomobject]@{Name = $LTMName; BaseURL = $BaseURL; Credential = $LTMCredentials} | Add-Member -Name GetLink -MemberType ScriptMethod {
-         param($Link)
-         $Link -replace 'localhost', $this.Name    
-    } -PassThru 
+    $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
+
+    $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+    if ($LoginReference) {
+
+		$JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password} | ConvertTo-Json
+
+		$Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
+		$Token = $Result.token.token
+        $session.Headers.Add('X-F5-Auth-Token', $Token)
+
+    } else {
+        $session.Credentials = $LTMCredentials
+    }
+
+	$newSession = [pscustomobject]@{
+		Name = $LTMName; 
+		BaseURL = $BaseURL; 
+		WebSession = $session 
+		} | Add-Member -Name GetLink -MemberType ScriptMethod {
+		 param($Link)
+		 $Link -replace 'localhost', $this.Name    
+	} -PassThru 
+
 
     #If the Default switch is set, and/or if no script-scoped F5Session exists, then set the script-scoped F5Session
     If ($Default -or !($Script:F5Session)){

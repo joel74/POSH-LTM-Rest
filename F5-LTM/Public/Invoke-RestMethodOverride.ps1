@@ -7,11 +7,17 @@
     param ( 
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,
-        [Parameter(Mandatory=$true)]
+
+        [Parameter(Mandatory=$false,ParameterSetName='Credential')]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
         $Credential,
-        [Parameter(Mandatory=$false)]$Body=$null,
+
+		[Parameter(Mandatory=$false,ParameterSetName='WebSession')]
+        [Microsoft.PowerShell.Commands.WebRequestSession]
+        $WebSession,
+
+		[Parameter(Mandatory=$false)]$Body=$null,
         [Parameter(Mandatory=$false)]$Headers=$null,
         [Parameter(Mandatory=$false)]$ContentType=$null,
         [Parameter(Mandatory=$false)]$ErrorMessage=$null,
@@ -20,9 +26,19 @@
     try {
         [SSLValidator]::OverrideValidation()
 
-        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType 
-
-        [SSLValidator]::RestoreValidation()
+        switch($PSCmdLet.ParameterSetName) {
+            Credential {
+				$Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType;
+			}
+			WebSession {
+				$Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession ;
+			}
+			Default {
+				Throw("Either a PSCredential object or a WebSession object must be passed to Invoke-RestMethodOverride");
+			}
+		}
+		
+		[SSLValidator]::RestoreValidation()
         
         if ($AsBoolean) {
             $true
