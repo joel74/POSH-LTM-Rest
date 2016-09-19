@@ -28,14 +28,14 @@
 
         switch($PSCmdLet.ParameterSetName) {
             Credential {
-				$Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType;
-			}
-			WebSession {
-				$Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession ;
-			}
-			Default {
-				Throw("Either a PSCredential object or a WebSession object must be passed to Invoke-RestMethodOverride");
-			}
+                $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType;
+            }
+            WebSession {
+                $Result = Invoke-RestMethod -Method $Method -Uri $URI -Websession $WebSession -Body $Body -Headers $Headers -ContentType $ContentType;
+            }
+            Default {
+                Throw("Either a PSCredential object or a WebSession object must be passed to Invoke-RestMethodOverride");
+            }
 		}
 		
 		[SSLValidator]::RestoreValidation()

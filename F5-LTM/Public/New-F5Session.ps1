@@ -11,8 +11,7 @@
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
-        [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials,
-        [Parameter(Mandatory=$false)]$LoginReference,
+        [Parameter(Mandatory=$false)][System.Management.Automation.PSCredential]$LTMCredentials,
         [switch]$Default,
         [switch]$PassThrough
     )
@@ -21,17 +20,18 @@
     $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
 
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-    if ($LoginReference) {
 
-		$JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password} | ConvertTo-Json
+	$JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password} | ConvertTo-Json
 
-		$Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
-		$Token = $Result.token.token
-        $session.Headers.Add('X-F5-Auth-Token', $Token)
+	$Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
+	$Token = $Result.token.token
+    $session.Headers.Add('X-F5-Auth-Token', $Token)
 
-    } else {
-        $session.Credentials = $LTMCredentials
-    }
+    #Add token expiration time to session
+    $ts = New-TimeSpan -Minutes 20
+    $date = Get-Date -Date $Result.token.startTime 
+    $ExpirationTime = $date + $ts
+    $session.Headers.Add('Token-Expiration', $ExpirationTime)
 
 	$newSession = [pscustomobject]@{
 		Name = $LTMName; 
