@@ -2,14 +2,68 @@ $scriptroot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Pat
 
 Import-Module (Join-Path $scriptroot 'F5-LTM\F5-LTM.psm1') -Force
 
-if (Test-Path -Path (Join-Path $HOME F5-LTM.json)) {
+$F5LTMTestCases = @{}
+[Regex]::Matches((Get-Content $MyInvocation.MyCommand.Path -raw),'(?<=F5LTMTestCases\.)Get_\w*') | 
+    Select-Object -ExpandProperty Value -Unique | 
+    Sort-Object | % {
+        $F5LTMTestCases.Add($_, @())
+}
+if (Test-Path -Path (Join-Path $HOME F5-LTM.TestCases.ps1)) {
     . (Join-Path $HOME F5-LTM.TestCases.ps1)
+} else {
+    Write-Host ('Writing test case template to {0}' -f (Join-Path $HOME F5-LTM.TestCases.ps1)) -ForegroundColor Green 
+    $F5LTMTestCasesTemplate = @"
+`$credentials = New-Object System.Management.Automation.PSCredential ('[username]', (ConvertTo-SecureString '[password]' -AsPlainText -Force))
+
+`$Sessions = @{}
+`$Sessions.Add('default', (New-F5Session -LTMName '[ipaddress]' -LTMCredentials `$credentials -Default -PassThrough))
+
+"@
+    $F5LTMTestCases.Keys | Sort-Object | ForEach-Object {
+        $params = [Regex]::Match($_, '(?<=_By).*$') -replace 'PoolnameFullpath','fullpath' -split 'And'
+        $hashvalues = @()
+        if ($_ -match 'FromPipeline$') {
+            for($x=0;$x -le 1; $x++) {
+                $pipelineobjects = @()
+                $pipelineparams = @()
+                foreach($p in $params) {
+                    if ($p) {
+                        $pipelineparams += ' {0} = ''[{0}]'' ' -f ($p.ToLower() -replace 'frompipeline','')
+                    }
+                }
+                $pipelineobjects += ('([pscustomobject]@{{{0}}})' -f ($pipelineparams -join ';'))
+            }
+            $hashvalues += '; object = {0}' -f ($pipelineobjects -join ',')
+        } else {
+            foreach($p in $params) {
+                if ($p) {
+                    if ($p -match 'Array$') {
+                        $hashvalues += '; {0} = ''[{0}1]'',''[{0}2]'',''[{0}3]''' -f ($p.ToLower() -replace 'array','')
+                    } else {
+                        $hashvalues += '; {0} = ''[{0}]''' -f $p.ToLower()
+                    }
+                }
+            }
+        }
+        $F5LTMTestCasesTemplate += '$F5LTMTestCases.{0} += @{{ session = ''default''{1} }}{2}' -f $_,($hashvalues -join ''),[Environment]::NewLine
+    }
+    $F5LTMTestCasesTemplate | Out-File -FilePath (Join-Path $HOME F5-LTM.TestCases.ps1) 
+}
+Describe 'TestCases' -Tags 'Validation' {
+    Context 'Empty' {
+        $F5LTMTestCases.Keys | Sort-Object | ForEach-Object {
+            If ($F5LTMTestCases[$_].Count -eq 0) {
+                Write-Warning ('$F5LTMTestCases.{0} is empty' -f $_)
+            }
+        }
+        Write-Host 'Invoke-Pester -ExcludeTag Validation to suppress empty test case warnings' -ForegroundColor Green
+    }
 }
 Describe 'HealthMonitor' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_HealthMonitor) {
-                It "Gets health monitors * on '<session>'" -TestCases $Get_HealthMonitor {
+            If ($F5LTMTestCases.Get_HealthMonitor) {
+                It "Gets health monitors * on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -19,8 +73,8 @@ Describe 'HealthMonitor' {
                         Should Not Be 0
                 }
             }
-            If ($Get_HealthMonitor_ByType) {
-                It "Gets health monitors of type '<type>' on '<session>'" -TestCases $Get_HealthMonitor_ByType {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByType) {
+                It "Gets health monitors of type '<type>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByType {
                     param($session, $type)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -29,8 +83,8 @@ Describe 'HealthMonitor' {
                         Should Be $type
                 }
             }
-            If ($Get_HealthMonitor_ByPartition) {
-                It "Gets health monitors in partition '<partition>' on '<session>'" -TestCases $Get_HealthMonitor_ByPartition {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByPartition) {
+                It "Gets health monitors in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -39,8 +93,8 @@ Describe 'HealthMonitor' {
                         Should Be $partition
                 }
             }            
-            If ($Get_HealthMonitor_ByNameAndPartition) {
-                It "Gets health monitors in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_HealthMonitor_ByNameAndPartition {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByNameAndPartition) {
+                It "Gets health monitors in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -49,8 +103,8 @@ Describe 'HealthMonitor' {
                         Should Be $Name
                 }
             }
-            If ($Get_HealthMonitor_ByFullpath) {
-                It "Gets health monitors by fullPath '<fullPath>' on '<session>'" -TestCases $Get_HealthMonitor_ByFullpath {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByFullpath) {
+                It "Gets health monitors by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -59,8 +113,8 @@ Describe 'HealthMonitor' {
                         Should Be $fullPath
                 }
             }
-            If ($Get_HealthMonitor_ByNameArray) {
-                It "Gets health monitors by Name[] on '<session>'" -TestCases $Get_HealthMonitor_ByNameArray {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByNameArray) {
+                It "Gets health monitors by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -70,8 +124,8 @@ Describe 'HealthMonitor' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_HealthMonitor_ByNameFromPipeline) {
-                It "Gets health monitors by Name From Pipeline on '<session>'" -TestCases $Get_HealthMonitor_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByNameFromPipeline) {
+                It "Gets health monitors by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -81,8 +135,8 @@ Describe 'HealthMonitor' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_HealthMonitor_ByNameAndPartitionFromPipeline) {
-                It "Gets health monitors by Name and Partition From Pipeline on '<session>'" -TestCases $Get_HealthMonitor_ByNameAndPartitionFromPipeline {
+            If ($F5LTMTestCases.Get_HealthMonitor_ByNameAndPartitionFromPipeline) {
+                It "Gets health monitors by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -98,8 +152,8 @@ Describe 'HealthMonitor' {
 Describe 'HealthMonitorType' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_HealthMonitorType) {
-                It "Gets health monitor types * on '<session>'" -TestCases $Get_HealthMonitorType {
+            If ($F5LTMTestCases.Get_HealthMonitorType) {
+                It "Gets health monitor types * on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -109,8 +163,8 @@ Describe 'HealthMonitorType' {
                         Should Not Be 0
                 }
             }
-            If ($Get_HealthMonitorType_ByName) {
-                It "Gets health monitor types by Name '<name>' on '<session>'" -TestCases $Get_HealthMonitorType_ByName {
+            If ($F5LTMTestCases.Get_HealthMonitorType_ByName) {
+                It "Gets health monitor types by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType_ByName {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -118,8 +172,8 @@ Describe 'HealthMonitorType' {
                         Should Be $name
                 }
             }
-            If ($Get_HealthMonitorType_ByNameArray) {
-                It "Gets health monitor types by Name[] on '<session>'" -TestCases $Get_HealthMonitorType_ByNameArray {
+            If ($F5LTMTestCases.Get_HealthMonitorType_ByNameArray) {
+                It "Gets health monitor types by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -129,8 +183,8 @@ Describe 'HealthMonitorType' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_HealthMonitorType_ByNameFromPipeline) {
-                It "Gets health monitor types by Name From Pipeline on '<session>'" -TestCases $Get_HealthMonitorType_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_HealthMonitorType_ByNameFromPipeline) {
+                It "Gets health monitor types by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -146,8 +200,8 @@ Describe 'HealthMonitorType' {
 Describe 'iRule' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_iRule) {
-                It "Gets irules* on '<session>'" -TestCases $Get_iRule {
+            If ($F5LTMTestCases.Get_iRule) {
+                It "Gets irules* on '<session>'" -TestCases $F5LTMTestCases.Get_iRule {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -157,8 +211,8 @@ Describe 'iRule' {
                         Should Not Be 0
                 }
             }
-            If ($Get_iRule_ByName) {
-                It "Gets irules by Name '<name>' on '<session>'" -TestCases $Get_iRule_ByName {
+            If ($F5LTMTestCases.Get_iRule_ByName) {
+                It "Gets irules by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByName {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -167,8 +221,8 @@ Describe 'iRule' {
                         Should Be $name
                 }
             }
-             If ($Get_iRule_ByPartition) {
-                It "Gets irules in partition '<partition>' on '<session>'" -TestCases $Get_iRule_ByPartition {
+             If ($F5LTMTestCases.Get_iRule_ByPartition) {
+                It "Gets irules in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -177,8 +231,8 @@ Describe 'iRule' {
                         Should Be $partition
                 }
             }            
-            If ($Get_iRule_ByNameAndPartition) {
-                It "Gets irules in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_iRule_ByNameAndPartition {
+            If ($F5LTMTestCases.Get_iRule_ByNameAndPartition) {
+                It "Gets irules in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -187,8 +241,8 @@ Describe 'iRule' {
                         Should Be $Name
                 }
             }
-            If ($Get_iRule_ByFullpath) {
-                It "Gets irules by fullPath '<fullPath>' on '<session>'" -TestCases $Get_iRule_ByFullpath {
+            If ($F5LTMTestCases.Get_iRule_ByFullpath) {
+                It "Gets irules by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -197,8 +251,8 @@ Describe 'iRule' {
                         Should Be $fullPath
                 }
             }
-           If ($Get_iRule_ByNameArray) {
-                It "Gets irules by Name[] on '<session>'" -TestCases $Get_iRule_ByNameArray {
+           If ($F5LTMTestCases.Get_iRule_ByNameArray) {
+                It "Gets irules by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -208,8 +262,8 @@ Describe 'iRule' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_iRule_ByNameFromPipeline) {
-                It "Gets irules by Name From Pipeline on '<session>'" -TestCases $Get_iRule_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_iRule_ByNameFromPipeline) {
+                It "Gets irules by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -219,8 +273,8 @@ Describe 'iRule' {
                         Should Be $name.Count
                 }
             }
-             If ($Get_iRule_ByNameAndPartitionFromPipeline) {
-                It "Gets irules by Name and Partition From Pipeline on '<session>'" -TestCases $Get_iRule_ByNameAndPartitionFromPipeline {
+             If ($F5LTMTestCases.Get_iRule_ByNameAndPartitionFromPipeline) {
+                It "Gets irules by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -236,8 +290,8 @@ Describe 'iRule' {
 Describe 'Node' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_Node) {
-                It "Gets nodes * on '<session>'" -TestCases $Get_Node {
+            If ($F5LTMTestCases.Get_Node) {
+                It "Gets nodes * on '<session>'" -TestCases $F5LTMTestCases.Get_Node {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -247,8 +301,8 @@ Describe 'Node' {
                         Should Not Be 0
                 }
             }
-             If ($Get_Node_ByPartition) {
-                It "Gets nodes in partition '<partition>' on '<session>'" -TestCases $Get_Node_ByPartition {
+             If ($F5LTMTestCases.Get_Node_ByPartition) {
+                It "Gets nodes in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -257,8 +311,8 @@ Describe 'Node' {
                         Should Be $partition
                 }
             }            
-            If ($Get_Node_ByNameAndPartition) {
-                It "Gets nodes in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_Node_ByNameAndPartition {
+            If ($F5LTMTestCases.Get_Node_ByNameAndPartition) {
+                It "Gets nodes in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -267,8 +321,8 @@ Describe 'Node' {
                         Should Be $Name
                 }
             }
-            If ($Get_Node_ByFullpath) {
-                It "Gets nodes by fullPath '<fullPath>' on '<session>'" -TestCases $Get_Node_ByFullpath {
+            If ($F5LTMTestCases.Get_Node_ByFullpath) {
+                It "Gets nodes by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -277,8 +331,8 @@ Describe 'Node' {
                         Should Be $fullPath
                 }
             }
-           If ($Get_Node_ByNameArray) {
-                It "Gets nodes by Name[] on '<session>'" -TestCases $Get_Node_ByNameArray {
+           If ($F5LTMTestCases.Get_Node_ByNameArray) {
+                It "Gets nodes by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -288,8 +342,8 @@ Describe 'Node' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_Node_ByNameFromPipeline) {
-                It "Gets nodes by Name From Pipeline on '<session>'" -TestCases $Get_Node_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_Node_ByNameFromPipeline) {
+                It "Gets nodes by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -299,8 +353,8 @@ Describe 'Node' {
                         Should Be $name.Count
                 }
             }
-             If ($Get_Node_ByNameAndPartitionFromPipeline) {
-                It "Gets nodes by Name and Partition From Pipeline on '<session>'" -TestCases $Get_Node_ByNameAndPartitionFromPipeline {
+             If ($F5LTMTestCases.Get_Node_ByNameAndPartitionFromPipeline) {
+                It "Gets nodes by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -316,8 +370,8 @@ Describe 'Node' {
 Describe 'Partition' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_Partition) {
-                It "Gets partitions * on '<session>'" -TestCases $Get_Partition {
+            If ($F5LTMTestCases.Get_Partition) {
+                It "Gets partitions * on '<session>'" -TestCases $F5LTMTestCases.Get_Partition {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -327,8 +381,8 @@ Describe 'Partition' {
                         Should Not Be 0
                 }
             }
-            If ($Get_Partition_ByName) {
-                It "Gets partitions by Name '<name>' on '<session>'" -TestCases $Get_Partition_ByName {
+            If ($F5LTMTestCases.Get_Partition_ByName) {
+                It "Gets partitions by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_Partition_ByName {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -336,8 +390,8 @@ Describe 'Partition' {
                         Should Be $name
                 }
             }
-            If ($Get_Partition_ByNameArray) {
-                It "Gets partitions by Name[] on '<session>'" -TestCases $Get_Partition_ByNameArray {
+            If ($F5LTMTestCases.Get_Partition_ByNameArray) {
+                It "Gets partitions by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_Partition_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -347,8 +401,8 @@ Describe 'Partition' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_Partition_ByNameFromPipeline) {
-                It "Gets partitions by Name From Pipeline on '<session>'" -TestCases $Get_Partition_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_Partition_ByNameFromPipeline) {
+                It "Gets partitions by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Partition_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -364,8 +418,8 @@ Describe 'Partition' {
 Describe 'Pool' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_Pool) {
-                It "Gets pools * on '<session>'" -TestCases $Get_Pool {
+            If ($F5LTMTestCases.Get_Pool) {
+                It "Gets pools * on '<session>'" -TestCases $F5LTMTestCases.Get_Pool {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -375,8 +429,8 @@ Describe 'Pool' {
                         Should Not Be 0
                 }
             }
-             If ($Get_Pool_ByPartition) {
-                It "Gets pools in partition '<partition>' on '<session>'" -TestCases $Get_Pool_ByPartition {
+             If ($F5LTMTestCases.Get_Pool_ByPartition) {
+                It "Gets pools in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -385,8 +439,8 @@ Describe 'Pool' {
                         Should Be $partition
                 }
             }            
-            If ($Get_Pool_ByNameAndPartition) {
-                It "Gets pools in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_Pool_ByNameAndPartition {
+            If ($F5LTMTestCases.Get_Pool_ByNameAndPartition) {
+                It "Gets pools in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -395,8 +449,8 @@ Describe 'Pool' {
                         Should Be $Name
                 }
             }
-            If ($Get_Pool_ByFullpath) {
-                It "Gets pools by fullPath '<fullPath>' on '<session>'" -TestCases $Get_Pool_ByFullpath {
+            If ($F5LTMTestCases.Get_Pool_ByFullpath) {
+                It "Gets pools by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -405,8 +459,8 @@ Describe 'Pool' {
                         Should Be $fullPath
                 }
             }
-           If ($Get_Pool_ByNameArray) {
-                It "Gets pools by Name[] on '<session>'" -TestCases $Get_Pool_ByNameArray {
+           If ($F5LTMTestCases.Get_Pool_ByNameArray) {
+                It "Gets pools by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -416,8 +470,8 @@ Describe 'Pool' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_Pool_ByNameFromPipeline) {
-                It "Gets pools by Name From Pipeline on '<session>'" -TestCases $Get_Pool_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_Pool_ByNameFromPipeline) {
+                It "Gets pools by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -427,8 +481,8 @@ Describe 'Pool' {
                         Should Be $name.Count
                 }
             }
-             If ($Get_Pool_ByNameAndPartitionFromPipeline) {
-                It "Gets pools by Name and Partition From Pipeline on '<session>'" -TestCases $Get_Pool_ByNameAndPartitionFromPipeline {
+             If ($F5LTMTestCases.Get_Pool_ByNameAndPartitionFromPipeline) {
+                It "Gets pools by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -444,8 +498,8 @@ Describe 'Pool' {
 Describe "PoolMember" {
     Context "Get" {
         if ($Sessions) {
-            if ($Get_PoolMember) {
-                It "Gets pool members * on '<session>'" -TestCases $Get_PoolMember {
+            if ($F5LTMTestCases.Get_PoolMember) {
+                It "Gets pool members * on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -455,8 +509,8 @@ Describe "PoolMember" {
                         Should Not Be 0
                 }
             }
-             If ($Get_PoolMember_ByPartition) {
-                It "Gets pool members in partition '<partition> on '<session>'" -TestCases $Get_PoolMember_ByPartition {
+             If ($F5LTMTestCases.Get_PoolMember_ByPartition) {
+                It "Gets pool members in partition '<partition> on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -465,8 +519,8 @@ Describe "PoolMember" {
                         Should Be $partition
                 }
             }
-            If ($Get_PoolMember_ByPoolnameAndPartition) {
-                It "Gets pool members in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $Get_PoolMember_ByPoolnameAndPartition {
+            If ($F5LTMTestCases.Get_PoolMember_ByPoolnameAndPartition) {
+                It "Gets pool members in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPoolnameAndPartition {
                     param($session, $partition, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -476,8 +530,8 @@ Describe "PoolMember" {
                         Should Be $partition
                 }
             }
-            If ($Get_PoolMember_ByPoolnameFullpath) {
-                It "Gets pool members in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $Get_PoolMember_ByPoolnameFullpath {
+            If ($F5LTMTestCases.Get_PoolMember_ByPoolnameFullpath) {
+                It "Gets pool members in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPoolnameFullpath {
                     param($session, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -486,8 +540,8 @@ Describe "PoolMember" {
                         Should Be $fullPath
                 }
             }
-            If ($Get_PoolMember_ByAddressArray) {
-                It "Gets pool members in pool '<poolname>' by Address[] on '<session>'" -TestCases $Get_PoolMember_ByAddressArray {
+            If ($F5LTMTestCases.Get_PoolMember_ByAddressArray) {
+                It "Gets pool members in pool '<poolname>' by Address[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByAddressArray {
                     param($session, $address, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -497,8 +551,8 @@ Describe "PoolMember" {
                         Should Match '^\d+\.\d+\.\d+\.\d+'
                 }
             }
-            If ($Get_PoolMember_ByNameArray) {
-                It "Gets pool members in pool '<poolname>' by Name[] on '<session>'" -TestCases $Get_PoolMember_ByNameArray {
+            If ($F5LTMTestCases.Get_PoolMember_ByNameArray) {
+                It "Gets pool members in pool '<poolname>' by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByNameArray {
                     param($session, $name, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -514,8 +568,8 @@ Describe "PoolMember" {
 Describe "PoolMemberStats" {
     Context "Get" {
         if ($Sessions) {
-            if ($Get_PoolMemberStats) {
-                It "Gets pool member statistics in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $Get_PoolMemberStats {
+            if ($F5LTMTestCases.Get_PoolMemberStats) {
+                It "Gets pool member statistics in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats {
                     param($session, $poolname, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -524,8 +578,8 @@ Describe "PoolMemberStats" {
                         Should Not Be Null
                 }
             }
-            if ($Get_PoolMemberStats_ByPoolnameFullpath) {
-                It "Gets pool member statistics in pool '<fullpath>' on '<session>'" -TestCases $Get_PoolMemberStats_ByPoolnameFullpath {
+            if ($F5LTMTestCases.Get_PoolMemberStats_ByPoolnameFullpath) {
+                It "Gets pool member statistics in pool '<fullpath>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats_ByPoolnameFullpath {
                     param($session, $fullPath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -534,8 +588,8 @@ Describe "PoolMemberStats" {
                         Should Not Be Null
                 }
             }
-            if ($Get_PoolMemberStats_ByAddressArray) {
-                It "Gets pool member statistics in pool '<fullpath>' and Address[] on '<session>'" -TestCases $Get_PoolMemberStats_ByAddressArray {
+            if ($F5LTMTestCases.Get_PoolMemberStats_ByAddressArray) {
+                It "Gets pool member statistics in pool '<fullpath>' and Address[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats_ByAddressArray {
                     param($session, $address, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -550,8 +604,8 @@ Describe "PoolMemberStats" {
                         Should Be $address.Count
                 }
             }
-            if ($Get_PoolMemberStatsByNameArray) {
-                It "Gets pool member statistics in pool '<poolname>' and Name[] on '<session>'" -TestCases $Get_PoolMemberStatsByNameArray {
+            if ($F5LTMTestCases.Get_PoolMemberStats_ByNameArray) {
+                It "Gets pool member statistics in pool '<poolname>' and Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats_ByNameArray {
                     param($session, $name, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -572,8 +626,8 @@ Describe "PoolMemberStats" {
 Describe "PoolMonitor" {
     Context "Get" {
         if ($Sessions) {
-            if ($Get_PoolMonitor) {
-                It "Gets pool monitors * on '<session>'" -TestCases $Get_PoolMonitor {
+            if ($F5LTMTestCases.Get_PoolMonitor) {
+                It "Gets pool monitors * on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -583,8 +637,8 @@ Describe "PoolMonitor" {
                         Should Not Be 0
                 }
             }
-             If ($Get_PoolMonitor_ByPartition) {
-                It "Gets pool monitors in partition '<partition> on '<session>'" -TestCases $Get_PoolMonitor_ByPartition {
+             If ($F5LTMTestCases.Get_PoolMonitor_ByPartition) {
+                It "Gets pool monitors in partition '<partition> on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -598,8 +652,8 @@ Describe "PoolMonitor" {
                         Should Match '/[^/]*/.*'
                 }
             }
-            If ($Get_PoolMonitor_ByPoolnameAndPartition) {
-                It "Gets pool monitors in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $Get_PoolMonitor_ByPoolnameAndPartition {
+            If ($F5LTMTestCases.Get_PoolMonitor_ByPoolnameAndPartition) {
+                It "Gets pool monitors in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPoolnameAndPartition {
                     param($session, $partition, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -613,8 +667,8 @@ Describe "PoolMonitor" {
                         Should Match '/[^/]*/.*'
                 }
             }
-            If ($Get_PoolMonitor_ByPoolnameFullpath) {
-                It "Gets pool monitors in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $Get_PoolMonitor_ByPoolnameFullpath {
+            If ($F5LTMTestCases.Get_PoolMonitor_ByPoolnameFullpath) {
+                It "Gets pool monitors in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPoolnameFullpath {
                     param($session, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -628,8 +682,8 @@ Describe "PoolMonitor" {
                         Should Match '/[^/]*/.*'
                 }
             }
-            If ($Get_PoolMonitor_ByFullpathArray) {
-                It "Gets pool monitors in pool by Fullpath[] on '<session>'" -TestCases $Get_PoolMonitor_ByFullpathArray {
+            If ($F5LTMTestCases.Get_PoolMonitor_ByFullpathArray) {
+                It "Gets pool monitors in pool by Fullpath[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByFullpathArray {
                     param($session, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -649,8 +703,8 @@ Describe "PoolMonitor" {
 Describe 'VirtualServer' {
     Context 'Get' {
         If ($Sessions) {
-            If ($Get_VirtualServer) {
-                It "Gets virtual servers * on '<session>'" -TestCases $Get_VirtualServer {
+            If ($F5LTMTestCases.Get_VirtualServer) {
+                It "Gets virtual servers * on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -660,8 +714,8 @@ Describe 'VirtualServer' {
                         Should Not Be 0
                 }
             }
-             If ($Get_VirtualServer_ByPartition) {
-                It "Gets virtual servers in partition '<partition>' on '<session>'" -TestCases $Get_VirtualServer_ByPartition {
+             If ($F5LTMTestCases.Get_VirtualServer_ByPartition) {
+                It "Gets virtual servers in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -670,8 +724,8 @@ Describe 'VirtualServer' {
                         Should Be $partition
                 }
             }            
-            If ($Get_VirtualServer_ByNameAndPartition) {
-                It "Gets virtual servers in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $Get_VirtualServer_ByNameAndPartition {
+            If ($F5LTMTestCases.Get_VirtualServer_ByNameAndPartition) {
+                It "Gets virtual servers in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -680,8 +734,8 @@ Describe 'VirtualServer' {
                         Should Be $Name
                 }
             }
-            If ($Get_VirtualServer_ByFullpath) {
-                It "Gets virtual servers by fullPath '<fullPath>' on '<session>'" -TestCases $Get_VirtualServer_ByFullpath {
+            If ($F5LTMTestCases.Get_VirtualServer_ByFullpath) {
+                It "Gets virtual servers by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -690,8 +744,8 @@ Describe 'VirtualServer' {
                         Should Be $fullPath
                 }
             }
-           If ($Get_VirtualServer_ByNameArray) {
-                It "Gets virtual servers by Name[] on '<session>'" -TestCases $Get_VirtualServer_ByNameArray {
+           If ($F5LTMTestCases.Get_VirtualServer_ByNameArray) {
+                It "Gets virtual servers by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -701,8 +755,8 @@ Describe 'VirtualServer' {
                         Should Be $name.Count
                 }
             }
-            If ($Get_VirtualServer_ByNameFromPipeline) {
-                It "Gets virtual servers by Name From Pipeline on '<session>'" -TestCases $Get_VirtualServer_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_VirtualServer_ByNameFromPipeline) {
+                It "Gets virtual servers by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
@@ -712,8 +766,8 @@ Describe 'VirtualServer' {
                         Should Be $name.Count
                 }
             }
-             If ($Get_VirtualServer_ByNameAndPartitionFromPipeline) {
-                It "Gets virtual servers by Name and Partition From Pipeline on '<session>'" -TestCases $Get_VirtualServer_ByNameAndPartitionFromPipeline {
+             If ($F5LTMTestCases.Get_VirtualServer_ByNameAndPartitionFromPipeline) {
+                It "Gets virtual servers by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
                     
