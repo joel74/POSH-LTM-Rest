@@ -25,17 +25,25 @@
     $pools = Get-Pool -F5Session $F5Session | Select-Object -ExpandProperty fullPath
     $pools
 
-    Write-Host ("`r`n* Test whether the first pool in the list - " + $pools[0] + " - exists") -ForegroundColor $TestNotesColor
-    Test-Pool -F5Session $F5Session -PoolName $pools[0]
+    #Get the first pool. If there is only one, don't treat it as an array
+    If ($pools -is [system.array]){
+        $FirstPool = $pools[0];
+    }
+    Else {
+        $FirstPool = $pools
+    }
 
-    Write-Host ("`r`n* Get the pool " + $pools[0]) -ForegroundColor $TestNotesColor
-    Get-Pool -F5Session $F5Session -PoolName $pools[0]
+    Write-Host ("`r`n* Test whether the first pool in the list - " + $FirstPool + " - exists") -ForegroundColor $TestNotesColor
+    Test-Pool -F5Session $F5Session -PoolName $FirstPool
 
-    Write-Host ("`r`n* Get members of the pool '" + $pools[0] + "'") -ForegroundColor $TestNotesColor
-    Get-PoolMember -F5Session $F5Session -PoolName $pools[0]
+    Write-Host ("`r`n* Get the pool " + $FirstPool) -ForegroundColor $TestNotesColor
+    Get-Pool -F5Session $F5Session -PoolName $FirstPool
 
-    Write-Host ("`r`n* Get the status of all members in the " + $pools[0] + " pool") -ForegroundColor $TestNotesColor
-    Get-PoolMember -F5Session $F5Session -PoolName $pools[0] | Select-Object -Property name,session,state
+    Write-Host ("`r`n* Get members of the pool '" + $FirstPool + "'") -ForegroundColor $TestNotesColor
+    Get-PoolMember -F5Session $F5Session -PoolName $FirstPool
+
+    Write-Host ("`r`n* Get the status of all members in the " + $FirstPool + " pool") -ForegroundColor $TestNotesColor
+    Get-PoolMember -F5Session $F5Session -PoolName $FirstPool | Select-Object -Property name,session,state
 
     Write-Host "`r`n* Create a new pool named '$TestPool'" -ForegroundColor $TestNotesColor
     New-Pool -F5Session $F5Session -PoolName $TestPool 
@@ -95,14 +103,14 @@
     Write-Output ("- This can be a large collection. The first entry found is:")
     Write-Output $iRules[0]
 
-    Write-Host ("`r`n* Add the iRule '" + $iRules[0].fullPath + "' to the new virtual server '$TestVirtualServer'") -ForegroundColor $TestNotesColor
-    Add-iRuleToVirtualServer -F5Session $F5Session -VirtualServer $TestVirtualServer -iRuleName $($iRules[0].fullPath)
+    Write-Host ("`r`n* Add the iRule '_sys_https_redirect' to the new virtual server '$TestVirtualServer'") -ForegroundColor $TestNotesColor
+    Add-iRuleToVirtualServer -F5Session $F5Session -VirtualServer $TestVirtualServer -iRuleName '_sys_https_redirect'
 
     Write-Host "`r`n* Get all iRules assigned to '$TestVirtualServer'" -ForegroundColor $TestNotesColor
     Get-VirtualServer -F5Session $F5Session -VirtualServer $TestVirtualServer | Select-Object -ExpandProperty rules
 
-    Write-Host ("`r`n* Remove the '" + $iRules[0].name + "' iRule from the new virtual server '$TestVirtualServer'") -ForegroundColor $TestNotesColor
-    Remove-iRuleFromVirtualServer -F5Session $F5Session -VirtualServer $TestVirtualServer -iRuleName $iRules[0].name
+    Write-Host ("`r`n* Remove the '_sys_https_redirect' iRule from the new virtual server '$TestVirtualServer'") -ForegroundColor $TestNotesColor
+    Remove-iRuleFromVirtualServer -F5Session $F5Session -VirtualServer $TestVirtualServer -iRuleName '_sys_https_redirect'
 
     Write-Host "`r`n* Remove the new virtual server '$TestVirtualServer'" -ForegroundColor $TestNotesColor
     Write-Host "(This will raise a confirmation prompt unless -confirm is set to false)" -ForegroundColor $TestNotesColor
