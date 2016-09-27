@@ -8,10 +8,11 @@ $F5LTMTestCases = @{}
     Sort-Object | % {
         $F5LTMTestCases.Add($_, @())
 }
-if (Test-Path -Path (Join-Path $HOME F5-LTM.TestCases.ps1)) {
-    . (Join-Path $HOME F5-LTM.TestCases.ps1)
+$TestCasePath = Invoke-NullCoalescing { $env:F5LTMTestCases } { (Join-Path $HOME F5-LTM.TestCases.ps1) }
+if (Test-Path -Path $TestCasePath) {
+    . $TestCasePath
 } else {
-    Write-Host ('Writing test case template to {0}' -f (Join-Path $HOME F5-LTM.TestCases.ps1)) -ForegroundColor Green 
+    Write-Host ('Writing test case template to {0}' -f $TestCasePath) -ForegroundColor Green 
     $F5LTMTestCasesTemplate = @"
 `$credentials = New-Object System.Management.Automation.PSCredential ('[username]', (ConvertTo-SecureString '[password]' -AsPlainText -Force))
 
@@ -47,7 +48,7 @@ if (Test-Path -Path (Join-Path $HOME F5-LTM.TestCases.ps1)) {
         }
         $F5LTMTestCasesTemplate += '$F5LTMTestCases.{0} += @{{ session = ''default''{1} }}{2}' -f $_,($hashvalues -join ''),[Environment]::NewLine
     }
-    $F5LTMTestCasesTemplate | Out-File -FilePath (Join-Path $HOME F5-LTM.TestCases.ps1) 
+    $F5LTMTestCasesTemplate | Out-File -FilePath $TestCasePath 
 }
 Describe 'TestCases' -Tags 'Validation' {
     Context 'Empty' {
@@ -56,7 +57,7 @@ Describe 'TestCases' -Tags 'Validation' {
                 Write-Warning ('$F5LTMTestCases.{0} is empty' -f $_)
             }
         }
-        Write-Host 'Invoke-Pester -ExcludeTag Validation to suppress empty test case warnings' -ForegroundColor Green
+        Write-Host 'Invoke-Pester -ExcludeTag Validation to suppress empty test case warnings' -ForegroundColor Green 
     }
 }
 Describe 'HealthMonitor' {
