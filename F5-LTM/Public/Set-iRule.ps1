@@ -100,7 +100,7 @@
                     if ($pscmdlet.ShouldProcess($F5Session.Name, "Deleting iRule $Name"))
                     {
                         $URIOldiRule = $F5Session.GetLink($iRuleonServer.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -URI $URIOldiRule -Credential $F5Session.Credential
+                        Invoke-RestMethodOverride -Method DELETE -URI $URIOldiRule -WebSession $F5Session.WebSession
                     }
                 }
                 
@@ -115,7 +115,7 @@
         {
             if ($pscmdlet.ShouldProcess($F5Session.Name, "Uploading iRule $Name"))
             {
-                Invoke-RestMethodOverride -Method POST -URI "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -AsBoolean
+                Invoke-RestMethodOverride -Method POST -URI "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -AsBoolean
             }
             
             foreach ($Virtualserver in $VirtualServers)

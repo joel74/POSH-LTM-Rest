@@ -32,7 +32,7 @@
                 foreach($virtualserver in $InputObject) {
                     if ($pscmdlet.ShouldProcess($virtualserver.fullPath)){
                         $URI = $F5Session.GetLink($virtualserver.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -WebSession $F5Session.WebSession
                     }
                 }
             }

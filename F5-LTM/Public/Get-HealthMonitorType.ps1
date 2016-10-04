@@ -18,7 +18,7 @@
     process {
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'monitor/'
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
+            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -WebSession $F5Session.WebSession
             $JSON.items.reference | ForEach-Object { 
                 [Regex]::Match($_.Link,'(?<=/)[^/?]*(?=\?)').Value |
                     Where-Object { $_ -like $itemname }

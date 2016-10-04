@@ -32,7 +32,7 @@
                 foreach($item in $InputObject) {
                     if ($pscmdlet.ShouldProcess($item.fullPath)){
                         $URI = $F5Session.GetLink($item.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential
+                        Invoke-RestMethodOverride -Method DELETE -Uri $URI -WebSession $F5Session.WebSession
                     }
                 }
             }
