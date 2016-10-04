@@ -58,6 +58,7 @@ The module contains the following functions.
    * Remove-ProfileRamCache
    * Remove-Node
    * Remove-VirtualServer
+   * Set-iRule
    * Set-PoolMemberDescription
    * Sync-DeviceToGroup
    * Test-F5Session
