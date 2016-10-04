@@ -7,8 +7,9 @@
             Can create a new, and update an existing iRule.
             Removes iRule from VirtualServers and adds them back again after uploading new iRule.
             The command supports -whatif
-        .PARAMETER apiAnonymous
-            The content of the iRule (as a string)
+        .PARAMETER iRuleContent
+            The content of the iRule (as a string).
+            Alias: iRuleContent
         .PARAMETER Partition
             The partition on the F5 to put the iRule on. The full path will be /Partition/iRuleName.
         .PARAMETER OverWrite
@@ -25,10 +26,10 @@
         $F5Session = $Script:F5Session,
         [Parameter(Mandatory)]
         [string]$Name,
+        [Alias('apiAnonymous')]
         [Parameter(Mandatory)]
-        [string]$apiAnonymous,
+        [string]$iRuleContent,
         [string]$Partition = 'Common',
-        [switch]$Passthru,
         [switch]$OverWrite
     )
     
@@ -49,7 +50,7 @@
             kind         = $kind
             name         = $newitem.Name
             fullPath     = $newitem.Name
-            apiAnonymous = $apiAnonymous
+            apiAnonymous = $iRuleContent
         }
                 
         $JSONBody = $JSONBody | ConvertTo-Json -Compress
@@ -67,11 +68,11 @@
             $JSONBody = $JSONBody -replace $Char.Key, $Char.Value
         }
         
-        $iRuleonServer = Get-iRule -Name $newitem.Name
+        $iRuleonServer = Get-iRule -Name $newitem.Name -ErrorAction SilentlyContinue
         
         if ($iRuleonServer)
         {
-            if ($iRuleonServer.apiAnonymous -eq $apiAnonymous)
+            if ($iRuleonServer.apiAnonymous -eq $iRuleContent)
             {
                 Write-Verbose -Message 'iRule on server is already in place'
                 $iRulesDifferent = $false
@@ -125,12 +126,5 @@
                 }
             }
         }
-
-        if ($Passthru) 
-        {
-            Get-iRule -Name $Name
-        } 
     }
 }
-
-
