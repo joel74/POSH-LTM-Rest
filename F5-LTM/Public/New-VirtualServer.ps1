@@ -19,6 +19,7 @@
         [Parameter(Mandatory=$false)]$Source='0.0.0.0/0',
         [Parameter(Mandatory=$false)]$DefaultPool=$null,
         [Parameter(Mandatory=$false)][string[]]$ProfileNames=$null,
+        [Parameter(Mandatory=$true,ParameterSetName = 'IpProtocol')]
         [ValidateSet('tcp','udp','sctp')]
         [Parameter(Mandatory=$false)]$ipProtocol=$null,
         [Parameter(Mandatory=$false)]$Mask='255.255.255.255',
