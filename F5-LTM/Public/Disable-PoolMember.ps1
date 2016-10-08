@@ -37,7 +37,7 @@
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
-                            $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session
+                            $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session -Force:$Force
                         }
                     }
                     "tm:ltm:pool:members:membersstate" {
@@ -56,7 +56,7 @@
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session
+                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session -Force:$Force
             }
         }
     }
