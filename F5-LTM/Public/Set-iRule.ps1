@@ -30,7 +30,8 @@
         [Parameter(Mandatory)]
         [string]$iRuleContent,
         [string]$Partition = 'Common',
-        [switch]$OverWrite
+        [Alias('Overwrite')]
+        [switch]$Force
     )
     
     begin {
@@ -83,9 +84,9 @@
             {
                 $iRulesDifferent = $True
 
-                if ($OverWrite)
+                if ($Force)
                 {
-                    Write-Verbose -Message 'iRule on server is different from current version, and OverWrite flag was set. Removing the iRule from VirtualServer and adding the new one.'
+                    Write-Verbose -Message 'iRule on server is different from current version, and Force flag was set. Removing the iRule from VirtualServer and adding the new one.'
                     
                     $VirtualServers = Get-VirtualServer | Where-Object -Property rules -EQ -Value $iRuleFullName
                     
@@ -106,12 +107,12 @@
                 
                 else
                 {
-                    Write-Warning -Message 'iRule on server is different from current version, set OverWrite flag to overwrite current iRule.'
+                    Write-Warning -Message 'iRule on server is different from current version, use -Force to overwrite current iRule.'
                 }
             }
         }
         
-        if ( (-not $iRuleonServer) -or ($iRuleonServer -and $iRulesDifferent -and $OverWrite) )
+        if ( (-not $iRuleonServer) -or ($iRuleonServer -and $iRulesDifferent -and $Force) )
         {
             if ($pscmdlet.ShouldProcess($F5Session.Name, "Uploading iRule $Name"))
             {
