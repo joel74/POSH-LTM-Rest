@@ -4,26 +4,33 @@
     [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
     [OutputType([String])]
     [OutputType([bool])]
-    param (
+    param ( 
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,
-        [Parameter(Mandatory=$false)]
+
+        [Parameter(Mandatory=$false,ParameterSetName='Credential')]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
         $Credential,
+
+        [Parameter(Mandatory=$false,ParameterSetName='WebSession')]
+        [Microsoft.PowerShell.Commands.WebRequestSession]
+        $WebSession,
+
         [Parameter(Mandatory=$false)]$Body=$null,
         [Parameter(Mandatory=$false)]$Headers=$null,
         [Parameter(Mandatory=$false)]$ContentType=$null,
         [Parameter(Mandatory=$false)]$ErrorMessage=$null,
-        [Parameter(Mandatory=$false)]
-        [Microsoft.PowerShell.Commands.WebRequestSession]
-        $WebSession,
         [switch]$AsBoolean
     )
     try {
         [SSLValidator]::OverrideValidation()
 
-        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession 
+        # Conditionally use WebSession.Credentials in the absensce of a token header or explicit Credential
+        if (!$Credential -and $WebSession -and $WebSession.Credentials -and !$WebSession.Headers.ContainsKey('X-F5-Auth-Token')) {
+            $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
+        }
+        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType;
 
         [SSLValidator]::RestoreValidation()
         
