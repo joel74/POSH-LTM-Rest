@@ -27,7 +27,7 @@
     )
     begin {
         #If the -Force param is specified pool members do not accept any new connections, even if they match an existing persistence session.
-        #Otherwise, members will only accept only new connections that match an existing persistence session.
+        #Otherwise, members will only accept new connections that match an existing persistence session.
     }
     process {
         switch($PSCmdLet.ParameterSetName) {

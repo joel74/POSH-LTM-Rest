@@ -225,7 +225,7 @@ if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
         -ScriptBlock $function:CompletePoolName
         
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command 'Get-iRule' -Module F5-LTM) `
+        -CommandName @(Get-Command '*-iRule' -Module F5-LTM) `
         -ParameterName Name `
         -ScriptBlock $function:CompleteRuleName
 
