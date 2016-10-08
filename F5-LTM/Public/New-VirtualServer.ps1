@@ -3,7 +3,7 @@
 .SYNOPSIS
     Create a new virtual server
 #>
-    [cmdletBinding()]
+    [cmdletbinding(SupportsShouldProcess = $True)]
     param (
         $F5Session=$Script:F5Session,
         [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate",
@@ -13,11 +13,12 @@
         [Parameter(Mandatory=$false)]$Description=$null,
         [Parameter(Mandatory=$true)]$DestinationIP,
         [Parameter(Mandatory=$true)]$DestinationPort,
-        [Parameter(Mandatory=$false)][string[]]$Vlans,
+		[Parameter(Mandatory=$false)][string[]]$Vlans,
+		[ValidateSet('vlansEnabled','vlansDisabled')]
+        [Parameter(Mandatory=$false)][string]$VlansEnabledDisabled='vlansEnabled',
         [Parameter(Mandatory=$false)]$Source='0.0.0.0/0',
         [Parameter(Mandatory=$false)]$DefaultPool=$null,
         [Parameter(Mandatory=$false)][string[]]$ProfileNames=$null,
-        [Parameter(Mandatory=$true,ParameterSetName = 'IpProtocol')]
         [ValidateSet('tcp','udp','sctp')]
         [Parameter(Mandatory=$false)]$ipProtocol=$null,
         [Parameter(Mandatory=$false)]$Mask='255.255.255.255',
@@ -38,7 +39,18 @@
 
         #Start building the JSON for the action
         $Destination = $DestinationIP + ":" + $DestinationPort
-        $JSONBody = @{kind=$Kind;name=$newitem.Name;description=$Description;partition=$newitem.Partition;destination=$Destination;vlans=$Vlans;source=$Source;pool=$DefaultPool;ipProtocol=$ipProtocol;mask=$Mask;connectionLimit=$ConnectionLimit}
+        $JSONBody = @{kind=$Kind;name=$newitem.Name;description=$Description;partition=$newitem.Partition;destination=$Destination;source=$Source;pool=$DefaultPool;ipProtocol=$ipProtocol;mask=$Mask;connectionLimit=$ConnectionLimit}
+        
+        #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
+        If ($Vlans) {
+            $JSONBody.vlans = $Vlans
+            if ($VlansEnabledDisabled -eq 'vlansEnabled') {
+                $JSONBody.vlansEnabled = $true
+            }
+            elseif ($VlansEnabledDisabled -eq 'vlansDisabled') {
+                $JSONBody.vlansDisabled = $true
+            }
+        }
 
         #Build array of profile items
         #JN: What happens if a non-existent profile is passed in?
@@ -52,6 +64,9 @@
 
         Write-Verbose $JSONBody
 
-        Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $($newitem.FullPath) virtual server."
+        if ($pscmdlet.ShouldProcess($F5Session.Name, "Creating virtualserver $Name"))
+        {
+            Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the $($newitem.FullPath) virtual server."
+        }
     }
 }
