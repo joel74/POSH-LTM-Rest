@@ -34,7 +34,7 @@
                 $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
                 foreach($member in $InputObject) {
                     $URI = $F5Session.GetLink($member.selfLink)
-                    Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ErrorMessage "Failed to enable node $($member.Name)." -AsBoolean
+                    Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ErrorMessage "Failed to enable node $($member.Name)." -AsBoolean
                 }
             }
         }
