@@ -60,7 +60,7 @@ function CompleteNodeName {
         } 
     }
 }
-function CompletePartition {
+function CompleteBIGIPPartition {
     param($commandName,
         $parameterName,
         $wordToComplete,
@@ -68,7 +68,7 @@ function CompletePartition {
         $fakeBoundParameters)
     $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
     if ($Session) {
-        Get-Partition -F5Session $Session | Where-Object { $_ -like "$wordToComplete*" }
+        Get-BIGIPPartition -F5Session $Session | Where-Object { $_ -like "$wordToComplete*" }
     }
 }
 function CompletePoolMemberAddress {
@@ -215,9 +215,9 @@ if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
         -ScriptBlock $function:CompletePartition
         
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command 'Get-Partition' -Module F5-LTM) `
+        -CommandName @(Get-Command 'Get-BIGIPPartition' -Module F5-LTM) `
         -ParameterName Name `
-        -ScriptBlock $function:CompletePartition
+        -ScriptBlock $function:CompleteBIGIPPartition
         
     Register-ArgumentCompleter `
         -CommandName @(Get-Command '*-Pool*' -Module F5-LTM) `
