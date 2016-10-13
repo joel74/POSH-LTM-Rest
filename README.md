@@ -30,7 +30,7 @@ The module contains the following functions.
    * Get-iRule
    * Get-iRuleCollection (deprecated; use __Get-iRule__)
    * Get-Node
-   * Get-Partition
+   * Get-BIGIPPartition
    * Get-Pool
    * Get-PoolList (deprecated; use __Get-Pool__)
    * Get-PoolMember
