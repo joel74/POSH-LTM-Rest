@@ -68,8 +68,8 @@
         $JSONBody = @{kind=$Kind;name=$newitem.Name;description=$Description;partition=$newitem.Partition;destination=$Destination;source=$Source;pool=$DefaultPool;ipProtocol=$ipProtocol;mask=$Mask;connectionLimit=$ConnectionLimit}
         
         #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
-        If ($Vlans) {
-            $JSONBody.vlans = $Vlans
+        If ($Vlan) {
+            $JSONBody.vlans = $Vlan
             if ($VlanState  -eq 'Enabled') {
                 $JSONBody.vlansEnabled = $true
             }
