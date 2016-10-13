@@ -27,9 +27,9 @@
 		[Parameter(Mandatory=$false, ParameterSetName= 'Vlan')]
         [string[]]$Vlans
         ,
-		[ValidateSet('vlanEnabled','vlanDisabled')]
+		[ValidateSet('Enabled','Disabled')]
         [Parameter(Mandatory=$true, ParameterSetName= 'Vlan')]
-        [string]$VlanEnabledDisabled
+        [string]$VlanState 
         ,
         [Parameter(Mandatory=$false)]
         $Source='0.0.0.0/0'
@@ -70,10 +70,10 @@
         #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
         If ($Vlans) {
             $JSONBody.vlans = $Vlans
-            if ($VlanEnabledDisabled -eq 'vlanEnabled') {
+            if ($VlanState  -eq 'Enabled') {
                 $JSONBody.vlansEnabled = $true
             }
-            elseif ($VlanEnabledDisabled -eq 'vlanDisabled') {
+            elseif ($VlanState  -eq 'Disabled') {
                 $JSONBody.vlansDisabled = $true
             }
         }
