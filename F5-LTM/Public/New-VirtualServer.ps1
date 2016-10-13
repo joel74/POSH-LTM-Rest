@@ -3,27 +3,52 @@
 .SYNOPSIS
     Create a new virtual server
 #>
-    [cmdletbinding(SupportsShouldProcess = $True)]
+    [cmdletbinding(SupportsShouldProcess = $True, DefaultParameterSetName='None')]
     param (
         $F5Session=$Script:F5Session,
-        [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate",
+        [Parameter(Mandatory=$false)]$Kind="tm:ltm:virtual:virtualstate"
+        ,
         [Alias('VirtualServerName')]
-        [Parameter(Mandatory=$true)][string]$Name,
-        [Parameter(Mandatory=$false)][string]$Partition,
-        [Parameter(Mandatory=$false)]$Description=$null,
-        [Parameter(Mandatory=$true)]$DestinationIP,
-        [Parameter(Mandatory=$true)]$DestinationPort,
-		[Parameter(Mandatory=$false)][string[]]$Vlans,
-		[ValidateSet('vlansEnabled','vlansDisabled')]
-        [Parameter(Mandatory=$false)][string]$VlansEnabledDisabled='vlansEnabled',
-        [Parameter(Mandatory=$false)]$Source='0.0.0.0/0',
-        [Parameter(Mandatory=$false)]$DefaultPool=$null,
-        [Parameter(Mandatory=$false)][string[]]$ProfileNames=$null,
-        [Parameter(Mandatory=$true,ParameterSetName = 'IpProtocol')]
+        [Parameter(Mandatory=$true)]
+        [string]$Name
+        ,
+        [Parameter(Mandatory=$false)]
+        [string]$Partition
+        ,
+        [Parameter(Mandatory=$false)]
+        $Description=$null
+        ,
+        [Parameter(Mandatory=$true)]
+        $DestinationIP
+        ,
+        [Parameter(Mandatory=$true)]
+        $DestinationPort
+        ,
+		[Parameter(Mandatory=$false, ParameterSetName= 'Vlan')]
+        [string[]]$Vlans
+        ,
+		[ValidateSet('vlanEnabled','vlanDisabled')]
+        [Parameter(Mandatory=$true, ParameterSetName= 'Vlan')]
+        [string]$VlanEnabledDisabled
+        ,
+        [Parameter(Mandatory=$false)]
+        $Source='0.0.0.0/0'
+        ,
+        [Parameter(Mandatory=$false)]
+        $DefaultPool=$null
+        ,
+        [Parameter(Mandatory=$false)]
+        [string[]]$ProfileNames=$null
+        ,
+        [Parameter(Mandatory=$true)]
         [ValidateSet('tcp','udp','sctp')]
-        [Parameter(Mandatory=$false)]$ipProtocol=$null,
-        [Parameter(Mandatory=$false)]$Mask='255.255.255.255',
-        [Parameter(Mandatory=$false)]$ConnectionLimit='0'
+        $ipProtocol=$null
+        ,
+        [Parameter(Mandatory=$false)]
+        $Mask='255.255.255.255'
+        ,
+        [Parameter(Mandatory=$false)]
+        $ConnectionLimit='0'
     )
 
     #Test that the F5 session is in a valid format
@@ -45,10 +70,10 @@
         #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
         If ($Vlans) {
             $JSONBody.vlans = $Vlans
-            if ($VlansEnabledDisabled -eq 'vlansEnabled') {
+            if ($VlanEnabledDisabled -eq 'vlansEnabled') {
                 $JSONBody.vlansEnabled = $true
             }
-            elseif ($VlansEnabledDisabled -eq 'vlansDisabled') {
+            elseif ($VlanEnabledDisabled -eq 'vlansDisabled') {
                 $JSONBody.vlansDisabled = $true
             }
         }
