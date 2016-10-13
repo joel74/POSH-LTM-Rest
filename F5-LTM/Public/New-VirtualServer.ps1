@@ -70,10 +70,10 @@
         #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
         If ($Vlans) {
             $JSONBody.vlans = $Vlans
-            if ($VlanEnabledDisabled -eq 'vlansEnabled') {
+            if ($VlanEnabledDisabled -eq 'vlanEnabled') {
                 $JSONBody.vlansEnabled = $true
             }
-            elseif ($VlanEnabledDisabled -eq 'vlansDisabled') {
+            elseif ($VlanEnabledDisabled -eq 'vlanDisabled') {
                 $JSONBody.vlansDisabled = $true
             }
         }
