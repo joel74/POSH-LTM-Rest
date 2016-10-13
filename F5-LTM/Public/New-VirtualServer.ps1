@@ -25,7 +25,7 @@
         $DestinationPort
         ,
 		[Parameter(Mandatory=$false, ParameterSetName= 'Vlan')]
-        [string[]]$Vlans
+        [string[]]$Vlan
         ,
 		[ValidateSet('Enabled','Disabled')]
         [Parameter(Mandatory=$true, ParameterSetName= 'Vlan')]
