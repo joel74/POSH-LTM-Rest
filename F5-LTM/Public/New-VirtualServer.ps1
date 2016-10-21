@@ -1,5 +1,4 @@
-﻿#requires -Version 3
-Function New-VirtualServer
+﻿Function New-VirtualServer
 {
   <#
       .SYNOPSIS
