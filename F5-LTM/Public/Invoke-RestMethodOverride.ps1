@@ -1,4 +1,4 @@
-﻿Function Invoke-RestMethodOverride {
+Function Invoke-RestMethodOverride {
     [cmdletBinding()]
     [OutputType([Xml.XmlDocument])]
     [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
@@ -26,16 +26,28 @@
     try {
         [SSLValidator]::OverrideValidation()
 
-        if (!$Credential -and $WebSession.Headers.Count -eq 0 -and $WebSession.Credentials) {
-            # LTM -lt 11.6, use F5Session.WebSession.Credentials
-            $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
-        }
-        if ($Credential) {
-            # LTM -lt 11.6, use F5Session.WebSession.Credentials
-            $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -WebSession $WebSession -Credential $Credential;
-        } else {
-            # LTM -ge 11.6, use 'X-F5-Auth-Token'
-            $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -WebSession $WebSession;
+        switch($PSCmdLet.ParameterSetName) {
+            Credential {
+                # 1) LTM version request
+                # 2) LTM token request (LTM -ge 11.6)
+                # 3) External caller with -Credential
+                $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
+            }
+            WebSession {
+                if ($WebSession.Headers.Count -eq 0 -and $WebSession.Credentials) {
+                    # 4) LTM -lt 11.6, use [F5Session.]WebSession.Credentials
+                    $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
+                    $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
+                } else {
+                    # 5) LTM -ge 11.6), uses 'X-F5-Auth-Token'
+                    # 6) External caller with -WebSession
+                    $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession
+                }
+            }
+            Default {
+                # 7) External caller with no -Credential nor -WebSession specified
+                Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType;
+            }
         }
 
         [SSLValidator]::RestoreValidation()
