@@ -30,7 +30,7 @@
         if (!$Credential -and $WebSession -and $WebSession.Credentials -and !$WebSession.Headers.ContainsKey('X-F5-Auth-Token')) {
             $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
         }
-        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType;
+        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession;
 
         [SSLValidator]::RestoreValidation()
         
