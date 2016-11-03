@@ -15,7 +15,7 @@
 
         [Parameter(Mandatory=$false,ParameterSetName='WebSession')]
         [Microsoft.PowerShell.Commands.WebRequestSession]
-        $WebSession,
+        $WebSession=(New-Object Microsoft.PowerShell.Commands.WebRequestSession),
 
         [Parameter(Mandatory=$false)]$Body=$null,
         [Parameter(Mandatory=$false)]$Headers=$null,
@@ -26,11 +26,17 @@
     try {
         [SSLValidator]::OverrideValidation()
 
-        # Conditionally use WebSession.Credentials in the absensce of a token header or explicit Credential
-        if (!$Credential -and $WebSession -and $WebSession.Credentials -and !$WebSession.Headers.ContainsKey('X-F5-Auth-Token')) {
+        if (!$Credential -and $WebSession.Headers.Count -eq 0 -and $WebSession.Credentials) {
+            # LTM -lt 11.6, use F5Session.WebSession.Credentials
             $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
         }
-        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession;
+        if ($Credential) {
+            # LTM -lt 11.6, use F5Session.WebSession.Credentials
+            $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -WebSession $WebSession -Credential $Credential;
+        } else {
+            # LTM -ge 11.6, use 'X-F5-Auth-Token'
+            $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -WebSession $WebSession;
+        }
 
         [SSLValidator]::RestoreValidation()
         
