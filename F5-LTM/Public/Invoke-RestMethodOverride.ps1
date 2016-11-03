@@ -1,5 +1,5 @@
 Function Invoke-RestMethodOverride {
-    [cmdletBinding()]
+    [cmdletBinding(DefaultParameterSetName='Anonymous')]
     [OutputType([Xml.XmlDocument])]
     [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
     [OutputType([String])]
