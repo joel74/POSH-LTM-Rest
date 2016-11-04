@@ -26,7 +26,7 @@
         $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
         $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password} | ConvertTo-Json
 
-        $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
+        $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -ContentType 'application/json'
         $Token = $Result.token.token
         $session.Headers.Add('X-F5-Auth-Token', $Token)
 
