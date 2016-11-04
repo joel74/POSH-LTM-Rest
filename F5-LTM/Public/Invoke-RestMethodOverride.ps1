@@ -29,22 +29,22 @@ Function Invoke-RestMethodOverride {
         switch($PSCmdLet.ParameterSetName) {
             Credential {
                 # 1) LTM version request
-                # 2) LTM token request (LTM -ge 11.6)
-                # 3) External caller with -Credential
+                # 2) External caller with -Credential
                 $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
             }
             WebSession {
                 if ($WebSession.Headers.Count -eq 0 -and $WebSession.Credentials) {
-                    # 4) LTM -lt 11.6, use [F5Session.]WebSession.Credentials
+                    # 3) LTM -lt 11.6, use [F5Session.]WebSession.Credentials
                     $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
                     $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
                 } else {
-                    # 5) LTM -ge 11.6), uses 'X-F5-Auth-Token'
-                    # 6) External caller with -WebSession
+                    # 4) LTM -ge 11.6), uses 'X-F5-Auth-Token'
+                    # 5) External caller with -WebSession
                     $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession
                 }
             }
             Default {
+                # 6) LTM token request (LTM -ge 11.6)
                 # 7) External caller with no -Credential nor -WebSession specified
                 Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType;
             }
