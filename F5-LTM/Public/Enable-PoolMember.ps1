@@ -37,7 +37,7 @@
                         $JSONBody = @{state='user-up';session='user-enabled'} | ConvertTo-Json
                         foreach($member in $InputObject) {
                             $URI = $F5Session.GetLink($member.selfLink)
-                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ErrorMessage "Failed to enable $Address in the $PoolName pool." -AsBoolean
+                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ErrorMessage "Failed to enable $Address in the $PoolName pool." -AsBoolean
                         }
                     }
                 }

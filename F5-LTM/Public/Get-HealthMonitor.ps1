@@ -38,7 +38,7 @@
         foreach ($typename in $Type) {
             foreach ($itemname in $Name) {
                 $URI = $F5Session.BaseURL + 'monitor/{0}' -f ($typename,(Get-ItemPath -Name $itemname -Application $Application -Partition $Partition) -join '/')
-                $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -ErrorAction $TypeSearchErrorAction
+                $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -WebSession $F5Session.WebSession -ErrorAction $TypeSearchErrorAction
                 if ($JSON.items -or $JSON.name) {
                     $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
                     if(![string]::IsNullOrWhiteSpace($Application) -and ![string]::IsNullOrWhiteSpace($Partition)) {

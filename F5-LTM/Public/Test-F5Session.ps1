@@ -8,7 +8,7 @@ Function Test-F5Session {
         [Parameter(Mandatory=$true)][AllowNull()]$F5Session
     )
     #Validate F5Session 
-    If ($($F5Session.BaseURL) -ne ("https://$($F5Session.Name)/mgmt/tm/ltm/") -or ($F5Session.Credential.GetType().name -ne 'PSCredential')) { 
+    If ($($F5Session.BaseURL) -ne ("https://$($F5Session.Name)/mgmt/tm/ltm/") -or ($F5Session.WebSession.GetType().name -ne 'WebRequestSession')) { 
         Write-Error 'You must either create an F5 Session with script scope (by calling New-F5Session) or pass an F5 session to this function.' 
     }
 }

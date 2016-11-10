@@ -47,7 +47,7 @@
                         "tm:ltm:pool:members:membersstate" {
                             if ($pscmdlet.ShouldProcess($item.GetFullName())) {
                                 $URI = $F5Session.GetLink($item.selfLink)
-                                Invoke-RestMethodOverride -Method DELETE -Uri $URI -Credential $F5Session.Credential
+                                Invoke-RestMethodOverride -Method DELETE -Uri $URI -WebSession $F5Session.WebSession
                             }
                         }
                     }
