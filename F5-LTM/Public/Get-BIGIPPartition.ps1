@@ -1,4 +1,4 @@
-﻿Function Get-Partition {
+﻿Function Get-BIGIPPartition {
 <#
 .SYNOPSIS
     Retrieve specified Partition(s)
