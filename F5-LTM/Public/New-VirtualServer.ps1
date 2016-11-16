@@ -1,4 +1,4 @@
-﻿Function New-VirtualServer
+Function New-VirtualServer
 {
   <#
       .SYNOPSIS
@@ -112,7 +112,7 @@
     if ($pscmdlet.ShouldProcess($F5Session.Name, "Creating virtualserver $Name"))
     {
       Invoke-RestMethodOverride -Method POST -Uri "$URI" `
-      -Credential $F5Session.Credential `
+      -WebSession $F5Session.WebSession `
       -Body $JSONBody `
       -ContentType 'application/json' `
       -ErrorMessage "Failed to create the $($newitem.FullPath) virtual server."

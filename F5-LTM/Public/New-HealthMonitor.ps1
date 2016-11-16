@@ -51,7 +51,7 @@
                 #Start building the JSON for the action
                 $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;recv=$Receive;send=$Send;interval=$Interval;timeout=$Timeout} | 
                     ConvertTo-Json
-                $newmonitor = Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the /$Type$($newitem.FullPath) health monitor."
+                $newmonitor = Invoke-RestMethodOverride -Method POST -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the /$Type$($newitem.FullPath) health monitor."
                 if ($Passthru) {
                     Get-HealthMonitor -F5Session $F5Session -Name $newmonitor.name -Partition $newmonitor.partition -Type $Type
                 }

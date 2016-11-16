@@ -42,7 +42,7 @@
                 #Start building the JSON for the action
                 $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;members=@()} | ConvertTo-Json
 
-                Invoke-RestMethodOverride -Method POST -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
+                Invoke-RestMethodOverride -Method POST -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
                 ForEach ($MemberDefinition in $MemberDefinitionList){
                     $Address,$PortNumber = $MemberDefinition -split ','
                     Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Address -PortNumber $PortNumber -Status Enabled

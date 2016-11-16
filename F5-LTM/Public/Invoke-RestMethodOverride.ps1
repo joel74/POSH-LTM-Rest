@@ -1,5 +1,5 @@
-﻿Function Invoke-RestMethodOverride {
-    [cmdletBinding()]
+Function Invoke-RestMethodOverride {
+    [cmdletBinding(DefaultParameterSetName='Anonymous')]
     [OutputType([Xml.XmlDocument])]
     [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
     [OutputType([String])]
@@ -7,10 +7,16 @@
     param ( 
         [Parameter(Mandatory=$true)][string]$Method,
         [Parameter(Mandatory=$true)][string]$URI,
-        [Parameter(Mandatory=$true)]
+
+        [Parameter(Mandatory=$false,ParameterSetName='Credential')]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
         $Credential,
+
+        [Parameter(Mandatory=$false,ParameterSetName='WebSession')]
+        [Microsoft.PowerShell.Commands.WebRequestSession]
+        $WebSession=(New-Object Microsoft.PowerShell.Commands.WebRequestSession),
+
         [Parameter(Mandatory=$false)]$Body=$null,
         [Parameter(Mandatory=$false)]$Headers=$null,
         [Parameter(Mandatory=$false)]$ContentType=$null,
@@ -20,7 +26,29 @@
     try {
         [SSLValidator]::OverrideValidation()
 
-        $Result = Invoke-RestMethod -Method $Method -Uri $URI -Credential $Credential -Body $Body -Headers $Headers -ContentType $ContentType 
+        switch($PSCmdLet.ParameterSetName) {
+            Credential {
+                # 1) LTM version request
+                # 2) External caller with -Credential
+                $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
+            }
+            WebSession {
+                if ($WebSession.Headers.Count -eq 0 -and $WebSession.Credentials) {
+                    # 3) LTM -lt 11.6, use [F5Session.]WebSession.Credentials
+                    $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
+                    $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
+                } else {
+                    # 4) LTM -ge 11.6), uses 'X-F5-Auth-Token'
+                    # 5) External caller with -WebSession
+                    $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Websession $WebSession
+                }
+            }
+            Default {
+                # 6) LTM token request (LTM -ge 11.6)
+                # 7) External caller with no -Credential nor -WebSession specified
+                Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType;
+            }
+        }
 
         [SSLValidator]::RestoreValidation()
         
