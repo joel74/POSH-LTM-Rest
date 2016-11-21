@@ -11,7 +11,7 @@
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param(
         [Parameter(Mandatory=$true)][string]$LTMName,
-        [Parameter(Mandatory=$false)][System.Management.Automation.PSCredential]$LTMCredentials,
+        [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials,
         [switch]$Default,
         [switch]$PassThrough
     )
