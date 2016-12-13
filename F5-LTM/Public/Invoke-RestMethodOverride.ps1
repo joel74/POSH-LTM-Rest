@@ -61,8 +61,7 @@ Function Invoke-RestMethodOverride {
         if ($AsBoolean) {
             $false
         } else {
-#            $message = $_.ErrorDetails.Message | ConvertFrom-json | Select-Object -expandproperty message
-            $message = $_.ErrorDetails.Message | Select-Object -expandproperty message
+            $message = $_.ErrorDetails.Message | ConvertFrom-json | Select-Object -expandproperty message
             $ErrorOutput = '"{0} {1}: {2}' -f $_.Exception.Response.StatusCode.value__,$_.Exception.Response.StatusDescription,(Invoke-NullCoalescing {$message} {$ErrorMessage}) 
             Write-Error $ErrorOutput
         } 
