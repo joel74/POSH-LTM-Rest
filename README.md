@@ -79,7 +79,7 @@ use the New-F5Session function to create this object. This function expects the 
 You can create a credential object using 'Get-Credential' and entering the username and password at the prompts, or programmatically like this:
 ```
 $secpasswd = ConvertTo-SecureString "PlainTextPassword" -AsPlainText -Force
-$mycreds = New-Object System.Management.Automation.PSCredential ("username", $secpasswd)
+$mycreds = New-Object System.Management.Automation.PSCredential "username", $secpasswd
 ```
 Thanks to Kotesh Bandhamravuri and his blog entry http://blogs.msdn.com/b/koteshb/archive/2010/02/13/powershell-creating-a-pscredential-object.aspx for this snippet.
 
