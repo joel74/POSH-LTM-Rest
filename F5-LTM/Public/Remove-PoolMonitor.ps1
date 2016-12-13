@@ -35,7 +35,7 @@
                         $monitor = ($pool.monitor -split ' and ' | Where-Object { $Name -notcontains $_.Trim() }) -join ' and '
                         $JSONBody = @{monitor=$monitor} | ConvertTo-Json
                         $URI = $F5Session.GetLink($pool.selfLink)
-                        Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json'
+                        Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json'
                     }
                 }
             }

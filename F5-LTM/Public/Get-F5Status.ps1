@@ -13,7 +13,7 @@
 
     $FailoverPage = $F5Session.BaseURL -replace "/ltm/", "/cm/failover-status"
 
-    $FailoverJSON = Invoke-RestMethodOverride -Method Get -Uri $FailoverPage -Credential $F5Session.Credential
+    $FailoverJSON = Invoke-RestMethodOverride -Method Get -Uri $FailoverPage -WebSession $F5Session.WebSession
 
     #This is where the failover status is indicated
     $FailoverJSON.entries.'https://localhost/mgmt/tm/cm/failover-status/0'.nestedStats.entries.status.description

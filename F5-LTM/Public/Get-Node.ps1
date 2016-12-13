@@ -28,7 +28,7 @@
     process {
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential
+            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -WebSession $F5Session.WebSession
             Invoke-NullCoalescing {$JSON.items} {$JSON} | 
                 Where-Object { $Address -eq '*' -or $Address -contains $_.address} |
                 Add-ObjectDetail -TypeName 'PoshLTM.Node'

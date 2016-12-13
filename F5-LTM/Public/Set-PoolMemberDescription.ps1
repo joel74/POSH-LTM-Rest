@@ -40,7 +40,7 @@
                         foreach($member in $InputObject) {
                             $JSONBody = @{description=$Description} | ConvertTo-Json
                             $URI = $F5Session.GetLink($member.selfLink)
-                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -Credential $F5Session.Credential -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $ComputerName in the $PoolName pool to $Description." -AsBoolean
+                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $ComputerName in the $PoolName pool to $Description." -AsBoolean
                         }
                     }
                 }

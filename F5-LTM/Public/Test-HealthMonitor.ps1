@@ -29,7 +29,7 @@
     process {
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'monitor/{0}/{1}' -f $Type,(Get-ItemPath -Name $itemname -Partition $Partition)
-            Invoke-RestMethodOverride -Method Get -Uri $URI -Credential $F5Session.Credential -AsBoolean
+            Invoke-RestMethodOverride -Method Get -Uri $URI -WebSession $F5Session.WebSession -AsBoolean
         }
     }
 }
