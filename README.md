@@ -62,6 +62,7 @@ The module contains the following functions.
    * Remove-Node
    * Remove-VirtualServer
    * Set-iRule
+   * Set-PoolLoadBalancingMode 
    * Set-PoolMemberDescription
    * Sync-DeviceToGroup
    * Test-F5Session
