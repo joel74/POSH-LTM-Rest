@@ -36,7 +36,7 @@ Function Invoke-RestMethodOverride {
             WebSession {
                 if ($WebSession.Headers.Count -eq 0 -and $WebSession.Credentials) {
                     # 4) LTM -lt 11.6, use [F5Session.]WebSession.Credentials
-                    $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, (ConvertTo-SecureString $WebSession.Credentials.Password -AsPlainText -Force))
+                    $Credential = New-Object System.Management.Automation.PSCredential($WebSession.Credentials.UserName, $WebSession.Credentials.SecurePassword)
                     $Result = Invoke-RestMethod -Method $Method -Uri $URI -Body $Body -Headers $Headers -ContentType $ContentType -Credential $Credential
                 } else {
                     # 5) LTM -ge 11.6), uses 'X-F5-Auth-Token'
