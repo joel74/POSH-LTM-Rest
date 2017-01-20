@@ -50,6 +50,7 @@
         $JSONBody = @{
             kind         = $kind
             name         = $newitem.Name
+            partition    = $Partition
             fullPath     = $newitem.Name
             apiAnonymous = $iRuleContent
         }
@@ -69,7 +70,7 @@
             $JSONBody = $JSONBody -replace $Char.Key, $Char.Value
         }
         
-        $iRuleonServer = Get-iRule -Name $newitem.Name -ErrorAction SilentlyContinue
+        $iRuleonServer = Get-iRule -Name $newitem.Name -Partition $Partition -ErrorAction SilentlyContinue
         
         if ($iRuleonServer)
         {
