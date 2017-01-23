@@ -19,8 +19,8 @@
 
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
-    #First we attempt to get an auth token. We need an auth token to do anything, include getting the LTM version, for LTMs using external auth.
-    #If we fail to get an auth token, that means the version is prior to 11.6, so we fall back on basic auth
+    #First, we attempt to get an authorization token. We need an auth token to do anything for LTMs using external authentication, including getting the LTM version.
+    #If we fail to get an auth token, that means the LTM version is prior to 11.6, so we fall back on basic authorization
     $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
     $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
 
