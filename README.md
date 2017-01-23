@@ -1,9 +1,9 @@
 # POSH-LTM-Rest
 This PowerShell module uses the F5 LTM REST API to manipulate and query pools, pool members, virtual servers and iRules.
 It is built to work with the following BIG-IP versions:
-11.5.1 Build 8.0.175 Hotfix 8 and later
-11.6.0 Build 5.0.429 Hotfix 4 and later
-All versions of 12.x
+   * 11.5.1 Build 8.0.175 Hotfix 8 and later
+   * 11.6.0 Build 5.0.429 Hotfix 4 and later
+   * All versions of 12.x
 
 It requires PowerShell v3 or higher.
 
