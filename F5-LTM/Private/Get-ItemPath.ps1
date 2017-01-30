@@ -4,7 +4,7 @@
         [Parameter(Mandatory=$false)][string]$Application,
         [Parameter(Mandatory=$false)][string]$Partition
     )
-    if ($Name -match '^/.*/.*$') {
+    if ($Name -match '^[~/].*[~/]([^~/]*.app[~/])?.*$') {
         $Name -replace '/','~'
     } else {
         if ([string]::IsNullOrEmpty($Name)) {

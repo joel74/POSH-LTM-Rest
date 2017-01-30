@@ -19,14 +19,15 @@
 
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
-    $F5Version = Invoke-RestMethodOverride -Method Get -Uri "https://$LTMName/mgmt/tm/sys/version" -Credential $LTMCredentials -ContentType 'application/json'
-    if ([version]([Regex]::Match($F5Version.selfLink,'(\d\.?)+$').Value) -lt [version]11.6) {
-        $session.Credentials = $LTMCredentials
-    } else {
-        $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
-        $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
+    #First, we attempt to get an authorization token. We need an auth token to do anything for LTMs using external authentication, including getting the LTM version.
+    #If we fail to get an auth token, that means the LTM version is prior to 11.6, so we fall back on Basic authentication
+    $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
+    $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
 
-        $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
+    $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
+
+    #Check if a token was returned
+    If ($Result.token.token){
         $Token = $Result.token.token
         $session.Headers.Add('X-F5-Auth-Token', $Token)
 
@@ -36,6 +37,11 @@
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
     }
+    #Otherwise, fall back to Basic authentication
+    Else {
+        Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token."
+        $session.Credentials = $LTMCredentials
+    }
 
     $newSession = [pscustomobject]@{
             Name = $LTMName
@@ -44,7 +50,7 @@
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)
                 $Link -replace 'localhost', $this.Name    
-            } -PassThru 
+    } -PassThru 
 
     #If the Default switch is set, and/or if no script-scoped F5Session exists, then set the script-scoped F5Session
     If ($Default -or !($Script:F5Session)){
