@@ -152,7 +152,7 @@ Function Set-VirtualServer {
                             name = $ProfileName
                         }
                     }
-                    $ChgProperties[$knownproperties[$key]] = $ProfileItems
+                    $ChgProperties['profiles'] = $ProfileItems
                 }
                 'InputObject' {} # Ignore
                 'PassThru' {} # Ignore
