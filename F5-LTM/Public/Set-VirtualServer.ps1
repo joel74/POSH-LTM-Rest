@@ -1,4 +1,4 @@
-﻿Function Set-VirtualServer {
+Function Set-VirtualServer {
     <#
         .SYNOPSIS
             Create or update VirtualServer(s)
@@ -168,26 +168,20 @@
             }
         }
         
-        # ipProtocol is required by New-VirtualServer, so pull it from $InputObject if necessary
-        if (-not ($NewProperties.ContainsKey('ipProtocol')) -and $InputObject.ipProtocol) {
-            $NewProperties['ipProtocol'] = $InputObject.ipProtocol
-        }
-
-        # pool, profiles, and vlans are not required by New-VirtualServer, so in the absensce of an override they will be applied on the subsequent REST/PUT Update
+        # ipProtocol and other Mandatory New-VirtualServer params are set either via ValueFromPipelineByPropertyName or explicitly below (DestinationIP+DestinationPort)
+        # New-VirtualServer may throw an error if InputObject excludes them. but they are not all Mandatory to set existing VirtualServers.
+        # pool, profiles, and vlans are not Mandatory New-VirtualServer params, so in the absensce of an override they will be applied on the subsequent REST/PUT Update
         
-        # Applies DestinationIP and/or DestinationPort overrides if supplied
-        if ($NewProperties.ContainsKey('DestinationIP') -or $NewProperties.ContainsKey('DestinationPort')) {
-            $destIP = if ($NewProperties.ContainsKey('DestinationIP')) { 
-                $NewProperties['DestinationIP'] 
-            } elseif ($InputObject.destination) {
-                ($InputObject.destination -split ':')[0]
-            }
-            $destPort = if ($NewProperties.ContainsKey('DestinationPort')) { 
-                $NewProperties['DestinationPort'] 
-            } elseif ($InputObject.destination) {
-                ($InputObject.destination -split ':')[1]
-            }
-            $ChgProperties['destination'] = ('{0}:{1}' -f $destIP,$destPort)
+        # Set New DestinationIP/DestinationPort based on $InputObject if necessary and available
+        if (-not $NewProperties.ContainsKey('DestinationIP') -and $InputObject -and $InputObject.destination) { 
+            $NewProperties['DestinationIP'] = ($InputObject.destination -split ':')[0]
+        }
+        if (-not $NewProperties.ContainsKey('DestinationPort') -and $InputObject -and $InputObject.destination) { 
+            $NewProperties['DestinationPort'] = ($InputObject.destination -split ':')[1]
+        }
+        # Set changed destination if either or both components are overridden via PSBoundParameters
+        if ($PSBoundParameters.ContainsKey('DestinationIP') -or $PSBoundParameters.ContainsKey('DestinationPort')) { 
+            $ChgProperties['destination'] = ('{0}:{1}' -f $NewProperties['DestinationIP'],$NewProperties['DestinationPort'])
         }
 
         if (-not (Test-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition)) {
