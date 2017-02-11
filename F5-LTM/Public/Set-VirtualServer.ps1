@@ -13,7 +13,22 @@ Function Set-VirtualServer {
         .PARAMETER PassThru
             Output the modified VirtualServer to the pipeline.
         .EXAMPLE
-            Set-VirtualServer -name 'NameThatMakesSense' -InputObject $VirtualServerPSObject
+            Set-VirtualServer -Name 'test.northwindtraders.com' -Description 'Northwind Traders example' -DefaultPool 'test.northwindtraders.com_blue' -Source 0.0.0.0/0 -DestinationIP 192.168.15.98 -DestinationPort 30785 -ipProtocol tcp
+
+            Creates or updates a VirtualServer.  Note that parameters that are Mandatory for New-VirtualServer must be specified for VirtualServers that do not yet exist.
+            
+        .EXAMPLE
+            Set-VirtualServer -Name 'test.northwindtraders.com' -DesinationPort 82
+            
+            Sets the destination port of an existing VirtualServer.
+            
+        .EXAMPLE
+            $vs = Get-VirtualServer -Name 'test.northwindtraders.com'
+            $vs.pool = if ($vs.pool -eq 'test.northwindtraders.com_blue') { 'test.northwindtraders.com_green' } else { 'test.northwindtraders.com_blue' }
+            $vs | Set-VirtualServer -PassThru
+
+            Toggles the pool of an existing VirtualServer via the pipeline and returns the resulting VirtualServer with -PassThru.
+            
     #>
     [cmdletbinding(ConfirmImpact='Medium',SupportsShouldProcess,DefaultParameterSetName="Default")]
     param (
@@ -64,16 +79,8 @@ Function Set-VirtualServer {
 
         #region New-VirtualServer equivalents - transformation required
 
-        [Parameter(ParameterSetName='InputObject')]
-        [Parameter(Mandatory,ParameterSetName='Default')]
-        [Parameter(Mandatory,ParameterSetName='VlanDisabled')]
-        [Parameter(Mandatory,ParameterSetName='VlanEnabled')]
         $DestinationIP,
 
-        [Parameter(ParameterSetName='InputObject')]
-        [Parameter(Mandatory,ParameterSetName='Default')]
-        [Parameter(Mandatory,ParameterSetName='VlanDisabled')]
-        [Parameter(Mandatory,ParameterSetName='VlanEnabled')]
         $DestinationPort,
 
         [Parameter(Mandatory,ParameterSetName='VlanEnabled')]
@@ -82,13 +89,10 @@ Function Set-VirtualServer {
         [Parameter(Mandatory,ParameterSetName='VlanDisabled')]
         [string[]]$VlanDisabled,
 
-        [Parameter]
+        [Parameter()]
         [string[]]$ProfileNames=$null,
 
-        [Parameter(ParameterSetName='InputObject',ValueFromPipelineByPropertyName)]
-        [Parameter(Mandatory,ParameterSetName='Default')]
-        [Parameter(Mandatory,ParameterSetName='VlanDisabled')]
-        [Parameter(Mandatory,ParameterSetName='VlanEnabled')]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [ValidateSet('tcp','udp','sctp')]
         $ipProtocol=$null,
 
@@ -144,7 +148,7 @@ Function Set-VirtualServer {
                     $NewProperties[$key] = $PSBoundParameters[$key]
                 }
                 'ProfileNames' {
-                    $NewProperties[$key] = $PSBoundParamters[$key]
+                    $NewProperties[$key] = $PSBoundParameters[$key]
                     $ProfileItems = @()
                     ForEach ($ProfileName in $ProfileNames) {
                         $ProfileItems += @{
@@ -171,13 +175,23 @@ Function Set-VirtualServer {
         # ipProtocol and other Mandatory New-VirtualServer params are set either via ValueFromPipelineByPropertyName or explicitly below (DestinationIP+DestinationPort)
         # New-VirtualServer may throw an error if InputObject excludes them. but they are not all Mandatory to set existing VirtualServers.
         # pool, profiles, and vlans are not Mandatory New-VirtualServer params, so in the absensce of an override they will be applied on the subsequent REST/PUT Update
-        
-        # Set New DestinationIP/DestinationPort based on $InputObject if necessary and available
-        if (-not $NewProperties.ContainsKey('DestinationIP') -and $InputObject -and $InputObject.destination) { 
-            $NewProperties['DestinationIP'] = ($InputObject.destination -split ':')[0]
+
+        # Set New DestinationIP/DestinationPort based on $InputObject or existing VirtualServer if necessary and available
+        if (-not $NewProperties.ContainsKey('DestinationIP')) {
+            $destination = if ($InputObject -and $InputObject.destination) {
+                $InputObject.destination
+            } else {
+                Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition -ErrorAction SilentlyContinue | Select-Object -ExpandProperty destination
+            }
+            $NewProperties['DestinationIP'] = ($destination -split ':')[0]
         }
-        if (-not $NewProperties.ContainsKey('DestinationPort') -and $InputObject -and $InputObject.destination) { 
-            $NewProperties['DestinationPort'] = ($InputObject.destination -split ':')[1]
+        if (-not $NewProperties.ContainsKey('DestinationPort')) { 
+            $destination = if ($InputObject -and $InputObject.destination) {
+                $InputObject.destination
+            } else {
+                Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition -ErrorAction SilentlyContinue | Select-Object -ExpandProperty destination
+            }
+            $NewProperties['DestinationPort'] = ($destination -split ':')[1]
         }
         # Set changed destination if either or both components are overridden via PSBoundParameters
         if ($PSBoundParameters.ContainsKey('DestinationIP') -or $PSBoundParameters.ContainsKey('DestinationPort')) { 
@@ -186,13 +200,12 @@ Function Set-VirtualServer {
 
         if (-not (Test-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition)) {
             Write-Verbose -Message 'Creating new VirtualServer...'
-            New-VirtualServer @NewProperties
+            New-VirtualServer @NewProperties | Out-Null
         }
-        if ($pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
+        # This performs the magic necessary for ChgProperties to override $InputObject properties
+        $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
+        if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
             Write-Verbose -Message 'Setting VirtualServer details...'
-
-            # This performs the magic necessary for ChgProperties to override $InputObject properties
-            $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties)
                 
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition) 
             $JSONBody = $NewObject | ConvertTo-Json -Compress
