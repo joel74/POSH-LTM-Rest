@@ -20,32 +20,30 @@
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
     #First, we attempt to get an authorization token. We need an auth token to do anything for LTMs using external authentication, including getting the LTM version.
-    #If we fail to get an auth token, that means the LTM version is prior to 11.6, so we fall back on Basic authentication
-    $AuthURL = "https://$LTMName/mgmt/shared/authn/login";
+    #If we fail to get an auth token, that means the LTM version is prior to 11.6, so we fall back on Credentials
+    $AuthURL = "https://$LTMName/mgmt/shared/authn/login"
     $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
+    try {
+        # Bypass Invoke-F5RestMethod so that we can catch the exception
+        $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
 
-    $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
-
-    #Check if a token was returned
-    If ($Result.token.token){
-        $Token = $Result.token.token
-        $session.Headers.Add('X-F5-Auth-Token', $Token)
+        $session.Headers.Add('X-F5-Auth-Token', $Result.token.token)
 
         # Add token expiration time to session
         $ts = New-TimeSpan -Minutes 20
         $date = Get-Date -Date $Result.token.startTime 
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
-    }
-    #Otherwise, fall back to Basic authentication
-    Else {
+    } catch {
+        # fall back to Credentials
         Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token."
-        $session.Credentials = $LTMCredentials
+        $Credentials = $LTMCredentials
     }
 
     $newSession = [pscustomobject]@{
             Name = $LTMName
             BaseURL = $BaseURL
+            Credential = $Credentials
             WebSession = $session 
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)

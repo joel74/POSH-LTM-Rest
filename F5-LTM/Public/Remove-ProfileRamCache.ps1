@@ -16,6 +16,6 @@
 
     $ProfileURL = $F5Session.BaseURL +$ProfileName
 
-    Invoke-RestMethodOverride -Method DELETE -Uri "$ProfileURL" -WebSession $F5Session.WebSession -ErrorMessage "Failed to clear the ram cache for the $ProfileName profile." |
+    Invoke-F5RestMethod -Method DELETE -Uri "$ProfileURL" -F5Session $F5Session -ErrorMessage "Failed to clear the ram cache for the $ProfileName profile." |
         Out-Null
 }

@@ -220,7 +220,7 @@ Function Set-VirtualServer {
 
             #endregion
 
-            $result = Invoke-RestMethodOverride -Method PUT -URI "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json'
+            $result = Invoke-F5RestMethod -Method PUT -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
         }
         if ($PassThru) { Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition }
     }
