@@ -64,6 +64,7 @@ The module contains the following functions.
    * Set-iRule
    * Set-PoolLoadBalancingMode 
    * Set-PoolMemberDescription
+   * Set-VirtualServer
    * Sync-DeviceToGroup
    * Test-F5Session
    * Test-Functionality

@@ -14,6 +14,11 @@ Function New-VirtualServer
     [Alias('VirtualServerName')]
     [string]$Name
     ,
+
+    [Alias('iApp')]
+    [Parameter(Mandatory=$false)]
+    [string]$Application='',
+
     [Parameter(Mandatory = $false)]
     [string]$Partition
     ,
@@ -64,7 +69,7 @@ Function New-VirtualServer
   }
   Else 
   {
-    $newitem = New-F5Item -Name $Name -Partition $Partition
+    $newitem = New-F5Item -Name $Name -Application $Application -Partition $Partition
 
     #Start building the JSON for the action
     $Destination = $DestinationIP + ':' + $DestinationPort
@@ -79,6 +84,9 @@ Function New-VirtualServer
       ipProtocol      = $ipProtocol
       mask            = $Mask
       connectionLimit = $ConnectionLimit
+    }
+    if ($newItem.application) {
+      $JSONBody.Add('application',$newItem.application)
     }
         
     #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
