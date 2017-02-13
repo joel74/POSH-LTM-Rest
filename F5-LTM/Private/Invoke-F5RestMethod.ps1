@@ -18,13 +18,13 @@ Function Invoke-F5RestMethod {
 
     try {
         # Remove params not understood by Invoke-RestMethod, so the remaining params can be splatted
-        $PSBoundParameters.Remove('AsBoolean')
-        $PSBoundParameters.Remove('F5Session')
-        $PSBoundParameters.Remove('ErrorMessage')
+        $null = $PSBoundParameters.Remove('AsBoolean')
+        $null = $PSBoundParameters.Remove('F5Session')
+        $null = $PSBoundParameters.Remove('ErrorMessage')
         if ($F5Session.Credential) {
-            $PSBoundParameters.Add('Credential', $F5Session.Credential)
+            $null = $PSBoundParameters.Add('Credential', $F5Session.Credential)
         } elseif ($F5Session.WebSession) {
-            $PSBoundParameters.Add('WebSession', $F5Session.Websession)
+            $null = $PSBoundParameters.Add('WebSession', $F5Session.Websession)
         }
         $Result = Invoke-RestMethodOverride @PSBoundParameters
         if ($AsBoolean) {
