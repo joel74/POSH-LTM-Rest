@@ -185,7 +185,7 @@ Function Set-VirtualServer {
             } elseif ($ExistingVirtualServer -ne $null) {
                 $ExistingVirtualServer.destination
             }
-            $NewProperties['DestinationIP'] = ($destination -split ':')[0]
+            if ($destination) { $NewProperties['DestinationIP'] = ($destination -split ':')[0] }
         }
         if (-not $NewProperties.ContainsKey('DestinationPort')) { 
             $destination = if ($InputObject -and $InputObject.destination) {
@@ -193,7 +193,7 @@ Function Set-VirtualServer {
             } elseif ($ExistingVirtualServer -ne $null) {
                 $ExistingVirtualServer.destination
             }
-            $NewProperties['DestinationPort'] = ($destination -split ':')[1]
+            if ($destination) { $NewProperties['DestinationPort'] = ($destination -split ':')[1] }
         }
         # Set changed destination if either or both components are overridden via PSBoundParameters
         if ($PSBoundParameters.ContainsKey('DestinationIP') -or $PSBoundParameters.ContainsKey('DestinationPort')) { 
