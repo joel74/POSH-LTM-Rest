@@ -52,7 +52,7 @@
 
                             $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json'
+                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
                         }
                         Else {
                             Write-Warning "The $($VirtualServer.name) virtual server does not contain the $iRuleFullName iRule."

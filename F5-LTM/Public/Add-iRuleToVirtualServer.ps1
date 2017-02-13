@@ -59,7 +59,7 @@ Function Add-iRuleToVirtualServer {
 
                             $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleFullName iRule to the $Name virtual server." -AsBoolean 
+                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleFullName iRule to the $Name virtual server." -AsBoolean 
                         }
                     }
                 }
