@@ -18,7 +18,7 @@ Function Set-VirtualServer {
             Creates or updates a VirtualServer.  Note that parameters that are Mandatory for New-VirtualServer must be specified for VirtualServers that do not yet exist.
             
         .EXAMPLE
-            Set-VirtualServer -Name 'test.northwindtraders.com' -DesinationPort 82
+            Set-VirtualServer -Name 'test.northwindtraders.com' -DestinationPort 82
             
             Sets the destination port of an existing VirtualServer.
             
@@ -176,20 +176,22 @@ Function Set-VirtualServer {
         # New-VirtualServer may throw an error if InputObject excludes them. but they are not all Mandatory to set existing VirtualServers.
         # pool, profiles, and vlans are not Mandatory New-VirtualServer params, so in the absensce of an override they will be applied on the subsequent REST/PUT Update
 
+        $ExistingVirtualServer = Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition -ErrorAction SilentlyContinue
+
         # Set New DestinationIP/DestinationPort based on $InputObject or existing VirtualServer if necessary and available
         if (-not $NewProperties.ContainsKey('DestinationIP')) {
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
-            } else {
-                Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition -ErrorAction SilentlyContinue | Select-Object -ExpandProperty destination
+            } elseif ($ExistingVirtualServer -ne $null) {
+                $ExistingVirtualServer.destination
             }
             $NewProperties['DestinationIP'] = ($destination -split ':')[0]
         }
         if (-not $NewProperties.ContainsKey('DestinationPort')) { 
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
-            } else {
-                Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition -ErrorAction SilentlyContinue | Select-Object -ExpandProperty destination
+            } elseif ($ExistingVirtualServer -ne $null) {
+                $ExistingVirtualServer.destination
             }
             $NewProperties['DestinationPort'] = ($destination -split ':')[1]
         }
@@ -198,9 +200,9 @@ Function Set-VirtualServer {
             $ChgProperties['destination'] = ('{0}:{1}' -f $NewProperties['DestinationIP'],$NewProperties['DestinationPort'])
         }
 
-        if (-not (Test-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition)) {
+        if ($null -eq $ExistingVirtualServer) {
             Write-Verbose -Message 'Creating new VirtualServer...'
-            New-VirtualServer @NewProperties | Out-Null
+            $null = New-VirtualServer @NewProperties
         }
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
@@ -220,7 +222,7 @@ Function Set-VirtualServer {
 
             #endregion
 
-            $result = Invoke-F5RestMethod -Method PUT -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+            $result = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
         }
         if ($PassThru) { Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition }
     }
