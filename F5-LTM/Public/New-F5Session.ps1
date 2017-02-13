@@ -6,6 +6,7 @@
     This function takes the DNS name or IP address of the F5 LTM device, and a PSCredential credential object
     for a user with permissions to work with the REST API. Based on the scope value, it either returns the 
     session object (local scope) or adds the session object to the script scope
+    It takes an optional parameter of TokenLifespan, a value in seconds between 300 and 36000 (5 minutes and 10 hours).
 #>
     [cmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
@@ -13,7 +14,8 @@
         [Parameter(Mandatory=$true)][string]$LTMName,
         [Parameter(Mandatory=$true)][System.Management.Automation.PSCredential]$LTMCredentials,
         [switch]$Default,
-        [switch]$PassThrough
+        [switch]$PassThrough,
+        [ValidateRange(300,36000)][int]$TokenLifespan=1200
     )
     $BaseURL = "https://$LTMName/mgmt/tm/ltm/"
 
@@ -28,11 +30,34 @@
 
     #Check if a token was returned
     If ($Result.token.token){
+
         $Token = $Result.token.token
         $session.Headers.Add('X-F5-Auth-Token', $Token)
 
+        #A UUID is returned by LTM v11.6. This is needed for modifying the token. 
+        #For v12+, the name value is used.
+        If ($result.token.uuid){
+            $TokenReference = $result.token.uuid;
+        }
+        Else {
+            $TokenReference = $Result.token.name;
+        }
+
+        #If a value for TokenLifespan was passed in, then patch the token with this expiration value
+        #Max value is 36000 seconds (10 hours)
+        If ($TokenLifespan -ne 1200){
+
+            $Body = @{ timeout = $TokenLifespan  }  | ConvertTo-Json
+            $Headers = @{
+                'X-F5-Auth-Token' = $Token
+            }
+
+            Invoke-RestMethodOverride -Method Patch -Uri https://$LTMName/mgmt/shared/authz/tokens/$TokenReference -Headers $Headers -Body $Body -WebSession $session | Out-Null
+
+        }
+
         # Add token expiration time to session
-        $ts = New-TimeSpan -Minutes 20
+        $ts = New-TimeSpan -Minutes ($TokenLifespan/60)
         $date = Get-Date -Date $Result.token.startTime 
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
