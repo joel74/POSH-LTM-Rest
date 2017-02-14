@@ -27,10 +27,8 @@
     $AuthURL = "https://$LTMName/mgmt/shared/authn/login"
     $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
 
-    $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json' -ErrorAction SilentlyContinue
-
-    #Check if a token was returned
-    If ($Result.token.token){
+    try {
+        $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
 
         $Token = $Result.token.token
         $session.Headers.Add('X-F5-Auth-Token', $Token)
@@ -62,9 +60,7 @@
         $date = Get-Date -Date $Result.token.startTime 
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
-    }
-    #Otherwise, fall back to Credentials
-    Else {
+    } catch {
         # fall back to Credentials
         Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token."
         $Credential = $LTMCredentials
