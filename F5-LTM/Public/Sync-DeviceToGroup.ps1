@@ -17,5 +17,5 @@
     $JSONBody = @{command='run';utilCmdArgs="config-sync to-group $GroupName"}
     $JSONBody = $JSONBody | ConvertTo-Json
 
-    Invoke-RestMethodOverride -Method POST -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to sync the device to the $GroupName group" -AsBoolean
+    Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to sync the device to the $GroupName group" -AsBoolean
 }

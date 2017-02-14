@@ -82,7 +82,7 @@
                                 } # else the node will be created
                                 $JSONBody = $JSONBody | ConvertTo-Json
                                 $MembersLink = $F5session.GetLink($pool.membersReference.link)
-                                Invoke-RestMethodOverride -Method POST -Uri "$MembersLink" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add $Name to $($pool.name)." | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
+                                Invoke-F5RestMethod -Method POST -Uri "$MembersLink" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add $Name to $($pool.name)." | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
 
                                 #After adding to the pool, make sure the member status is set as specified
                                 If ($Status -eq "Enabled"){
