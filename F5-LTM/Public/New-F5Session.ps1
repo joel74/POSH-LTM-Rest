@@ -27,7 +27,7 @@
     $AuthURL = "https://$LTMName/mgmt/shared/authn/login"
     $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
 
-    $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
+    $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json' -ErrorAction SilentlyContinue
 
     #Check if a token was returned
     If ($Result.token.token){
