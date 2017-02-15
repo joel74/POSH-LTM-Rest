@@ -35,8 +35,8 @@
 
         #A UUID is returned by LTM v11.6. This is needed for modifying the token. 
         #For v12+, the name value is used.
-        If ($result.token.uuid){
-            $TokenReference = $result.token.uuid;
+        If ($Result.token.uuid){
+            $TokenReference = $Result.token.uuid;
         }
         Else {
             $TokenReference = $Result.token.name;
@@ -61,8 +61,19 @@
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
     } catch {
+        # We failed to retrieve an authorization token. Either the version of the LTM is pre 11.6, or the $LTMName is not valid
+        # Verify that the LTM base URL is available. Otherwise return a message saying the LTM specified is not valid.
+        Try {
+            Invoke-WebRequest -Uri $BaseURL -ErrorVariable LTMError -TimeoutSec 3
+        }
+        Catch {
+            #If an error is thrown and it doesn't contain the word 'Unauthorized' then the LTM name and $BaseURL are invalid
+            If ($LTMError[0] -notmatch 'Unauthorized'){
+                Throw ("The specified LTM name $LTMName is not valid.")
+            }
+        }
         # fall back to Credentials
-        Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token."
+        Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token but the base URL is valid."
         $Credential = $LTMCredentials
     }
 
