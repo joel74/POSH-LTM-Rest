@@ -1,7 +1,7 @@
 ﻿Function Set-PoolLoadBalancingMode {
 <#
 .SYNOPSIS
-    Sets the load balancing mode on a pool 
+    Set-PoolLoadBalancingMode is deprecated.  Please use Set-Pool
 #>
     [cmdletBinding()]
     param(
@@ -22,19 +22,13 @@
         [ValidateSet("dynamic-ratio-member","dynamic-ratio-node","fastest-app-response","fastest-node","least-connections-members","least-connections-node","least-sessions","observed-member","observed-node","predictive-member","predictive-node","ratio-least-connections-member","ratio-least-connections-node","ratio-member","ratio-node","ratio-session","round-robin","weighted-least-connections-member","weighted-least-connections-node")]
         [string]$Name
     )
-    begin {
-        #Test that the F5 session is in a valid format
-        Test-F5Session($F5Session)
-    }
     process {
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
-                $JSONBody = @{loadBalancingMode=$Name} | ConvertTo-Json
-                $URI = $F5Session.GetLink($InputObject.selfLink) -replace 'localhost', $F5Session.name
-                Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+                $InputObject | Set-Pool -F5Session $F5Session -LoadBalancingMode $Name
             }
             PoolName {
-                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition | Set-PoolLoadBalancingMode -F5Session $F5Session -Name $Name
+                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition  | Set-Pool -F5Session $F5Session -LoadBalancingMode $Name
             }
         }
     }

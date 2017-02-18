@@ -52,6 +52,7 @@
         if ($PSCmdLet.ParameterSetName -match 'ComputerName$') {
             $Address = [Net.Dns]::GetHostAddresses($ComputerName) | Where-Object { $_.AddressFamily -eq 'InterNetwork' }  | Select-Object -First 1
         }
+        $ExistingNode = Get-Node -F5Session $F5Session -Address $Address.IPAddressToString -Partition $Partition -ErrorAction SilentlyContinue
     }
 
     process {
@@ -65,9 +66,11 @@
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
+                            # Default name to IPAddress
                             if (!$Name) {
                                 $Name = '{0}:{1}' -f $Address.IPAddressToString,$PortNumber
                             }
+                            # Append port number if not already present
                             if ($Name -notmatch ':\d+$') {
                                 $Name = '{0}:{1}' -f $Name,$PortNumber
                             }
@@ -76,9 +79,9 @@
                                     $Partition = $pool.partition 
                                 }
                                 $JSONBody = @{name=$Name;partition=$Partition;address=$Address.IPAddressToString;description=$Description}
-                                if (Test-Node -F5Session $F5Session -Name $Address -Partition $Partition) {
+                                if ($ExistingNode) {
                                     # Node exists, just add using name
-                                    $JSONBody = @{name=$Name}
+                                    $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber)}
                                 } # else the node will be created
                                 $JSONBody = $JSONBody | ConvertTo-Json
                                 $MembersLink = $F5session.GetLink($pool.membersReference.link)
