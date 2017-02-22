@@ -23,7 +23,8 @@ Function Invoke-F5RestMethod {
         $null = $PSBoundParameters.Remove('ErrorMessage')
         if ($F5Session.Credential) {
             $null = $PSBoundParameters.Add('Credential', $F5Session.Credential)
-        } elseif ($F5Session.WebSession) {
+        }
+        if ($F5Session.WebSession) {
             $null = $PSBoundParameters.Add('WebSession', $F5Session.Websession)
         }
         $Result = Invoke-RestMethodOverride @PSBoundParameters
