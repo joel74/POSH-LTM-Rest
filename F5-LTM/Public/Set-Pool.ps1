@@ -121,13 +121,15 @@
             Write-Verbose -Message 'Creating new Pool...'
             $null = New-Pool @NewProperties
         }
+
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
         if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting Pool $Name")) {
-            Write-Verbose -Message 'Setting Pool details...'
             
             # We only update the pool if properties other than 'Name' are passed in
             If ($NewObject | Get-Member -MemberType NoteProperty | Where Name -ne 'Name'){
+
+                Write-Verbose -Message 'Setting Pool details...'
 
                 $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition) 
                 $JSONBody = $NewObject | ConvertTo-Json -Compress
@@ -148,6 +150,9 @@
 
             # MemberDefinitionList should trump existing members IFF there is an ExistingPool, otherwise New-Pool will take care of initializing the members.
             if ($MemberDefinitionList -and $ExistingPool) {
+
+                Write-Verbose -Message 'Setting Pool members...'
+
                 # Remove all existing pool members
                 Get-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition | Remove-PoolMember -F5Session $F5Session -Confirm:$false
                 # Add requested pool members
