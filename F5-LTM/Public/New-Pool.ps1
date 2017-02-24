@@ -22,6 +22,12 @@
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
         
+        [string]$Description,
+
+        [ValidateSet('dynamic-ratio-member','dynamic-ratio-node','fastest-app-response','fastest-node','least-connections-members','least-connections-node','least-sessions','observed-member','observed-node','predictive-member','predictive-node','ratio-least-connections-member','ratio-least-connections-node','ratio-member','ratio-node','ratio-session','round-robin','weighted-least-connections-member','weighted-least-connections-node')]
+        [Parameter(Mandatory=$true)]
+        [string]$LoadBalancingMode,
+
         [Parameter(Mandatory=$false)]
         [string[]]$MemberDefinitionList=$null
     )
@@ -40,12 +46,17 @@
             }
             Else {
                 #Start building the JSON for the action
-                $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;members=@()} | ConvertTo-Json
+                $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;description=$Description;loadBalancingMode=$LoadBalancingMode;members=@()} | ConvertTo-Json
 
                 Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
                 ForEach ($MemberDefinition in $MemberDefinitionList){
-                    $Address,$PortNumber = $MemberDefinition -split ','
-                    Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Address -PortNumber $PortNumber -Status Enabled
+                    $Node,$PortNumber = $MemberDefinition -split ','
+                    # IP Addresses always start with a number, server names can not
+                    if ($Node -match '^\d') {
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Status Enabled
+                    } else {
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -ComputerName $Node -PortNumber $PortNumber -Status Enabled
+                    }
                 }
             }
         }
