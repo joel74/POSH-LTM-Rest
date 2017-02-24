@@ -25,7 +25,9 @@
         [string]$Description,
 
         [ValidateSet('dynamic-ratio-member','dynamic-ratio-node','fastest-app-response','fastest-node','least-connections-members','least-connections-node','least-sessions','observed-member','observed-node','predictive-member','predictive-node','ratio-least-connections-member','ratio-least-connections-node','ratio-member','ratio-node','ratio-session','round-robin','weighted-least-connections-member','weighted-least-connections-node')]
+        [Parameter(Mandatory=$true)]
         [string]$LoadBalancingMode,
+
         [Parameter(Mandatory=$false)]
         [string[]]$MemberDefinitionList=$null
     )

@@ -13,21 +13,24 @@
         .PARAMETER PassThru
             Output the modified Pool to the pipeline.
         .EXAMPLE
-            Set-Pool -Name 'test.northwindtraders.com' -Description 'Northwind Traders example' -DefaultPool 'test.northwindtraders.com_blue' -Source 0.0.0.0/0 -DestinationIP 192.168.15.98 -DestinationPort 30785 -ipProtocol tcp
+            Set-Pool -Name 'northwindtraders_servers' -Description 'Northwind Traders example' -LoadBalancingMode dynamic-ratio-member
 
-            Creates or updates a Pool.  Note that parameters that are Mandatory for New-Pool must be specified for Pools that do not yet exist.
+            Creates or updates a Pool.  Note that parameters that are Mandatory for New-Pool (Name and LoadBalancingMode) must be specified for Pools that do not yet exist.
             
         .EXAMPLE
-            Set-Pool -Name 'test.northwindtraders.com' -DestinationPort 82
+            Set-Pool -Name 'northwindtraders_servers' -Description 'Some useful description'
             
-            Sets the destination port of an existing Pool.
+            Sets the description of an existing Pool.
+
+        .EXAMPLE
+            Set-Pool -Name 'northwindtraders_servers' -MemberDefinitionList {192.168.1.100,80},{192.168.1.101,80}
             
         .EXAMPLE
-            $vs = Get-Pool -Name 'test.northwindtraders.com'
-            $vs.pool = if ($vs.pool -eq 'test.northwindtraders.com_blue') { 'test.northwindtraders.com_green' } else { 'test.northwindtraders.com_blue' }
-            $vs | Set-Pool -PassThru
+            $pool = Get-Pool -Name 'northwindtraders_servers';
+            $pool.minActiveMembers = if ($pool.minActiveMembers -lt 3) { 3 };
+            $pool | Set-Pool -PassThru;
 
-            Toggles the pool of an existing Pool via the pipeline and returns the resulting Pool with -PassThru.
+            Set the minimum active pool members to 3 if currently less than 3 and returns the resulting Pool with -PassThru.
             
     #>
     [cmdletbinding(ConfirmImpact='Medium',SupportsShouldProcess,DefaultParameterSetName="Default")]
@@ -118,33 +121,44 @@
             Write-Verbose -Message 'Creating new Pool...'
             $null = New-Pool @NewProperties
         }
+
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
         if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting Pool $Name")) {
-            Write-Verbose -Message 'Setting Pool details...'
-                
-            $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition) 
-            $JSONBody = $NewObject | ConvertTo-Json -Compress
+            
+            # We only update the pool if properties other than 'Name' are passed in
+            If ($NewObject | Get-Member -MemberType NoteProperty | Where Name -ne 'Name'){
 
-            #region case-sensitive parameter names
+                Write-Verbose -Message 'Setting Pool details...'
 
-            # If someone inputs their own custom PSObject with properties with unexpected case, this will correct the case of known properties.
-            # It could arguably be removed.  If not removed, it should be refactored into a shared (Private) function for use by all Set-* functions in the module.
-            $knownRegex = '(?<=")({0})(?=":)' -f ($knownproperties.Keys -join '|')
-            # Use of regex.Replace with a callback is more efficient than multiple, separate replacements
-            $JsonBody = [regex]::Replace($JSONBody,$knownRegex,{param($match) $knownproperties[$match.Value] }, [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition) 
+                $JSONBody = $NewObject | ConvertTo-Json -Compress
 
-            #endregion
+                #region case-sensitive parameter names
 
-            $result = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+                # If someone inputs their own custom PSObject with properties with unexpected case, this will correct the case of known properties.
+                # It could arguably be removed.  If not removed, it should be refactored into a shared (Private) function for use by all Set-* functions in the module.
+                $knownRegex = '(?<=")({0})(?=":)' -f ($knownproperties.Keys -join '|')
+                # Use of regex.Replace with a callback is more efficient than multiple, separate replacements
+                $JsonBody = [regex]::Replace($JSONBody,$knownRegex,{param($match) $knownproperties[$match.Value] }, [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+
+                #endregion
+
+                $result = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+
+            }
 
             # MemberDefinitionList should trump existing members IFF there is an ExistingPool, otherwise New-Pool will take care of initializing the members.
             if ($MemberDefinitionList -and $ExistingPool) {
+
+                Write-Verbose -Message 'Setting Pool members...'
+
                 # Remove all existing pool members
                 Get-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition | Remove-PoolMember -F5Session $F5Session -Confirm:$false
                 # Add requested pool members
                 ForEach ($MemberDefinition in $MemberDefinitionList){
                     $Node,$PortNumber = $MemberDefinition -split ','
+
                     # IP Addresses always start with a number, server names can not
                     if ($Node -match '^\d') {
                         $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Status Enabled
