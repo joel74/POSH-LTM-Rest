@@ -55,6 +55,19 @@ Function New-VirtualServer
     ,
     [Parameter(Mandatory = $false)]
     $ConnectionLimit = '0'
+    ,
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('true','false')]
+    $Enabled = 'true'
+    ,
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('automap','snat','none')]
+    $SourceAddressTranslationType
+    ,
+    [Parameter(Mandatory = $false)]
+    [string]$SourceAddressTranslationPool
+
+
   )
 
   #Test that the F5 session is in a valid format
@@ -74,16 +87,17 @@ Function New-VirtualServer
     #Start building the JSON for the action
     $Destination = $DestinationIP + ':' + $DestinationPort
     $JSONBody = @{
-      kind            = $Kind
-      name            = $newitem.Name
-      description     = $Description
-      partition       = $newitem.Partition
-      destination     = $Destination
-      source          = $Source
-      pool            = $DefaultPool
-      ipProtocol      = $ipProtocol
-      mask            = $Mask
-      connectionLimit = $ConnectionLimit
+      kind                     = $Kind
+      name                     = $newitem.Name
+      description              = $Description
+      partition                = $newitem.Partition
+      destination              = $Destination
+      source                   = $Source
+      pool                     = $DefaultPool
+      ipProtocol               = $ipProtocol
+      mask                     = $Mask
+      connectionLimit          = $ConnectionLimit
+
     }
     if ($newItem.application) {
       $JSONBody.Add('application',$newItem.application)
@@ -100,6 +114,25 @@ Function New-VirtualServer
       $JSONBody.vlans = $VlanDisabled
       $JSONBody.vlansDisabled = $True
     }
+
+    if ($Enabled -eq 'true'){
+        $JSONBody.enabled = $True
+    }
+    elseif ($Enabled -eq 'false'){
+        $JSONBody.disabled = $True
+    }
+
+    #Settings for source address translation
+    If ($SourceAddressTranslationType){
+      $SourceAddressTranslation = @{
+        type = $SourceAddressTranslationType
+      }
+      #If SourceAddressTranslationType is SNAT, then a value for sourceAddressTranslationPool is expected
+      if ($SourceAddressTranslationType -eq 'snat'){
+        $SourceAddressTranslation.pool = $SourceAddressTranslationPool
+      }       
+    }
+    $JSONBody.sourceAddressTranslation = $SourceAddressTranslation
 
     #Build array of profile items
     #JN: What happens if a non-existent profile is passed in?
