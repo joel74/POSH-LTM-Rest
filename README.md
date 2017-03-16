@@ -44,8 +44,8 @@ The module contains the following functions.
    * Get-PoolsForMember
    * Get-StatusShape
    * Get-VirtualServer
-   * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Select -ExpandProperty rules__)
-   * Get-VirtualServerList (deprecated; use __Get-VirtualServer__)
+   * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Where rules | Select -ExpandProperty rules__)
+   * Get-VirtualServerList (deprecated; use __Get-VirtualServer__) 
    * Invoke-RestMethodOverride
    * New-F5Session
    * New-HealthMonitor
@@ -53,6 +53,7 @@ The module contains the following functions.
    * New-Pool
    * New-VirtualServer
    * Remove-HealthMonitor
+   * Remove-iRule
    * Remove-iRuleFromVirtualServer
    * Remove-Pool
    * Remove-PoolMember
