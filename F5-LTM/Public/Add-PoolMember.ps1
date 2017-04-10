@@ -37,6 +37,9 @@
         [Parameter(Mandatory=$true)]
         [ValidateRange(0,65535)]
         [int]$PortNumber,
+
+        [Parameter(Mandatory=$true)]
+        [int]$RouteDomain,        
     
         [Parameter(Mandatory=$false)]
         [string]$Description=$ComputerName,
@@ -52,7 +55,14 @@
         if ($PSCmdLet.ParameterSetName -match 'ComputerName$') {
             $Address = [Net.Dns]::GetHostAddresses($ComputerName) | Where-Object { $_.AddressFamily -eq 'InterNetwork' }  | Select-Object -First 1
         }
-        $ExistingNode = Get-Node -F5Session $F5Session -Address $Address.IPAddressToString -Partition $Partition -ErrorAction SilentlyContinue
+        
+        $AddressString = $Address.IPAddressToString
+
+        if ($RouteDomain) {
+            $AddressString = "{0}%{1}" -f $AddressString, $RouteDomain.ToString()
+        }
+
+        $ExistingNode = Get-Node -F5Session $F5Session -Address $AddressString -Partition $Partition -ErrorAction SilentlyContinue
     }
 
     process {
@@ -65,10 +75,13 @@
                     "tm:ltm:pool:poolstate" {
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
-                        } else {
+                        } 
+                        else {
+                            # Set Address to include the route domain - Route Domains are specified after a % sign in the address string.
+                            $AddressString = "{0}%{1}" -f $Address.IPAddressToString, $RouteDomain.Tostring()
                             # Default name to IPAddress
                             if (!$Name) {
-                                $Name = '{0}:{1}' -f $Address.IPAddressToString,$PortNumber
+                                $Name = '{0}:{1}' -f $AddressString, $PortNumber
                             }
                             # Append port number if not already present
                             if ($Name -notmatch ':\d+$') {
@@ -78,7 +91,7 @@
                                 if (!$Partition) {
                                     $Partition = $pool.partition 
                                 }
-                                $JSONBody = @{name=$Name;partition=$Partition;address=$Address.IPAddressToString;description=$Description}
+                                $JSONBody = @{name=$Name;partition=$Partition;address=$AddressString;description=$Description}
                                 if ($ExistingNode) {
                                     # Node exists, just add using name
                                     $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber)}
@@ -89,10 +102,10 @@
 
                                 #After adding to the pool, make sure the member status is set as specified
                                 If ($Status -eq "Enabled"){
-                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Enable-PoolMember -F5session $F5Session 
+                                    $pool | Get-PoolMember -F5Session $F5Session -Address $AddressString -Name $Name | Enable-PoolMember -F5session $F5Session 
                                 }
                                 ElseIf ($Status -eq "Disabled"){
-                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session 
+                                    $pool | Get-PoolMember -F5Session $F5Session -Address $AddressString -Name $Name | Disable-PoolMember -F5session $F5Session 
                                 }
                             }
                         }
@@ -101,7 +114,7 @@
             }
             "PoolNameWith*" {
                 foreach($pName in $PoolName) {
-                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status
+                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -RouteDomain $RouteDomain -PortNumber $PortNumber -Status $Status
                 }
             }
         }
