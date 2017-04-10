@@ -38,7 +38,7 @@
         [ValidateRange(0,65535)]
         [int]$PortNumber,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$false)]
         [int]$RouteDomain,        
     
         [Parameter(Mandatory=$false)]
