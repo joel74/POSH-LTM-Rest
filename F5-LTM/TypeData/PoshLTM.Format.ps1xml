@@ -140,6 +140,10 @@
             <Label>Mode</Label>
             <Width>30</Width>
           </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>ApplicationService</Label>
+            <Width>30</Width>
+          </TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
           <TableRowEntry>
@@ -152,6 +156,9 @@
               </TableColumnItem>
               <TableColumnItem>
                 <PropertyName>loadBalancingMode</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>appService</PropertyName>
               </TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
