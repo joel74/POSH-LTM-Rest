@@ -50,6 +50,7 @@
 
         [Parameter(Mandatory=$false)]
         [int]$RouteDomain        
+
     )
 
     begin {
@@ -106,10 +107,12 @@
 
                                 #After adding to the pool, make sure the member status is set as specified
                                 If ($Status -eq "Enabled"){
+
                                     $pool | Get-PoolMember -F5Session $F5Session -Address $AddressString -Name $Name -Application $Application | Enable-PoolMember -F5session $F5Session | Out-Null
                                 }
                                 ElseIf ($Status -eq "Disabled"){
                                     $pool | Get-PoolMember -F5Session $F5Session -Address $AddressString -Name $Name -Application $Application | Disable-PoolMember -F5session $F5Session | Out-Null
+
                                 }
                             }
                         }
@@ -118,7 +121,9 @@
             }
             "PoolNameWith*" {
                 foreach($pName in $PoolName) {
+
                     Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status -Application $Application -RouteDomain $RouteDomain
+
                 }
             }
         }
