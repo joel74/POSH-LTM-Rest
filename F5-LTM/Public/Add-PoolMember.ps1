@@ -39,13 +39,13 @@
         [int]$PortNumber,
 
         [Parameter(Mandatory=$false)]
-        [int]$RouteDomain,        
-    
-        [Parameter(Mandatory=$false)]
         [string]$Description=$ComputerName,
 
         [ValidateSet("Enabled","Disabled")]
-        [Parameter(Mandatory=$true)]$Status
+        [Parameter(Mandatory=$true)]$Status,
+
+        [Parameter(Mandatory=$false)]
+        [int]$RouteDomain        
     )
 
     begin {
