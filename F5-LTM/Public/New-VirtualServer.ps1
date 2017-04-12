@@ -66,6 +66,12 @@ Function New-VirtualServer
     ,
     [Parameter(Mandatory = $false)]
     [string]$SourceAddressTranslationPool
+    ,
+    [Parameter(Mandatory = $false)]
+    [string[]]$PersistenceProfiles
+    ,
+    [Parameter(Mandatory = $false)]
+    [string]$FallbackPersistence
 
 
   )
@@ -97,6 +103,8 @@ Function New-VirtualServer
       ipProtocol               = $ipProtocol
       mask                     = $Mask
       connectionLimit          = $ConnectionLimit
+      persist                  = $PersistenceProfiles
+      fallbackPersistence      = $FallbackPersistence
 
     }
     if ($newItem.application) {
@@ -135,7 +143,6 @@ Function New-VirtualServer
     $JSONBody.sourceAddressTranslation = $SourceAddressTranslation
 
     #Build array of profile items
-    #JN: What happens if a non-existent profile is passed in?
     $ProfileItems = @()
     ForEach ($ProfileName in $ProfileNames)
     {
@@ -147,8 +154,6 @@ Function New-VirtualServer
     $JSONBody.profiles = $ProfileItems
 
     $JSONBody = $JSONBody | ConvertTo-Json
-
-    Write-Verbose -Message $JSONBody
 
     if ($pscmdlet.ShouldProcess($F5Session.Name, "Creating virtualserver $Name"))
     {

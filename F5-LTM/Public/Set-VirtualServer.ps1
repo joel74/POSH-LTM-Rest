@@ -4,6 +4,8 @@ Function Set-VirtualServer {
             Create or update VirtualServer(s)
         .DESCRIPTION
             Can create new or update existing VirtualServer(s).
+            If a custom PS object is used, this function uses a defined list of known properties to correct any case discrepancies in property names.
+            Not all properties of a virtual server object have been explicitly defined here. However, it is possible to retrieve an existing Virtual Server object from an LTM device, add the required member(s) to it, and pass it to this function and have those properties be updated.
         .PARAMETER InputObject
             The content of the VirtualServer.
         .PARAMETER Application
@@ -13,43 +15,78 @@ Function Set-VirtualServer {
         .PARAMETER PassThru
             Output the modified VirtualServer to the pipeline.
         .EXAMPLE
+            # Creates or updates a VirtualServer.  Note that parameters that are Mandatory for New-VirtualServer must be specified for VirtualServers that do not yet exist.
+            
             Set-VirtualServer -Name 'test.northwindtraders.com' -Description 'Northwind Traders example' -DefaultPool 'test.northwindtraders.com_blue' -Source 0.0.0.0/0 -DestinationIP 192.168.15.98 -DestinationPort 30785 -ipProtocol tcp
-
-            Creates or updates a VirtualServer.  Note that parameters that are Mandatory for New-VirtualServer must be specified for VirtualServers that do not yet exist.
             
         .EXAMPLE
+            # Sets the destination port of an existing VirtualServer.
+
             Set-VirtualServer -Name 'test.northwindtraders.com' -DestinationPort 82
             
-            Sets the destination port of an existing VirtualServer.
-            
         .EXAMPLE
+            # Toggles the pool of an existing VirtualServer via the pipeline and returns the resulting VirtualServer with -PassThru.
+
             $vs = Get-VirtualServer -Name 'test.northwindtraders.com'
             $vs.pool = if ($vs.pool -eq 'test.northwindtraders.com_blue') { 'test.northwindtraders.com_green' } else { 'test.northwindtraders.com_blue' }
             $vs | Set-VirtualServer -PassThru
 
-            Toggles the pool of an existing VirtualServer via the pipeline and returns the resulting VirtualServer with -PassThru.
+        .EXAMPLE
+            #Add server, client, and persistence profiles to a virtual server and set the failback persistence profile
+
+            #Define the server and client profiles to apply
+            $Profiles = @('http','serverssl','clientssl')
+            $ProfileItems = @()
+            ForEach ($Profile in $Profiles){
+                $ProfileItems += @{
+                    kind = 'tm:ltm:virtual:profiles:profilesstate'
+                    name = $Profile
+                }
+            }
+            #Add the profiles member to the virtual server object
+            $vs | Add-Member -Name 'profiles' -Value $ProfileItems -MemberType NoteProperty
+
+
+            #Define the persistence profiles to apply
+            $PersistenceProfiles = @('hash','cookie')
+            $PersistItems = @()
+            ForEach ($PersistenceProfile in $PersistenceProfiles){
+                $PersistItems += @{
+                    name = $PersistenceProfile
+                }
+            }
+
+            #Add the profiles member to the virtual server object
+            $vs | Add-Member -Name 'persist' -Value $PersistItems -MemberType NoteProperty
+
+
+            #Add the fallbackPersistence member to the virtual server object
+            $vs | Add-Member 'fallbackPersistence' -Value 'source_addr'
+
+            #Set the virtual server by passing the modified local object to the LTM
+            $vs | Set-VirtualServer
             
     #>
     [cmdletbinding(ConfirmImpact='Medium',SupportsShouldProcess,DefaultParameterSetName="Default")]
     param (
-        $F5Session=$Script:F5Session,
-
+        $F5Session=$Script:F5Session
+        ,
         [Parameter(Mandatory,ParameterSetName='InputObject',ValueFromPipeline)]
         [Alias("VirtualServer")]
-        [PSObject[]]$InputObject,
-
+        [PSObject[]]$InputObject
+        ,
         #region Immutable fullPath component params
 
         [Parameter(Mandatory,ValueFromPipelineByPropertyName)]
-        $Name,
-
+        $Name
+        ,
         [Alias('iApp')]
         [Parameter(ValueFromPipelineByPropertyName)]
-        $Application='',
-
+        $Application=''
+        ,
         [Parameter(ValueFromPipelineByPropertyName)]
-        $Partition='Common',
-
+        $Partition='Common'
+        ,
         #endregion
 
         # region New-VirtualServer equivalents
@@ -57,45 +94,45 @@ Function Set-VirtualServer {
         # region New-VirtualServer equivalents - optional 1-to-1 ValueFromPipelineByPropertyName
 
         [Parameter(ValueFromPipelineByPropertyName)]
-        $Kind='tm:ltm:virtual:virtualstate',
-
+        $Kind='tm:ltm:virtual:virtualstate'
+        ,
         [Parameter(ValueFromPipelineByPropertyName)]
-        $Description=$null,
-
+        $Description=$null
+        ,
         [Parameter(ValueFromPipelineByPropertyName)]
-        $Source='0.0.0.0/0',
-
+        $Source='0.0.0.0/0'
+        ,
         [Alias('Pool')]
         [Parameter(ValueFromPipelineByPropertyName)]
-        $DefaultPool=$null,
-
+        $DefaultPool=$null
+        ,
         [Parameter(ValueFromPipelineByPropertyName)]
-        $Mask='255.255.255.255',
-
+        $Mask='255.255.255.255'
+        ,
         [Parameter(ValueFromPipelineByPropertyName)]
-        $ConnectionLimit='0',        
-
+        $ConnectionLimit='0'
+        ,
         #endregion
 
         #region New-VirtualServer equivalents - transformation required
 
-        $DestinationIP,
-
-        $DestinationPort,
-
+        $DestinationIP
+        ,
+        $DestinationPort
+        ,
         [Parameter(Mandatory,ParameterSetName='VlanEnabled')]
-        [string[]]$VlanEnabled,
-
+        [string[]]$VlanEnabled
+        ,
         [Parameter(Mandatory,ParameterSetName='VlanDisabled')]
-        [string[]]$VlanDisabled,
-
+        [string[]]$VlanDisabled
+        ,
         [Parameter()]
-        [string[]]$ProfileNames=$null,
-
+        [string[]]$ProfileNames=$null
+        ,
         [Parameter(ValueFromPipelineByPropertyName)]
         [ValidateSet('tcp','udp','sctp')]
-        $ipProtocol=$null,
-
+        $ipProtocol=$null
+        ,
         #endregion
 
         #endregion
