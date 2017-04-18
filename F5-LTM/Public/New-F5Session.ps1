@@ -60,6 +60,7 @@
         $date = Get-Date -Date $Result.token.startTime 
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
+
     } catch {
         # We failed to retrieve an authorization token. Either the version of the LTM is pre 11.6, or the $LTMName is not valid
         # Verify that the LTM base URL is available. Otherwise return a message saying the LTM specified is not valid.
@@ -81,11 +82,22 @@
             Name = $LTMName
             BaseURL = $BaseURL
             Credential = $Credential
-            WebSession = $session 
+            WebSession = $session
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)
                 $Link -replace 'localhost', $this.Name    
     } -PassThru 
+
+
+    # Since we've connected to the LTM, we can now retrieve the device version
+    # We'll add it to the session object and reference it in cases where the iControlREST web services differ between LTM versions.
+    $VersionURL = $BaseURL.Replace('ltm/','sys/version/')
+    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession
+    #If the LTM version is 12+, then the version JSON is contained within a nestedStats property
+    If ($JSON.entries.PSObject.Properties.Value.nestedStats){
+        $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats
+    }
+    $newSession | Add-Member -Name LTMVersion -Value ($JSON.entries.Version.description) -MemberType NoteProperty
 
     #If the Default switch is set, and/or if no script-scoped F5Session exists, then set the script-scoped F5Session
     If ($Default -or !($Script:F5Session)){

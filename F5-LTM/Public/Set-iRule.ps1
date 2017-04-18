@@ -57,12 +57,13 @@
                 
         $JSONBody = $JSONBody | ConvertTo-Json -Compress
         
-        #Caused by a bug in ConvertTo-Json https://windowsserver.uservoice.com/forums/301869-powershell/suggestions/11088243-provide-option-to-not-encode-html-special-characte
-        #'<', '>' and ''' are replaced by ConvertTo-Json to \\u003c, \\u003e and \\u0027. The F5 API doesn't understand this. Change them back.
+        # Caused by a bug in ConvertTo-Json https://windowsserver.uservoice.com/forums/301869-powershell/suggestions/11088243-provide-option-to-not-encode-html-special-characte
+        # '<', '>', ''' and '&' are replaced by ConvertTo-Json to \\u003c, \\u003e, \\u0027, and \\u0026. The F5 API doesn't understand this. Change them back.
         $ReplaceChars = @{
             '\\u003c' = '<'
             '\\u003e' = '>'
             '\\u0027' = "'"
+            '\\u0026' = "&"
         }
 
         foreach ($Char in $ReplaceChars.GetEnumerator()) 
