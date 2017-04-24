@@ -99,7 +99,7 @@
                                 $JSONBody = @{name=$Name;partition=$Partition;address=$AddressString;description=$Description}
                                 if ($ExistingNode) {
                                     # Node exists, just add using name
-                                    $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber)}
+                                    $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber);partition=('{0}' -f $Partition)}
                                 } # else the node will be created
                                 $JSONBody = $JSONBody | ConvertTo-Json
                                 $MembersLink = $F5session.GetLink($pool.membersReference.link)
