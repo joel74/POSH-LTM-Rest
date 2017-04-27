@@ -18,7 +18,8 @@
         [switch]$PassThru,
         [ValidateRange(300,36000)][int]$TokenLifespan=1200
     )
-    $BaseURL = "https://$LTMName/mgmt/tm/ltm/"
+    $RootURL = "https://$LTMName"
+    $BaseURL = "$RootURL/mgmt/tm/ltm/"
 
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 

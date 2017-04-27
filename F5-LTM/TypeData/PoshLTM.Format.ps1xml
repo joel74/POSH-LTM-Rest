@@ -281,5 +281,45 @@
         </TableRowEntries>
       </TableControl>
     </View>
+    <View>
+      <Name>Default</Name>
+      <ViewSelectedBy>
+        <TypeName>PoshLTM.Application</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>Name</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Partition</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Template</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>StrictUpdates</Label>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>name</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>partition</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>template</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>strictUpdates</PropertyName>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
   </ViewDefinitions>
 </Configuration>
