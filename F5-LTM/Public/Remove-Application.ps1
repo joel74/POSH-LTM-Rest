@@ -23,7 +23,7 @@ Function Remove-Application
     }
     process {
         foreach ($itemname in $Name) {
-            $URI = "$($F5Session.RootURL)/mgmt/tm/sys/application/service/~$($Partition)~$($itemname).app~$($itemname)"
+            $URI = "$($F5Session.DeviceURL)/mgmt/tm/sys/application/service/~$($Partition)~$($itemname).app~$($itemname)"
             Invoke-F5RestMethod -Method Delete -Uri $URI -F5Session $F5Session
         }
     }

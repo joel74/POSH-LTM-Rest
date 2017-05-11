@@ -25,7 +25,7 @@ Function Get-Application
         if($Name -and $Partition)
         {
             foreach ($itemname in $Name) {
-                $URI = "$($F5Session.RootURL)/mgmt/tm/sys/application/service/~$($Partition)~$($itemname).app~$($itemname)?expandSubcollections=true"
+                $URI = "$($F5Session.DeviceURL)/mgmt/tm/sys/application/service/~$($Partition)~$($itemname).app~$($itemname)?expandSubcollections=true"
                 $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
                 if ($JSON.items -or $JSON.name) {
                     $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
@@ -36,7 +36,7 @@ Function Get-Application
         elseif($Name)
         {
             foreach ($itemname in $Name) {
-                $URI = "$($F5Session.RootURL)/mgmt/tm/sys/application/service/?expandSubcollections=true"
+                $URI = "$($F5Session.DeviceURL)/mgmt/tm/sys/application/service/?expandSubcollections=true"
                 $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
                 if ($JSON.items -or $JSON.name) {
                     $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
@@ -47,7 +47,7 @@ Function Get-Application
         }
         elseif($Partition)
         {
-            $URI = "$($F5Session.RootURL)/mgmt/tm/sys/application/service/?expandSubcollections=true"
+            $URI = "$($F5Session.DeviceURL)/mgmt/tm/sys/application/service/?expandSubcollections=true"
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
@@ -57,7 +57,7 @@ Function Get-Application
         }
         else
         {
-            $URI = "$($F5Session.RootURL)/mgmt/tm/sys/application/service/?expandSubcollections=true"
+            $URI = "$($F5Session.DeviceURL)/mgmt/tm/sys/application/service/?expandSubcollections=true"
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}

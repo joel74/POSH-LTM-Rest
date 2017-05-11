@@ -87,7 +87,7 @@ $VariablesJson
 }
 "@
         
-        $URI = "$($F5Session.RootURL)/mgmt/tm/sys/application/service/"
+        $URI = "$($F5Session.DeviceURL)/mgmt/tm/sys/application/service/"
         
         if ($PSCmdlet.ShouldProcess($F5Session.Name, "Creating virtualserver $Name"))
         {
