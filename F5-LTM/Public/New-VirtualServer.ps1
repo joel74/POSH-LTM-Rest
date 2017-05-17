@@ -55,6 +55,25 @@ Function New-VirtualServer
     ,
     [Parameter(Mandatory = $false)]
     $ConnectionLimit = '0'
+    ,
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('true','false')]
+    $Enabled = 'true'
+    ,
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('automap','snat','none')]
+    $SourceAddressTranslationType
+    ,
+    [Parameter(Mandatory = $false)]
+    [string]$SourceAddressTranslationPool
+    ,
+    [Parameter(Mandatory = $false)]
+    [string[]]$PersistenceProfiles
+    ,
+    [Parameter(Mandatory = $false)]
+    [string]$FallbackPersistence
+
+
   )
 
   #Test that the F5 session is in a valid format
@@ -74,16 +93,19 @@ Function New-VirtualServer
     #Start building the JSON for the action
     $Destination = $DestinationIP + ':' + $DestinationPort
     $JSONBody = @{
-      kind            = $Kind
-      name            = $newitem.Name
-      description     = $Description
-      partition       = $newitem.Partition
-      destination     = $Destination
-      source          = $Source
-      pool            = $DefaultPool
-      ipProtocol      = $ipProtocol
-      mask            = $Mask
-      connectionLimit = $ConnectionLimit
+      kind                     = $Kind
+      name                     = $newitem.Name
+      description              = $Description
+      partition                = $newitem.Partition
+      destination              = $Destination
+      source                   = $Source
+      pool                     = $DefaultPool
+      ipProtocol               = $ipProtocol
+      mask                     = $Mask
+      connectionLimit          = $ConnectionLimit
+      persist                  = $PersistenceProfiles
+      fallbackPersistence      = $FallbackPersistence
+
     }
     if ($newItem.application) {
       $JSONBody.Add('application',$newItem.application)
@@ -101,8 +123,26 @@ Function New-VirtualServer
       $JSONBody.vlansDisabled = $True
     }
 
+    if ($Enabled -eq 'true'){
+        $JSONBody.enabled = $True
+    }
+    elseif ($Enabled -eq 'false'){
+        $JSONBody.disabled = $True
+    }
+
+    #Settings for source address translation
+    If ($SourceAddressTranslationType){
+      $SourceAddressTranslation = @{
+        type = $SourceAddressTranslationType
+      }
+      #If SourceAddressTranslationType is SNAT, then a value for sourceAddressTranslationPool is expected
+      if ($SourceAddressTranslationType -eq 'snat'){
+        $SourceAddressTranslation.pool = $SourceAddressTranslationPool
+      }       
+    }
+    $JSONBody.sourceAddressTranslation = $SourceAddressTranslation
+
     #Build array of profile items
-    #JN: What happens if a non-existent profile is passed in?
     $ProfileItems = @()
     ForEach ($ProfileName in $ProfileNames)
     {
@@ -114,8 +154,6 @@ Function New-VirtualServer
     $JSONBody.profiles = $ProfileItems
 
     $JSONBody = $JSONBody | ConvertTo-Json
-
-    Write-Verbose -Message $JSONBody
 
     if ($pscmdlet.ShouldProcess($F5Session.Name, "Creating virtualserver $Name"))
     {

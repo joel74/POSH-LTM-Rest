@@ -1,17 +1,19 @@
+  # Set to FALSE because it is not a .NET project
 build: false
+
+version: 1.4.{build}
+os: WMF 5
+
 environment:
-  # Set your PowerShellGallery API Key to facilitate publishing
-  # Don't store it in the clear, encrypt it: https://ci.appveyor.com/tools/encrypt
+  # Encrypted PowerShellGallery API Key to facilitate publishing
+  # See https://ci.appveyor.com/tools/encrypt
   POWERSHELLGALLERY_APIKEY:
     secure: NvJlPynne4N7tJ/8DM2LFAKoZu5v9e35PvbAJNOCiXbXJRHrJ+OetTQsO/bYjNo5
   
-os: WMF 5
 skip_commits:
   # Skip on updates to the readme. [skip ci] or [ci skip] anywhere in commit message will also prevent a ci build 
   message: /update readme.*/
   
-version: 1.4.{build}
-
 install:
   # Force bootstrap of the Nuget PackageManagement Provider; Reference: http://www.powershellgallery.com/GettingStarted?section=Get%20Started
   - ps: Get-PackageProvider -Name NuGet -Force
