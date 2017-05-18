@@ -1,3 +1,22 @@
+# Retrieve ALL ~/Public/*.ps1 Command names
+$Script:F5LTMPublicCommands = Get-ChildItem -Path ($PSScriptRoot -replace 'Private','Public') -Filter '*.ps1' -Recurse | Select-Object -ExpandProperty BaseName
+function Get-F5Command {
+<#
+.SYNOPSIS  
+    (Get-Command -Module F5-LTM) adversely affects module import performance.  
+    This is a much faster alternative without resorting to static command names
+    for Register-ArgumentCompleter -Command parameters.
+#>
+    param(
+        [Parameter(ValueFromPipeline=$true)]
+        [string[]]$Filter
+    )
+    process{
+        foreach ($f in $filter) {
+            $Script:F5LTMPublicCommands -like $f
+        }
+    }
+}
 function Get-CompleteSession {
     param($boundSession)
     Invoke-NullCoalescing {$boundSession} {$Script:F5Session}
@@ -170,67 +189,67 @@ function CompleteVirtualServerName {
 if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
 {
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-PoolMember' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-PoolMember') `
         -ParameterName Address `
         -ScriptBlock $function:CompletePoolMemberAddress
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-PoolMember' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-PoolMember') `
         -ParameterName Name `
         -ScriptBlock $function:CompletePoolMemberName
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-PoolMonitor' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-PoolMonitor') `
         -ParameterName Name `
         -ScriptBlock $function:CompletePoolMonitorName
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-HealthMonitor' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-HealthMonitor') `
         -ParameterName Name `
         -ScriptBlock $function:CompleteMonitorName
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-HealthMonitor' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-HealthMonitor') `
         -ParameterName Type `
         -ScriptBlock $function:CompleteMonitorType
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-Node' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-Node') `
         -ParameterName Address `
         -ScriptBlock $function:CompleteNodeAddress
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-Node' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-Node') `
         -ParameterName Name `
         -ScriptBlock $function:CompleteNodeName
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-Pool' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-Pool') `
         -ParameterName Name `
         -ScriptBlock $function:CompletePoolName
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*') `
         -ParameterName Partition `
         -ScriptBlock $function:CompletePartition
         
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command 'Get-BIGIPPartition' -Module F5-LTM) `
+        -CommandName 'Get-BIGIPPartition' `
         -ParameterName Name `
         -ScriptBlock $function:CompleteBIGIPPartition
         
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-Pool*' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-Pool*') `
         -ParameterName PoolName `
         -ScriptBlock $function:CompletePoolName
         
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-iRule' -Module F5-LTM) `
+        -CommandName 'Get-iRule' `
         -ParameterName Name `
         -ScriptBlock $function:CompleteRuleName
 
     Register-ArgumentCompleter `
-        -CommandName @(Get-Command '*-VirtualServer' -Module F5-LTM) `
+        -CommandName @(Get-F5Command '*-VirtualServer') `
         -ParameterName Name `
         -ScriptBlock $function:CompleteVirtualServerName
 }
