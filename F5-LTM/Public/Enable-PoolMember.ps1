@@ -18,7 +18,7 @@
         [string]$Partition,
 
         [Alias("ComputerName")]
-        [string]$Address='*',
+        [PoshLTM.F5Address]$Address=[IPAddress]::Any,
 
         [string]$Name='*'
     )
@@ -27,7 +27,7 @@
             InputObject {
                 switch ($InputObject.kind) {
                     "tm:ltm:pool:poolstate" {
-                        if (!$Address) {
+                        if ($Address -eq [IPAddress]::Any) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
                             $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Enable-PoolMember -F5session $F5Session

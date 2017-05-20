@@ -51,12 +51,7 @@ Function New-Pool {
                 Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
                 ForEach ($MemberDefinition in $MemberDefinitionList){
                     $Node,$PortNumber = $MemberDefinition -split ','
-                    # IP Addresses always start with a number, server names can not
-                    if ($Node -match '^\d') {
-                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Status Enabled
-                    } else {
-                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -ComputerName $Node -PortNumber $PortNumber -Status Enabled
-                    }
+                    $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Status Enabled
                 }
             }
         }

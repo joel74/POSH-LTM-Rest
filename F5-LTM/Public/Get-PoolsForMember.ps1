@@ -12,36 +12,21 @@
 
         [Alias("ComputerName")]
         [Parameter(Mandatory=$false,ParameterSetName='Address')]
-        [string]$Address='*'
+        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any
     )
     begin {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
-
-        if ($PSCmdLet.ParameterSetName -eq 'Address') {
-            if ($Address -ne '*') {
-                $ip = [IPAddress]::Any
-                if ([IpAddress]::TryParse($Address,[ref]$ip)) {
-                    $Address = $ip.IpAddressToString
-                } else {
-                    $ip = [string]([System.Net.Dns]::GetHostAddresses($Address).IPAddressToString)
-                    #If we don't get an IP address for the computer, try the value specified
-                    If ($ip) {
-                        $Address = $ip
-                    }
-                }
-            }
-        }
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
             Address {
                 $pools = Get-Pool -F5Session $F5Session
                 foreach ($pool in $pools) {
-                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $_.address -like $Address }
+                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $Address -eq [IPAddress]::Any -or $_.address -like $Address }
                     if ($members) {
                         $pool
-                    }    
+                    }
                 }
             }
             InputObject {

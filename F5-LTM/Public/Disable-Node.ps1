@@ -11,8 +11,8 @@
         [PSObject[]]$InputObject,
 
         [Parameter(Mandatory=$false,ParameterSetName='AddressOrName',ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Address='*',
-
+        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any,
+	
         [Alias('ComputerName')]
         [Alias('NodeName')]
         [Parameter(Mandatory=$false,ParameterSetName='AddressOrName',ValueFromPipelineByPropertyName=$true)]

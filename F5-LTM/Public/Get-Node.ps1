@@ -11,7 +11,7 @@
         $F5Session=$Script:F5Session,
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Address='*',
+        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any,
 
         [Alias('ComputerName')]
         [Alias('NodeName')]
@@ -30,7 +30,7 @@
             $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             Invoke-NullCoalescing {$JSON.items} {$JSON} | 
-                Where-Object { $Address -eq '*' -or $Address -contains $_.address} |
+                Where-Object { $Address -eq [IPAddress]::Any -or $Address -contains $_.address} |
                 Add-ObjectDetail -TypeName 'PoshLTM.Node'
         }
     }

@@ -74,7 +74,7 @@
             }
         }
         # fall back to Credentials
-        Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token but the base URL is valid."
+        Write-Verbose "The version must be prior to 11.6 since we failed to retrieve an auth token."
         $Credential = $LTMCredentials
     }
 
