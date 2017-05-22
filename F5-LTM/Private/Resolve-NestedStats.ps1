@@ -12,22 +12,13 @@
 
         [Parameter(Mandatory=$true)][string]$JSONData
     )
-
-    $LTM_VersionArray = $F5Session.LTMVersion.Split(".")
-
-#    $LTM_VersionArray[0] = Major version
-#    $LTM_VersionArray[1] = Minor version
-#    $LTM_VersionArray[2] = Maintenance version
-
-    #Switch based on the major version value
-    switch ($LTM_VersionArray[0])
+    switch ($F5Session.LTMVersion.Major)
     {
-        '11' { <# no conversion needed #> }
-        '12' { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
-        '13' { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
+        11 { <# no conversion needed #> }
+        12 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
+        13 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
         Default { <# assume no conversion needed #> }
     }
 
     $JSON
-
 }

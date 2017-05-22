@@ -21,11 +21,10 @@ Function Invoke-F5RestMethod {
         $null = $PSBoundParameters.Remove('AsBoolean')
         $null = $PSBoundParameters.Remove('F5Session')
         $null = $PSBoundParameters.Remove('ErrorMessage')
-        if ($F5Session.Credential) {
-            $null = $PSBoundParameters.Add('Credential', $F5Session.Credential)
-        }
-        if ($F5Session.WebSession) {
+        if ($F5Session.WebSession.Headers.ContainsKey('X-F5-Auth-Token')) {
             $null = $PSBoundParameters.Add('WebSession', $F5Session.Websession)
+        } else {
+            $null = $PSBoundParameters.Add('Credential', $F5Session.Credential)
         }
         $Result = Invoke-RestMethodOverride @PSBoundParameters
         if ($AsBoolean) {
