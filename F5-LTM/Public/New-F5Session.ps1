@@ -92,12 +92,13 @@
     # Since we've connected to the LTM, we can now retrieve the device version
     # We'll add it to the session object and reference it in cases where the iControlREST web services differ between LTM versions.
     $VersionURL = $BaseURL.Replace('ltm/','sys/version/')
-    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession
-    #If the LTM version is 12+, then the version JSON is contained within a nestedStats property
-    If ($JSON.entries.PSObject.Properties.Value.nestedStats){
-        $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats
+    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json
+    
+    $version = '0.0.0.0' # Default value, rather than throw error
+    if ($JSON -match '(\d+\.?){3,4}') {
+        $version = [Regex]::Match($JSON,'(\d+\.?){3,4}').Value
     }
-    $newSession | Add-Member -Name LTMVersion -Value ($JSON.entries.Version.description) -MemberType NoteProperty
+    $newSession | Add-Member -Name LTMVersion -Value ([Version]$version) -MemberType NoteProperty
 
     #If the Default switch is set, and/or if no script-scoped F5Session exists, then set the script-scoped F5Session
     If ($Default -or !($Script:F5Session)){
