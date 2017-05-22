@@ -18,7 +18,7 @@
         [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName,
 
-        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
         [Alias("ComputerName")]

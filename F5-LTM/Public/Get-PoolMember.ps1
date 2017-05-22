@@ -16,7 +16,7 @@
         [Parameter(Mandatory=$false,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName='',
 
-        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
         [Alias("ComputerName")]
@@ -45,7 +45,7 @@
                 foreach($pool in $InputObject) {
                     $MembersLink = $F5Session.GetLink($pool.membersReference.link)
                     $JSON = Invoke-F5RestMethod -Method Get -Uri $MembersLink -F5Session $F5Session
-                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { ($Address -eq [IPAddress]::Any -and $Name -eq '*') -or $Address -contains $_.address -or $Name -contains $_.name } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { ($Address.IPAddress -eq [IPAddress]::Any -and $Name -eq '*') -or $Address.IPAddress.IPAddressToString -contains $_.address -or $Name -contains $_.name } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
                         [Regex]::Match($this.selfLink, '(?<=pool/)[^/]*') -replace '~','/'
                     } -Force -PassThru | Add-Member -Name GetFullName -MemberType ScriptMethod {
                         '{0}{1}' -f $this.GetPoolName(),$this.fullPath
