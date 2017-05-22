@@ -10,11 +10,11 @@
     param (
         $F5Session=$Script:F5Session,
 
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [Alias("Pool")]
         [PSObject[]]$InputObject,
 
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName,
 
         [Parameter(Mandatory=$false,ValueFromPipeline=$true)]
@@ -58,11 +58,8 @@
     }
 
     process {
-#        $Address.IPAddressToString
-#        $PSCmdLet.ParameterSetName
-
-        switch -Wildcard ($PSCmdLet.ParameterSetName) {
-            "InputObjectWith*" {
+        switch ($PSCmdLet.ParameterSetName) {
+            'InputObject' {
                 switch ($InputObject.kind) {
                     "tm:ltm:pool:poolstate" {
                         if ($Address -eq [IPAddress]::any) {
@@ -105,7 +102,7 @@
                     }
                 }
             }
-            "PoolNameWith*" {
+            'PoolName' {
                 foreach($pName in $PoolName) {
 
                     Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status -Application $Application
