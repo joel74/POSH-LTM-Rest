@@ -16,11 +16,10 @@ Function Add-iRuleToVirtualServer {
         [Alias("VirtualServerName")]
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
-        [Parameter(Mandatory=$false)]
-        [string]$VirtualServerPartition='Common',
         
         [Parameter(Mandatory=$true)]
         [string]$iRuleName,
+
         [Parameter(Mandatory=$false)]
         [string]$Partition='Common'
     )
