@@ -35,7 +35,7 @@
                     $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
                     [bool](
                         Invoke-NullCoalescing {$JSON.items} {$JSON} | 
-                        Where-Object { $Address -eq [IPAddress]::Any -or $Address.IPAddress.IPAddressToString -contains $_.address}
+                        Where-Object { $f5address -eq [IPAddress]::Any -or ([string]$itemaddress) -contains $_.address}
                     )
                 }
             }

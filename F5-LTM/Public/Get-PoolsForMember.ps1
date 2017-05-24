@@ -23,7 +23,7 @@
             Address {
                 $pools = Get-Pool -F5Session $F5Session
                 foreach ($pool in $pools) {
-                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $Address -eq [IPAddress]::Any -or $_.address -like $Address.IPAddress.IPAddressToString }
+                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $Address -eq [IPAddress]::Any -or $_.address -like ([string[]]$Address) }
                     if ($members) {
                         $pool
                     }
