@@ -20,7 +20,9 @@
         [string]$Partition='Common',
         
         [Parameter(Mandatory=$true)]
-        [string]$iRuleName
+        [string]$iRuleName,
+
+        [switch]$PassThru
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -52,7 +54,7 @@
 
                             $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                            Invoke-RestMethodOverride -Method PATCH -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json'
+                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
                         }
                         Else {
                             Write-Warning "The $($VirtualServer.name) virtual server does not contain the $iRuleFullName iRule."
@@ -61,12 +63,17 @@
                 }
             }
             Name {
-                $virtualservers = $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition
+                $virtualserver = $Name | Get-VirtualServer -F5Session $F5Session -Partition $Partition
 
-                if ($null -eq $virtualservers) {
+                if ($null -eq $virtualserver) {
                     Write-Warning "No virtual servers found."
                 }
-                $virtualservers | Remove-iRuleFromVirtualServer -F5session $F5Session -iRuleName $iRuleName -Partition $Partition
+                else {
+                    $virtualserver = $virtualserver | Remove-iRuleFromVirtualServer -F5session $F5Session -iRuleName $iRuleName -Partition $Partition
+                    If ($PassThru){
+                        $virtualserver
+                    }
+                }
             }
         }
     }

@@ -24,7 +24,11 @@
         [string[]]$Address='*',
 
         [Parameter(Mandatory=$false)]
-        [string[]]$Name='*'
+        [string[]]$Name='*',
+
+        [Alias('iApp')]
+        [Parameter(Mandatory=$false)]
+        [string]$Application=''
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -49,11 +53,11 @@
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
                 if ($null -eq $InputObject) {
-                    $InputObject = Get-Pool -F5Session $F5Session -Partition $Partition
+                    $InputObject = Get-Pool -F5Session $F5Session -Partition $Partition -Application $Application
                 }
                 foreach($pool in $InputObject) {
                     $MembersLink = $F5Session.GetLink($pool.membersReference.link)
-                    $JSON = Invoke-RestMethodOverride -Method Get -Uri $MembersLink -WebSession $F5Session.WebSession
+                    $JSON = Invoke-F5RestMethod -Method Get -Uri $MembersLink -F5Session $F5Session
                     Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { ($Address -eq '*' -and $Name -eq '*') -or $Address -contains $_.address -or $Name -contains $_.name } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
                         [Regex]::Match($this.selfLink, '(?<=pool/)[^/]*') -replace '~','/'
                     } -Force -PassThru | Add-Member -Name GetFullName -MemberType ScriptMethod {
@@ -62,7 +66,7 @@
                 }
             }
             PoolName {
-                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name
+                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition -Application $Application | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application
             }
         }
     }

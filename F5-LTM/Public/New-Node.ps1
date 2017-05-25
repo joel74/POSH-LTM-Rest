@@ -43,7 +43,7 @@
                 #Start building the JSON for the action
                 $JSONBody = @{address=$Address[$a];name=$newitem.Name;partition=$newitem.Partition;description=$Description[$a]} | ConvertTo-Json
 
-                Invoke-RestMethodOverride -Method POST -Uri "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' |
+                Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' |
                     Out-Null
                 if ($Passthru) {
                     Get-Node -F5Session $F5Session -Name $newitem.Name -Partition $newitem.Partition

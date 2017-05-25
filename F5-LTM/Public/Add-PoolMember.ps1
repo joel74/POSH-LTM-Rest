@@ -37,12 +37,20 @@
         [Parameter(Mandatory=$true)]
         [ValidateRange(0,65535)]
         [int]$PortNumber,
-    
+
         [Parameter(Mandatory=$false)]
         [string]$Description=$ComputerName,
 
         [ValidateSet("Enabled","Disabled")]
-        [Parameter(Mandatory=$true)]$Status
+        [Parameter(Mandatory=$true)]$Status,
+        
+        [Alias('iApp')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Application='',
+
+        [Parameter(Mandatory=$false)]
+        [int]$RouteDomain        
+
     )
 
     begin {
@@ -52,6 +60,14 @@
         if ($PSCmdLet.ParameterSetName -match 'ComputerName$') {
             $Address = [Net.Dns]::GetHostAddresses($ComputerName) | Where-Object { $_.AddressFamily -eq 'InterNetwork' }  | Select-Object -First 1
         }
+        
+        $AddressString = $Address.IPAddressToString
+
+        if ($RouteDomain) {
+            $AddressString = "{0}%{1}" -f $AddressString, $RouteDomain.ToString()
+        }
+
+        $ExistingNode = Get-Node -F5Session $F5Session -Address $AddressString -Partition $Partition -ErrorAction SilentlyContinue
     }
 
     process {
@@ -64,10 +80,15 @@
                     "tm:ltm:pool:poolstate" {
                         if (!$Address) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
-                        } else {
+                        } 
+                        else {
+                            # Set Address to include the route domain - Route Domains are specified after a % sign in the address string.
+                            $AddressString = "{0}%{1}" -f $Address.IPAddressToString, $RouteDomain.Tostring()
+                            # Default name to IPAddress
                             if (!$Name) {
-                                $Name = '{0}:{1}' -f $Address.IPAddressToString,$PortNumber
+                                $Name = '{0}:{1}' -f $AddressString, $PortNumber
                             }
+                            # Append port number if not already present
                             if ($Name -notmatch ':\d+$') {
                                 $Name = '{0}:{1}' -f $Name,$PortNumber
                             }
@@ -75,21 +96,23 @@
                                 if (!$Partition) {
                                     $Partition = $pool.partition 
                                 }
-                                $JSONBody = @{name=$Name;partition=$Partition;address=$Address.IPAddressToString;description=$Description}
-                                if (Test-Node -F5Session $F5Session -Name $Address -Partition $Partition) {
+                                $JSONBody = @{name=$Name;partition=$Partition;address=$AddressString;description=$Description}
+                                if ($ExistingNode) {
                                     # Node exists, just add using name
-                                    $JSONBody = @{name=$Name}
+                                    $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber);partition=('{0}' -f $Partition)}
                                 } # else the node will be created
                                 $JSONBody = $JSONBody | ConvertTo-Json
                                 $MembersLink = $F5session.GetLink($pool.membersReference.link)
-                                Invoke-RestMethodOverride -Method POST -Uri "$MembersLink" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add $Name to $($pool.name)." | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
+                                Invoke-F5RestMethod -Method POST -Uri "$MembersLink" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add $Name to $($pool.name)." | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'
 
                                 #After adding to the pool, make sure the member status is set as specified
                                 If ($Status -eq "Enabled"){
-                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Enable-PoolMember -F5session $F5Session 
+
+                                    $pool | Get-PoolMember -F5Session $F5Session -Address $AddressString -Name $Name -Application $Application | Enable-PoolMember -F5session $F5Session | Out-Null
                                 }
                                 ElseIf ($Status -eq "Disabled"){
-                                    $pool | Get-PoolMember -F5Session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session 
+                                    $pool | Get-PoolMember -F5Session $F5Session -Address $AddressString -Name $Name -Application $Application | Disable-PoolMember -F5session $F5Session | Out-Null
+
                                 }
                             }
                         }
@@ -98,7 +121,9 @@
             }
             "PoolNameWith*" {
                 foreach($pName in $PoolName) {
-                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status
+
+                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status -Application $Application -RouteDomain $RouteDomain
+
                 }
             }
         }

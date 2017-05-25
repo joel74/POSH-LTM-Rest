@@ -9,9 +9,8 @@ It requires PowerShell v3 or higher.
 
 It includes a Validation.cs class file (based on code posted by Brian Scholer on www.briantist.com) to allow for using the REST API with LTM devices using self-signed SSL certificates.
 
-To use:
-Download all the files and place them in a F5-LTM folder beneath your PowerShell modules folder. By default, this is %USERPROFILE%\Documents\WindowsPowerShell\Modules or $env:userProfile\Documents\WindowsPowerShell\Modules
-This module is also available in the PowerShellGallery (https://www.powershellgallery.com/packages/f5-ltm)
+Setup:
+Install the latest version of the module either by calling 'Install-Module F5-LTM' to retrieve it from the PowerShell Gallery (assuming you're using PSGet, included in PowerShell 5 and later). By default, PSGallery is an untrusted repository, so you may be prompted for confirmation. If you don't have PowerShell 5 / PSGet, use the Gist install script available at https://gist.github.com/joel74/f5acb78ca7dbe0d87bc95cab98de1388
 
 The module contains the following functions.
 
@@ -45,8 +44,8 @@ The module contains the following functions.
    * Get-PoolsForMember
    * Get-StatusShape
    * Get-VirtualServer
-   * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Select -ExpandProperty rules__)
-   * Get-VirtualServerList (deprecated; use __Get-VirtualServer__)
+   * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Where rules | Select -ExpandProperty rules__)
+   * Get-VirtualServerList (deprecated; use __Get-VirtualServer__) 
    * Invoke-RestMethodOverride
    * New-F5Session
    * New-HealthMonitor
@@ -54,6 +53,7 @@ The module contains the following functions.
    * New-Pool
    * New-VirtualServer
    * Remove-HealthMonitor
+   * Remove-iRule
    * Remove-iRuleFromVirtualServer
    * Remove-Pool
    * Remove-PoolMember
@@ -62,8 +62,9 @@ The module contains the following functions.
    * Remove-Node
    * Remove-VirtualServer
    * Set-iRule
-   * Set-PoolLoadBalancingMode 
+   * Set-PoolLoadBalancingMode (deprecated; use __Set-Pool__)
    * Set-PoolMemberDescription
+   * Set-Pool
    * Set-VirtualServer
    * Sync-DeviceToGroup
    * Test-F5Session

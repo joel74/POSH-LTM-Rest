@@ -26,7 +26,11 @@
         [string[]]$Address='*',
 
         [Parameter(Mandatory=$false)]
-        [string[]]$Name='*'
+        [string[]]$Name='*',
+
+        [Alias('iApp')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [string]$Application=''
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -39,7 +43,7 @@
                     switch ($item.kind) {
                         "tm:ltm:pool:poolstate" {
                             if ($Address -or $Name) {
-                                $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Remove-PoolMember -F5session $F5Session
+                                $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
                             } else {
                                 Write-Error 'Address and/or Name is required when the pipeline object is not a PoolMember'
                             }
@@ -47,14 +51,14 @@
                         "tm:ltm:pool:members:membersstate" {
                             if ($pscmdlet.ShouldProcess($item.GetFullName())) {
                                 $URI = $F5Session.GetLink($item.selfLink)
-                                Invoke-RestMethodOverride -Method DELETE -Uri $URI -WebSession $F5Session.WebSession
+                                Invoke-F5RestMethod -Method DELETE -Uri $URI -F5Session $F5Session
                             }
                         }
                     }
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name | Remove-PoolMember -F5session $F5Session
+                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
             }
         }
     }

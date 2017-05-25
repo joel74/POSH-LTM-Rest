@@ -29,13 +29,14 @@
     process {
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'rule/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
-            $JSON = Invoke-RestMethodOverride -Method Get -Uri $URI -WebSession $F5Session.WebSession
+            $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
                 if(![string]::IsNullOrWhiteSpace($Application) -and ![string]::IsNullOrWhiteSpace($Partition)) {
                     $items = $items | Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"}
                 }
-                $items | Add-ObjectDetail -TypeName 'PoshLTM.iRule'
+                $items | Add-ObjectDetail -TypeName 'PoshLTM.iRule' | Add-Member -MemberType AliasProperty -Name Definition -Value apiAnonymous;
+                $items
             }
         }
     }

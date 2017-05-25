@@ -1,19 +1,17 @@
-﻿Function Remove-Pool {
+﻿Function Remove-iRule {
 <#
 .SYNOPSIS
-    Remove the specified pool(s). Confirmation is needed.
-.NOTES
-    Pool names are case-specific.
+    Remove the specified irule(s). Confirmation is needed.
 #>
     [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact='High')]
     param (
         $F5Session=$Script:F5Session,
 
-        [Alias('Pool')]
+        [Alias('iRule')]
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
 
-        [Alias('PoolName')]
+        [Alias('iRuleName')]
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name,
 
@@ -24,7 +22,7 @@
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
 
-        Write-Verbose "NB: Pool names are case-specific."
+        Write-Verbose "NB: iRule names are case-specific."
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
@@ -37,7 +35,7 @@
                 }
             }
             Name {
-                $Name | Get-Pool -F5Session $F5Session -Partition $Partition | Remove-Pool -F5session $F5Session
+                $Name | Get-iRule -F5Session $F5Session -Partition $Partition | Remove-iRule -F5session $F5Session
             }
         }
     }

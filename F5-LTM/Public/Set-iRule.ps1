@@ -57,12 +57,13 @@
                 
         $JSONBody = $JSONBody | ConvertTo-Json -Compress
         
-        #Caused by a bug in ConvertTo-Json https://windowsserver.uservoice.com/forums/301869-powershell/suggestions/11088243-provide-option-to-not-encode-html-special-characte
-        #'<', '>' and ''' are replaced by ConvertTo-Json to \\u003c, \\u003e and \\u0027. The F5 API doesn't understand this. Change them back.
+        # Caused by a bug in ConvertTo-Json https://windowsserver.uservoice.com/forums/301869-powershell/suggestions/11088243-provide-option-to-not-encode-html-special-characte
+        # '<', '>', ''' and '&' are replaced by ConvertTo-Json to \\u003c, \\u003e, \\u0027, and \\u0026. The F5 API doesn't understand this. Change them back.
         $ReplaceChars = @{
             '\\u003c' = '<'
             '\\u003e' = '>'
             '\\u0027' = "'"
+            '\\u0026' = "&"
         }
 
         foreach ($Char in $ReplaceChars.GetEnumerator()) 
@@ -102,7 +103,7 @@
                     if ($pscmdlet.ShouldProcess($F5Session.Name, "Deleting iRule $Name"))
                     {
                         $URIOldiRule = $F5Session.GetLink($iRuleonServer.selfLink)
-                        Invoke-RestMethodOverride -Method DELETE -URI $URIOldiRule -WebSession $F5Session.WebSession
+                        Invoke-F5RestMethod -Method DELETE -URI $URIOldiRule -F5Session $F5Session
                     }
                 }
                 
@@ -117,7 +118,7 @@
         {
             if ($pscmdlet.ShouldProcess($F5Session.Name, "Uploading iRule $Name"))
             {
-                Invoke-RestMethodOverride -Method POST -URI "$URI" -WebSession $F5Session.WebSession -Body $JSONBody -ContentType 'application/json' -AsBoolean
+                Invoke-F5RestMethod -Method POST -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -AsBoolean
             }
             
             foreach ($Virtualserver in $VirtualServers)
