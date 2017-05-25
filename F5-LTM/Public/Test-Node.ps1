@@ -34,8 +34,8 @@
                     $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Partition $Partition)
                     $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
                     [bool](
-                        Invoke-NullCoalescing {$JSON.items} {$JSON} | 
-                        Where-Object { $f5address -eq [IPAddress]::Any -or ([string]$itemaddress) -contains $_.address}
+                        Invoke-NullCoalescing {$JSON.items} {$JSON} |
+                        Where-Object { $itemaddress -eq [IPAddress]::Any -or ([string]$itemaddress) -contains $_.address}
                     )
                 }
             }
