@@ -4,7 +4,7 @@ Function New-VirtualServer
       .SYNOPSIS
       Create a new virtual server
   #>
-  [cmdletbinding(SupportsShouldProcess = $True,DefaultParameterSetName="VlanEnabled")]   
+  [cmdletbinding(SupportsShouldProcess = $True,DefaultParameterSetName="VlanEnabled")]
   param (
     $F5Session = $Script:F5Session
     ,
@@ -26,7 +26,7 @@ Function New-VirtualServer
     $Description = $null
     ,
     [Parameter(Mandatory = $True)]
-    $DestinationIP
+    [PoshLTM.F5Address]$DestinationIP
     ,
     [Parameter(Mandatory = $True)]
     $DestinationPort
@@ -35,7 +35,7 @@ Function New-VirtualServer
     [string[]]$VlanEnabled
     ,
     [Parameter(Mandatory = $false, ParameterSetName = 'VlanDisabled')]
-    [string[]]$VlanDisabled 
+    [string[]]$VlanDisabled
     ,
     [Parameter(Mandatory = $false)]
     $Source = '0.0.0.0/0'
@@ -86,12 +86,12 @@ Function New-VirtualServer
   {
     Write-Error -Message "The $Name virtual server already exists."
   }
-  Else 
+  Else
   {
     $newitem = New-F5Item -Name $Name -Application $Application -Partition $Partition
 
     #Start building the JSON for the action
-    $Destination = $DestinationIP + ':' + $DestinationPort
+    $Destination = $DestinationIP.ToString() + ':' + $DestinationPort
     $JSONBody = @{
       kind                     = $Kind
       name                     = $newitem.Name
@@ -110,14 +110,14 @@ Function New-VirtualServer
     if ($newItem.application) {
       $JSONBody.Add('application',$newItem.application)
     }
-        
+
     #Extra options for Vlan handling. Sets Vlans for VirtualServer, and sets it to be en- or disabled on those Vlans.
-    If ($VlanEnabled) 
+    If ($VlanEnabled)
     {
       $JSONBody.vlans = $VlanEnabled
       $JSONBody.vlansEnabled = $True
     }
-    elseif ($VlanDisabled) 
+    elseif ($VlanDisabled)
     {
       $JSONBody.vlans = $VlanDisabled
       $JSONBody.vlansDisabled = $True
@@ -138,7 +138,7 @@ Function New-VirtualServer
       #If SourceAddressTranslationType is SNAT, then a value for sourceAddressTranslationPool is expected
       if ($SourceAddressTranslationType -eq 'snat'){
         $SourceAddressTranslation.pool = $SourceAddressTranslationPool
-      }       
+      }
     }
     $JSONBody.sourceAddressTranslation = $SourceAddressTranslation
 
