@@ -30,9 +30,9 @@
         Write-Verbose "NB: Node names are case-specific."
     }
     process {
-        for($i=0; $i -lt $Name.Count -and $i -lt $Address.Count; $i++) {
-            $itemname = $Name[$i]
-            $itemaddress = $Address[$i]
+        for($i=0; $i -lt $Name.Count -or $i -lt $Address.Count; $i++) {
+            $itemname = Invoke-NullCoalescing {$Name[$i]} {''}
+            $itemaddress = Invoke-NullCoalescing {$Address[$i]} {[PoshLTM.F5Address]::Any}
             $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session -ErrorAction SilentlyContinue
             [bool](
