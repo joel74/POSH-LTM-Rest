@@ -29,8 +29,8 @@ namespace PoshLTM
                     // IPv6 Addresses do not always start with a number, but resolve nicely
                     // TODO: Is GetHostAddresses[0] sufficient, or should we favor IPv4 addresses?
                     IPAddress = System.Net.Dns.GetHostAddresses(address)[0];
-                    // If IPv4 the input string wasn't IPv6 so save the input as ComputerName for reference
-                    if (IPAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
+                    // If the input string is equal to the IPAddress the input is probably IPv6.  If not save the input as ComputerName for reference.
+                    if (!IPAddress.ToString().Equals(address)) {
                         ComputerName = address;
                     }
                 }
@@ -54,11 +54,13 @@ namespace PoshLTM
             }
             if (obj is System.Net.IPAddress)
             {
-                return this.IPAddress.Equals((System.Net.IPAddress)obj);
+                var f5address = new PoshLTM.F5Address(((System.Net.IPAddress)obj).ToString());
+                return this.Equals(f5address);
             }
             if (obj is string)
             {
-                return this.ToString().Equals((string)obj);
+                var f5address = new PoshLTM.F5Address((string)obj);
+                return this.Equals(f5address);
             }
             return false;
         }
