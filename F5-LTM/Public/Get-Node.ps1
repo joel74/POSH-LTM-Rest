@@ -10,27 +10,31 @@
     param (
         $F5Session=$Script:F5Session,
 
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
 
         [Alias('ComputerName')]
         [Alias('NodeName')]
-        [Parameter(Mandatory=$false,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [string[]]$Name='',
 
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Partition
     )
     begin {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
+
+        Write-Verbose "NB: Node names are case-specific."
     }
     process {
-        foreach ($itemname in $Name) {
+        for($i=0; $i -lt $Name.Count -and $i -lt $Address.Count; $i++) {
+            $itemname = $Name[$i]
+            $itemaddress = $Address[$i]
             $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
-            Invoke-NullCoalescing {$JSON.items} {$JSON} | 
-                Where-Object { $Address -eq [IPAddress]::Any -or ([string[]]$Address) -contains $_.address} |
+            Invoke-NullCoalescing {$JSON.items} {$JSON} |
+                Where-Object { [PoshLTM.F5Address]::IsMatch($itemaddress, $_.address) } |
                 Add-ObjectDetail -TypeName 'PoshLTM.Node'
         }
     }

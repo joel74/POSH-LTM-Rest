@@ -23,7 +23,7 @@
 
         [Alias("ComputerName")]
         [Parameter(Mandatory=$false)]
-        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any,
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
 
         [Parameter(Mandatory=$false)]
         [string[]]$Name='*',
@@ -42,7 +42,7 @@
                 foreach($item in $InputObject) {
                     switch ($item.kind) {
                         "tm:ltm:pool:poolstate" {
-                            if ($Address -ne [IPAddress]::Any -or $Name) {
+                            if ($Address -ne [PoshLTM.F5Address]::Any -or $Name) {
                                 $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
                             } else {
                                 Write-Error 'Address and/or Name is required when the pipeline object is not a PoolMember'

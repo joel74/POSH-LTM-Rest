@@ -12,7 +12,7 @@
 
         [Alias("ComputerName")]
         [Parameter(Mandatory=$false,ParameterSetName='Address')]
-        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -23,7 +23,7 @@
             Address {
                 $pools = Get-Pool -F5Session $F5Session
                 foreach ($pool in $pools) {
-                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $Address -eq [IPAddress]::Any -or $_.address -like ([string[]]$Address) }
+                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { [PoshLTM.F5Address]::IsMatch($Address, $_.address) }
                     if ($members) {
                         $pool
                     }
@@ -31,7 +31,7 @@
             }
             InputObject {
                 foreach($member in $InputObject) {
-                    Get-PoolsForMember -F5Session $F5Session -Address $member.address 
+                    Get-PoolsForMember -F5Session $F5Session -Address $member.address
                 }
             }
         }

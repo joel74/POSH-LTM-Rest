@@ -3,24 +3,27 @@
 .SYNOPSIS
     Disable a node to quickly disable all pool members associated with it
 #>
-    [cmdletBinding()]
-    param(
+    [cmdletBinding(DefaultParameterSetName='Address')]
+    param (
         $F5Session=$Script:F5Session,
 
-        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [Alias('Node')]
+        [Parameter(Mandatory,ParameterSetName='InputObject',ValueFromPipeline)]
         [PSObject[]]$InputObject,
 
-        [Parameter(Mandatory=$false,ParameterSetName='AddressOrName',ValueFromPipelineByPropertyName=$true)]
-        [PoshLTM.F5Address[]]$Address=[IPAddress]::Any,
-	
+        [Parameter(Mandatory,ParameterSetName='Address',ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory,ParameterSetName='AddressAndName',ValueFromPipelineByPropertyName)]
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
+
         [Alias('ComputerName')]
         [Alias('NodeName')]
-        [Parameter(Mandatory=$false,ParameterSetName='AddressOrName',ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory,ParameterSetName='Name',ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory,ParameterSetName='AddressAndName',ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [string[]]$Name='',
 
-        [Parameter(Mandatory=$false,ParameterSetName='AddressOrName',ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Partition,
-        
+
         [switch]$Force
     )
     begin {
@@ -29,9 +32,6 @@
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
-            AddressOrName {
-                Get-Node -F5session $F5Session -Address $Address -Partition $Partition -Name $Name | Disable-Node -F5session $F5Session -Force:$Force
-            }
             InputObject {
                 If ($Force){
                     $AcceptNewConnections = "user-down"
@@ -44,6 +44,9 @@
                     $URI = $F5Session.GetLink($member.selfLink)
                     Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ErrorMessage "Failed to disable node $($member.Name)." -AsBoolean
                 }
+            }
+            default {
+                Get-Node -F5session $F5Session -Address $Address -Name $Name -Partition $Partition | Disable-Node -F5session $F5Session -Force:$Force
             }
         }
     }
