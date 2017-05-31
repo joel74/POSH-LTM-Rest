@@ -17,7 +17,6 @@
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Alias("ComputerName")]
         [PoshLTM.F5Address]$Address=[PoshLTM.F5Address]::Any,
 
         [Parameter(Mandatory=$false)]

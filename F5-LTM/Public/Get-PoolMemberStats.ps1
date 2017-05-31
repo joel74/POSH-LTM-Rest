@@ -21,7 +21,6 @@
         [Parameter(Mandatory=$false)]
         [string]$Partition,
 
-        [Alias("ComputerName")]
         [Parameter(Mandatory=$false)]
         [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
 

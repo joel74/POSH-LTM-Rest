@@ -16,7 +16,6 @@
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Alias("ComputerName")]
         [Parameter(Mandatory=$false,ParameterSetName='InputObject')]
         [Parameter(Mandatory=$true,ParameterSetName='PoolName')]
         [PoshLTM.F5Address]$Address=[PoshLTM.F5Address]::Any,
@@ -40,7 +39,7 @@
                         foreach($member in $InputObject) {
                             $JSONBody = @{description=$Description} | ConvertTo-Json
                             $URI = $F5Session.GetLink($member.selfLink)
-                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $ComputerName in the $PoolName pool to $Description." -AsBoolean
+                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to set the description on $($member.Name) in the $PoolName pool to $Description." -AsBoolean
                         }
                     }
                 }

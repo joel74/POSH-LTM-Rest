@@ -17,7 +17,6 @@
         [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
         [string]$Partition,
 
-        [Alias("ComputerName")]
         [PoshLTM.F5Address]$Address=[PoshLTM.F5Address]::Any,
 
         [string]$Name='*'

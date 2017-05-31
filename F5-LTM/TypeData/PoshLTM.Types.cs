@@ -1,73 +1,78 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text.RegularExpressions;
 namespace PoshLTM
 {
     public struct F5Address
     {
-        public static PoshLTM.F5Address Any = System.Net.IPAddress.Any;
-        public string ComputerName;
-        public System.Net.IPAddress IPAddress;
+        public static F5Address Any = IPAddress.Any;
+        public IPAddress IPAddress;
         public int? RouteDomain;
 
         public F5Address(string address)
         {
-            ComputerName = "";
-            // TODO: Implement ComputerName%RouteDomain syntax?
-            if (System.Text.RegularExpressions.Regex.IsMatch(address,"%[0-9]+$"))
+            RouteDomain = null;
+            IPAddress = null;
+            string hostname = address;
+            // Extract a RouteDomain, if applicable
+            if (Regex.IsMatch(address,"%[0-9]+$"))
             {
-                IPAddress = System.Net.IPAddress.Parse(address.Split('%')[0]);
+                hostname = address.Split('%')[0];
                 RouteDomain = int.Parse(address.Split('%')[1]);
+            }
+            // IPv4 Addresses always start with a number, server names can not
+            if (Regex.IsMatch(hostname,"^[0-9]"))
+            {
+                IPAddress = IPAddress.Parse(hostname);
             }
             else
             {
-                // IPv4 Addresses always start with a number, server names can not
-                if (System.Text.RegularExpressions.Regex.IsMatch(address,"^[0-9]"))
+                // Resolve hostname
+                // IPv6 Addresses do not always start with a number, but resolve nicely
+                foreach (IPAddress IPA in Dns.GetHostAddresses(hostname))
                 {
-                    IPAddress = System.Net.IPAddress.Parse(address);
-                }
-                else
-                {
-                    // IPv6 Addresses do not always start with a number, but resolve nicely
-                    // TODO: Is GetHostAddresses[0] sufficient, or should we favor IPv4 addresses?
-                    IPAddress = System.Net.Dns.GetHostAddresses(address)[0];
-                    // If the input string is equal to the IPAddress the input is probably IPv6.  If not save the input as ComputerName for reference.
-                    if (!IPAddress.ToString().Equals(address)) {
-                        ComputerName = address;
+                    // This avoids (but does not prevent) getting no address at all
+                    IPAddress = IPA;
+                    // This applies a bias in favor of IPv4 or IPv6 addresses that are NOT LinkLocal which often have a physical NIC ScopeId, not to be confused with a RouteDomain
+                    if (IPA.AddressFamily == AddressFamily.InterNetwork || (IPA.AddressFamily == AddressFamily.InterNetworkV6 && !IPA.IsIPv6LinkLocal))
+                    {
+                        break;
                     }
                 }
-                RouteDomain = null;
             }
         }
 
         #region Override Equals
 
         // https://msdn.microsoft.com/ru-ru/library/ms173147(v=vs.80).aspx
-        public override bool Equals(System.Object obj)
+        public override bool Equals(Object obj)
         {
             // If parameter is null return false.
             if (obj == null)
             {
                 return false;
             }
-            if (obj is PoshLTM.F5Address)
+            if (obj is F5Address)
             {
-                return this.Equals((PoshLTM.F5Address)obj);
+                return this.Equals((F5Address)obj);
             }
-            if (obj is System.Net.IPAddress)
+            if (obj is IPAddress)
             {
-                var f5address = new PoshLTM.F5Address(((System.Net.IPAddress)obj).ToString());
+                var f5address = new F5Address(((IPAddress)obj).ToString());
                 return this.Equals(f5address);
             }
             if (obj is string)
             {
-                var f5address = new PoshLTM.F5Address((string)obj);
+                var f5address = new F5Address((string)obj);
                 return this.Equals(f5address);
             }
             return false;
         }
 
-        public bool Equals(PoshLTM.F5Address other)
+        public bool Equals(F5Address other)
         {
-            return IPAddress.Equals(other.IPAddress) && RouteDomain.Equals(other.RouteDomain) && ComputerName.Equals(ComputerName);
+            return IPAddress.Equals(other.IPAddress) && RouteDomain.Equals(other.RouteDomain);
         }
 
         // Required to override Equals
@@ -91,7 +96,7 @@ namespace PoshLTM
             }
             else
             {
-                PoshLTM.F5Address f5address = new PoshLTM.F5Address(address);
+                F5Address f5address = new F5Address(address);
                 return IPAddress.ToString() == f5address.IPAddress.ToString();
             }
         }
@@ -101,29 +106,29 @@ namespace PoshLTM
             return String.Format("{0}{1:\\%0}", IPAddress, RouteDomain);
         }
 
-        public static implicit operator PoshLTM.F5Address(System.Net.IPAddress value)
+        public static implicit operator F5Address(IPAddress value)
         {
-            return new PoshLTM.F5Address(value.ToString());
+            return new F5Address(value.ToString());
         }
-        public static implicit operator PoshLTM.F5Address(string value)
+        public static implicit operator F5Address(string value)
         {
-            return new PoshLTM.F5Address(value);
+            return new F5Address(value);
         }
-        public static implicit operator System.Net.IPAddress(PoshLTM.F5Address value)
+        public static implicit operator IPAddress(F5Address value)
         {
             return value.IPAddress;
         }
-        public static implicit operator string(PoshLTM.F5Address value)
+        public static implicit operator string(F5Address value)
         {
             return String.Format("{0}{1:\\%0}", value.IPAddress, value.RouteDomain);
         }
-        public static bool IsMatch(PoshLTM.F5Address filter, string address)
+        public static bool IsMatch(F5Address filter, string address)
         {
             return filter.IsMatch(address);
         }
-        public static bool IsMatch(PoshLTM.F5Address[] filter, string address)
+        public static bool IsMatch(F5Address[] filter, string address)
         {
-            foreach(PoshLTM.F5Address f in filter)
+            foreach(F5Address f in filter)
             {
                 if (f.IsMatch(address))
                 {

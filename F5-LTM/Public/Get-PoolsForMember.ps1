@@ -10,7 +10,6 @@
         [Alias('PoolMember')]
         [PSObject]$InputObject,
 
-        [Alias("ComputerName")]
         [Parameter(Mandatory=$false,ParameterSetName='Address')]
         [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any
     )

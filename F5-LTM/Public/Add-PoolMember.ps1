@@ -20,29 +20,28 @@
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Alias('ComputerName')]
         [Parameter(Mandatory=$true)]
         [PoshLTM.F5Address]$Address,
 
         [Parameter(Mandatory=$false)]
-        [string]$Name=$Address.ComputerName, # TODO: Verify this default works as intended
+        [string]$Name,
 
         [Parameter(Mandatory=$true)]
         [ValidateRange(0,65535)]
         [int]$PortNumber,
 
         [Parameter(Mandatory=$false)]
-        [string]$Description=$Address.ComputerName,
+        [string]$Description,
 
         [ValidateSet("Enabled","Disabled")]
         [Parameter(Mandatory=$true)]$Status,
-        
+
         [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Application='',
 
         [Parameter(Mandatory=$false)]
-        [int]$RouteDomain        
+        [int]$RouteDomain
 
     )
 
@@ -64,7 +63,7 @@
                     "tm:ltm:pool:poolstate" {
                         if ($Address -eq [IPAddress]::any) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
-                        } 
+                        }
                         else {
                             $AddressString = $Address.ToString()
                             # Default name to IPAddress
@@ -77,7 +76,7 @@
                             }
                             foreach($pool in $InputObject) {
                                 if (!$Partition) {
-                                    $Partition = $pool.partition 
+                                    $Partition = $pool.partition
                                 }
                                 $JSONBody = @{name=$Name;partition=$Partition;address=$AddressString;description=$Description}
                                 if ($ExistingNode) {
