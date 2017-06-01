@@ -16,12 +16,11 @@
         [Parameter(Mandatory=$false,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName='',
 
-        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Alias("ComputerName")]
         [Parameter(Mandatory=$false)]
-        [string[]]$Address='*',
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
 
         [Parameter(Mandatory=$false)]
         [string[]]$Name='*',
@@ -37,19 +36,6 @@
         Write-Verbose "NB: Pool and member names are case-specific."
     }
     process {
-        if ($Address -ne '*') {
-            for ([int]$a=0; $a -lt $Address.Count; $a++) {
-                $ip = [IPAddress]::Any
-                if($Address[$a] -match "[\d\.]+%\d+") {
-                    # Do not alter $Address[$a] if in format of IP%Partition
-                } elseif ([IpAddress]::TryParse($Address[$a],[ref]$ip)) {
-                    $Address[$a] = $ip.IpAddressToString
-                } else {
-                    $Address = [string]([System.Net.Dns]::GetHostAddresses($Address).IPAddressToString)
-                    $Address[$a] = $ip
-                }
-            }
-        }
         switch($PSCmdLet.ParameterSetName) {
             InputObject {
                 if ($null -eq $InputObject) {
@@ -58,7 +44,7 @@
                 foreach($pool in $InputObject) {
                     $MembersLink = $F5Session.GetLink($pool.membersReference.link)
                     $JSON = Invoke-F5RestMethod -Method Get -Uri $MembersLink -F5Session $F5Session
-                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { ($Address -eq '*' -and $Name -eq '*') -or $Address -contains $_.address -or $Name -contains $_.name } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { [PoshLTM.F5Address]::IsMatch($Address, $_.address) -and ($Name -eq '*' -or $Name -contains $_.name) } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
                         [Regex]::Match($this.selfLink, '(?<=pool/)[^/]*') -replace '~','/'
                     } -Force -PassThru | Add-Member -Name GetFullName -MemberType ScriptMethod {
                         '{0}{1}' -f $this.GetPoolName(),$this.fullPath
