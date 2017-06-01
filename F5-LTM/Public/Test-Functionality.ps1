@@ -3,7 +3,7 @@
 .SYNOPSIS
     Perform some standard tests to make sure things work as expected
 .EXAMPLE
-    Test-Functionality -F5Session $F5session -TestVirtualServer 'virt123' -TestVirtualServerIP '10.1.1.240' -TestPool 'testpool123' -PoolMember 'Server1'
+    Test-Functionality -F5Session $F5session -TestVirtualServer 'virt123' -TestVirtualServerIP '10.1.1.240' -TestPool 'testpool123' -PoolMemberAddress '10.1.1.100'
 #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingWriteHost", "")]
     param (
@@ -11,7 +11,7 @@
         [Parameter(Mandatory=$true)]$TestVirtualServer,
         [Parameter(Mandatory=$true)]$TestVirtualServerIP,
         [Parameter(Mandatory=$true)]$TestPool,
-        [Parameter(Mandatory=$true)]$PoolMember
+        [Parameter(Mandatory=$true)]$PoolMemberAddress
     )
 
     $TestNotesColor = 'Cyan'
@@ -46,44 +46,44 @@
     Get-PoolMember -F5Session $F5Session -PoolName $FirstPool | Select-Object -Property name,session,state
 
     Write-Host "`r`n* Create a new pool named '$TestPool'" -ForegroundColor $TestNotesColor
-    New-Pool -F5Session $F5Session -PoolName $TestPool 
+    New-Pool -F5Session $F5Session -PoolName $TestPool -LoadBalancingMode dynamic-ratio-member
 
     Write-Host "`r`n* Add the computer $PoolMember to the pool '$TestPool'" -ForegroundColor $TestNotesColor
-    Add-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PortNumber 80 -PoolName $TestPool -Status Enabled
+    Add-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PortNumber 80 -PoolName $TestPool -Status Enabled
 
     Write-Host "`r`n* Get the new pool member" -ForegroundColor $TestNotesColor
-    Get-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool
+    Get-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool
 
     Write-Host "`r`n* Get the IP address for the new pool member" -ForegroundColor $TestNotesColor
-    Get-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool | Select-Object -ExpandProperty address
+    Get-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool | Select-Object -ExpandProperty address
 
     Write-Host "`r`n* Get all pools of which this pool member is a member" -ForegroundColor $TestNotesColor
-    Get-PoolsForMember -F5Session $F5Session -ComputerName $PoolMember
+    Get-PoolsForMember -F5Session $F5Session -Address $PoolMemberAddress
 
     Write-Host "`r`n* Get the number of current connections for this pool member" -ForegroundColor $TestNotesColor
-    Get-PoolMemberStats -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool | Select-Object -ExpandProperty 'serverside.curConns'
+    Get-PoolMemberStats -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool | Select-Object -ExpandProperty 'serverside.curConns'
 
     Write-Host "`r`n* Disable the new pool member" -ForegroundColor $TestNotesColor
-    Disable-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool
+    Disable-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool
 
     Write-Host "`r`n* Get the status of the new pool member" -ForegroundColor $TestNotesColor
-    $PoolMemberStatus = Get-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool | Select-Object -Property name,session,state
+    $PoolMemberStatus = Get-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool | Select-Object -Property name,session,state
     $PoolMemberStatus
 
     Write-Host "`r`n* Set the pool member description to 'My new pool' and retrieve it" -ForegroundColor $TestNotesColor
     Write-Host "Old description:"
     #NB: If there is not description for the pool member, no Description propery is returned.
-    Get-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool | Select-Object -ExpandProperty Description -ErrorAction SilentlyContinue
+    Get-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool | Select-Object -ExpandProperty Description -ErrorAction SilentlyContinue
 
-    Set-PoolMemberDescription -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool -Description 'My new pool' | out-null
+    Set-PoolMemberDescription -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool -Description 'My new pool' | out-null
     Write-Host "New description:"
-    Get-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool | Select-Object -ExpandProperty Description
+    Get-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool | Select-Object -ExpandProperty Description
     
     Write-Host "`r`n* Enable the new pool member" -ForegroundColor $TestNotesColor
-    Enable-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool
+    Enable-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool
 
     Write-Host "`r`n* Remove the new pool member from the pool" -ForegroundColor $TestNotesColor
-    Remove-PoolMember -F5Session $F5Session -ComputerName $PoolMember -PoolName $TestPool
+    Remove-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool
 
     Write-Host "`r`n* Get a list of all virtual servers" -ForegroundColor $TestNotesColor
     $virtualServers = Get-VirtualServer -F5Session $F5Session | Select-Object -ExpandProperty fullPath
