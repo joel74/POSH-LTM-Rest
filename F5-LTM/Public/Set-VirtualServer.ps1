@@ -16,14 +16,14 @@ Function Set-VirtualServer {
             Output the modified VirtualServer to the pipeline.
         .EXAMPLE
             # Creates or updates a VirtualServer.  Note that parameters that are Mandatory for New-VirtualServer must be specified for VirtualServers that do not yet exist.
-            
+
             Set-VirtualServer -Name 'test.northwindtraders.com' -Description 'Northwind Traders example' -DefaultPool 'test.northwindtraders.com_blue' -Source 0.0.0.0/0 -DestinationIP 192.168.15.98 -DestinationPort 30785 -ipProtocol tcp
-            
+
         .EXAMPLE
             # Sets the destination port of an existing VirtualServer.
 
             Set-VirtualServer -Name 'test.northwindtraders.com' -DestinationPort 82
-            
+
         .EXAMPLE
             # Toggles the pool of an existing VirtualServer via the pipeline and returns the resulting VirtualServer with -PassThru.
 
@@ -65,7 +65,7 @@ Function Set-VirtualServer {
 
             #Set the virtual server by passing the modified local object to the LTM
             $vs | Set-VirtualServer
-            
+
     #>
     [cmdletbinding(ConfirmImpact='Medium',SupportsShouldProcess,DefaultParameterSetName="Default")]
     param (
@@ -90,7 +90,7 @@ Function Set-VirtualServer {
         #endregion
 
         # region New-VirtualServer equivalents
-        
+
         # region New-VirtualServer equivalents - optional 1-to-1 ValueFromPipelineByPropertyName
 
         [Parameter(ValueFromPipelineByPropertyName)]
@@ -116,7 +116,7 @@ Function Set-VirtualServer {
 
         #region New-VirtualServer equivalents - transformation required
 
-        $DestinationIP
+        [PoshLTM.F5Address]$DestinationIP
         ,
         $DestinationPort
         ,
@@ -139,7 +139,7 @@ Function Set-VirtualServer {
 
         [switch]$PassThru
     )
-    
+
     begin {
         Test-F5Session -F5Session ($F5Session)
 
@@ -160,7 +160,7 @@ Function Set-VirtualServer {
             connectionLimit='connectionLimit'
         }
     }
-    
+
     process {
         if ($InputObject -and (
                 ($Name -and $Name -cne $InputObject.name) -or
@@ -173,7 +173,7 @@ Function Set-VirtualServer {
 
         $NewProperties = @{} # A hash table to facilitate splatting of New-VirtualServer params
         $ChgProperties = @{} # A hash table of PSBoundParameters to override InputObject properties
-        
+
         # Build out both hashtables based on $PSBoundParameters
         foreach ($key in $PSBoundParameters.Keys) {
             switch ($key) {
@@ -208,7 +208,7 @@ Function Set-VirtualServer {
                 }
             }
         }
-        
+
         # ipProtocol and other Mandatory New-VirtualServer params are set either via ValueFromPipelineByPropertyName or explicitly below (DestinationIP+DestinationPort)
         # New-VirtualServer may throw an error if InputObject excludes them. but they are not all Mandatory to set existing VirtualServers.
         # pool, profiles, and vlans are not Mandatory New-VirtualServer params, so in the absensce of an override they will be applied on the subsequent REST/PUT Update
@@ -224,7 +224,7 @@ Function Set-VirtualServer {
             }
             if ($destination) { $NewProperties['DestinationIP'] = ($destination -split ':')[0] }
         }
-        if (-not $NewProperties.ContainsKey('DestinationPort')) { 
+        if (-not $NewProperties.ContainsKey('DestinationPort')) {
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
             } elseif ($ExistingVirtualServer -ne $null) {
@@ -233,7 +233,7 @@ Function Set-VirtualServer {
             if ($destination) { $NewProperties['DestinationPort'] = ($destination -split ':')[1] }
         }
         # Set changed destination if either or both components are overridden via PSBoundParameters
-        if ($PSBoundParameters.ContainsKey('DestinationIP') -or $PSBoundParameters.ContainsKey('DestinationPort')) { 
+        if ($PSBoundParameters.ContainsKey('DestinationIP') -or $PSBoundParameters.ContainsKey('DestinationPort')) {
             $ChgProperties['destination'] = ('{0}:{1}' -f $NewProperties['DestinationIP'],$NewProperties['DestinationPort'])
         }
 
@@ -245,8 +245,8 @@ Function Set-VirtualServer {
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
         if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
             Write-Verbose -Message 'Setting VirtualServer details...'
-                
-            $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition) 
+
+            $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition)
             $JSONBody = $NewObject | ConvertTo-Json -Compress
 
             #region case-sensitive parameter names

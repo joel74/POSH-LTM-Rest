@@ -15,7 +15,7 @@
 $Script:F5Session=$null
 
 Add-Type -Path "${PSScriptRoot}\Validation.cs"
-
+Add-Type -Path "${PSScriptRoot}\TypeData\PoshLTM.Types.cs"
 Update-FormatData "${PSScriptRoot}\TypeData\PoshLTM.Format.ps1xml"
 $ScriptPath = Split-Path $MyInvocation.MyCommand.Path
 
