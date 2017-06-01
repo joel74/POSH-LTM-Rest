@@ -13,7 +13,7 @@
 
         [Alias("ComputerName")]
         [Parameter(Mandatory=$false)]
-        [string]$Address='*',
+        [string]$Address='0.0.0.0',
 
         [Parameter(Mandatory=$false)]
         [string]$Name='*'

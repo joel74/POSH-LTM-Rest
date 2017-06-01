@@ -10,26 +10,18 @@
     param (
         $F5Session=$Script:F5Session,
 
-        [Parameter(Mandatory=$true,ParameterSetName='InputObjectWithAddress',ValueFromPipeline=$true)]
-        [Parameter(Mandatory=$true,ParameterSetName='InputObjectWithComputerName',ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [Alias("Pool")]
         [PSObject[]]$InputObject,
 
-        [Parameter(Mandatory=$true,ParameterSetName='PoolNameWithAddress',ValueFromPipeline=$true)]
-        [Parameter(Mandatory=$true,ParameterSetName='PoolNameWithComputerName')]
+        [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName,
 
-        [Parameter(Mandatory=$false,ParameterSetName='PoolNameWithAddress',ValueFromPipeline=$true)]
-        [Parameter(Mandatory=$false,ParameterSetName='PoolNameWithComputerName')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Parameter(Mandatory=$true,ParameterSetName='InputObjectWithComputerName')]
-        [Parameter(Mandatory=$true,ParameterSetName='PoolNameWithComputerName')]
-        [string]$ComputerName,
-
-        [Parameter(Mandatory=$true,ParameterSetName='InputObjectWithAddress')]
-        [Parameter(Mandatory=$true,ParameterSetName='PoolNameWithAddress')]
-        [IPAddress]$Address,
+        [Parameter(Mandatory=$true)]
+        [PoshLTM.F5Address]$Address,
 
         [Parameter(Mandatory=$false)]
         [string]$Name,
@@ -39,17 +31,17 @@
         [int]$PortNumber,
 
         [Parameter(Mandatory=$false)]
-        [string]$Description=$ComputerName,
+        [string]$Description,
 
         [ValidateSet("Enabled","Disabled")]
         [Parameter(Mandatory=$true)]$Status,
-        
+
         [Alias('iApp')]
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Application='',
 
         [Parameter(Mandatory=$false)]
-        [int]$RouteDomain        
+        [int]$RouteDomain
 
     )
 
@@ -57,33 +49,23 @@
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
 
-        if ($PSCmdLet.ParameterSetName -match 'ComputerName$') {
-            $Address = [Net.Dns]::GetHostAddresses($ComputerName) | Where-Object { $_.AddressFamily -eq 'InterNetwork' }  | Select-Object -First 1
-        }
-        
-        $AddressString = $Address.IPAddressToString
-
         if ($RouteDomain) {
-            $AddressString = "{0}%{1}" -f $AddressString, $RouteDomain.ToString()
+            $Address = "{0}%{1}" -f $Address.IPAddress.IPAddressToString, $RouteDomain.ToString()
         }
 
-        $ExistingNode = Get-Node -F5Session $F5Session -Address $AddressString -Partition $Partition -ErrorAction SilentlyContinue
+        $ExistingNode = Get-Node -F5Session $F5Session -Address $Address -Partition $Partition -ErrorAction SilentlyContinue
     }
 
     process {
-#        $Address.IPAddressToString
-#        $PSCmdLet.ParameterSetName
-
-        switch -Wildcard ($PSCmdLet.ParameterSetName) {
-            "InputObjectWith*" {
+        switch ($PSCmdLet.ParameterSetName) {
+            'InputObject' {
                 switch ($InputObject.kind) {
                     "tm:ltm:pool:poolstate" {
-                        if (!$Address) {
+                        if ($Address -eq [IPAddress]::any) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
-                        } 
+                        }
                         else {
-                            # Set Address to include the route domain - Route Domains are specified after a % sign in the address string.
-                            $AddressString = "{0}%{1}" -f $Address.IPAddressToString, $RouteDomain.Tostring()
+                            $AddressString = $Address.ToString()
                             # Default name to IPAddress
                             if (!$Name) {
                                 $Name = '{0}:{1}' -f $AddressString, $PortNumber
@@ -94,7 +76,7 @@
                             }
                             foreach($pool in $InputObject) {
                                 if (!$Partition) {
-                                    $Partition = $pool.partition 
+                                    $Partition = $pool.partition
                                 }
                                 $JSONBody = @{name=$Name;partition=$Partition;address=$AddressString;description=$Description}
                                 if ($ExistingNode) {
@@ -119,10 +101,10 @@
                     }
                 }
             }
-            "PoolNameWith*" {
+            'PoolName' {
                 foreach($pName in $PoolName) {
 
-                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status -Application $Application -RouteDomain $RouteDomain
+                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status -Application $Application
 
                 }
             }

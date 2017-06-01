@@ -14,15 +14,14 @@
 
         [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName,
-        [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
-        [Alias("ComputerName")]
-        [string]$Address='*',
+        [PoshLTM.F5Address]$Address=[PoshLTM.F5Address]::Any,
 
         [Parameter(Mandatory=$false)]
         [string]$Name='*',
-        
+
         [switch]$Force
     )
     begin {
@@ -34,7 +33,7 @@
             InputObject {
                 switch ($InputObject.kind) {
                     "tm:ltm:pool:poolstate" {
-                        if (!$Address) {
+                        if ($Address -eq [PoshLTM.F5Address]::Any) {
                             Write-Error 'Address is required when the pipeline object is not a PoolMember'
                         } else {
                             $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name | Disable-PoolMember -F5session $F5Session -Force:$Force

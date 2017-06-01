@@ -1,27 +1,29 @@
 ﻿Function Remove-Node {
 <#
 .SYNOPSIS
-    Remove the specified node(s)
+    Remove the specified Node(s)
 .NOTES
     Node names are case-specific.
 #>
-    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact='Medium')]
+    [cmdletBinding( DefaultParameterSetName='Address', SupportsShouldProcess, ConfirmImpact='Medium')]
     param (
         $F5Session=$Script:F5Session,
 
         [Alias('Node')]
-        [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
+        [Parameter(Mandatory,ParameterSetName='InputObject',ValueFromPipeline)]
         [PSObject[]]$InputObject,
 
-        [Parameter(Mandatory=$true,ParameterSetName='Address',ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Address='*',
+        [Parameter(Mandatory,ParameterSetName='Address',ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory,ParameterSetName='AddressAndName',ValueFromPipelineByPropertyName)]
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
 
         [Alias('ComputerName')]
         [Alias('NodeName')]
-        [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Name,
+        [Parameter(Mandatory,ParameterSetName='Name',ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory,ParameterSetName='AddressAndName',ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [string[]]$Name='',
 
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Partition
     )
     begin {
@@ -32,12 +34,6 @@
     }
     process {
         switch($PSCmdLet.ParameterSetName) {
-            Address {
-                Get-Node -F5Session $F5Session -Address $Address -Partition $Partition | Remove-Node -F5session $F5Session
-            }
-            Name {
-                $Name | Get-Node -F5Session $F5Session -Address $Address -Partition $Partition | Remove-Node -F5session $F5Session
-            }
             InputObject {
                 foreach($item in $InputObject) {
                     if ($pscmdlet.ShouldProcess($item.fullPath)){
@@ -45,6 +41,9 @@
                         Invoke-F5RestMethod -Method DELETE -Uri $URI -F5Session $F5Session
                     }
                 }
+            }
+            default {
+                Get-Node -F5Session $F5Session -Address $Address -Name $Name -Partition $Partition | Remove-Node -F5session $F5Session
             }
         }
     }

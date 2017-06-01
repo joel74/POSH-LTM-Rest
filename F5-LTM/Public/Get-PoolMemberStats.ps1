@@ -21,9 +21,8 @@
         [Parameter(Mandatory=$false)]
         [string]$Partition,
 
-        [Alias("ComputerName")]
         [Parameter(Mandatory=$false)]
-        [string[]]$Address='*',
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
 
         [Parameter(Mandatory=$false)]
         [string[]]$Name='*',
@@ -42,7 +41,7 @@
                 foreach($item in $InputObject) {
                     switch ($item.kind) {
                         "tm:ltm:pool:poolstate" {
-                            if ($Address -or $Name) {
+                            if ($Address -ne [PoshLTM.F5Address]::Any -or $Name) {
                                 $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application | Get-PoolMemberStats -F5session $F5Session
                             } else {
                                 Write-Error 'Address and/or Name is required when the pipeline object is not a PoolMember'
@@ -56,7 +55,7 @@
 
                             Invoke-NullCoalescing {$JSON.entries} {$JSON} #|
                                 # Add-ObjectDetail -TypeName 'PoshLTM.PoolMemberStats'
-                                # TODO: Establish a type for formatting and return more columns, and consider adding a GetStats() ScriptMethod to PoshLTM.PoolMember  
+                                # TODO: Establish a type for formatting and return more columns, and consider adding a GetStats() ScriptMethod to PoshLTM.PoolMember
                         }
                     }
                 }

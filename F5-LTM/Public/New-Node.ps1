@@ -11,7 +11,7 @@
         $F5Session=$Script:F5Session,
 
         [Parameter(Mandatory=$true,ParameterSetName='Address',ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Address,
+        [PoshLTM.F5Address[]]$Address,
 
         [Alias('ComputerName')]
         [Alias('NodeName')]
@@ -34,14 +34,17 @@
     }
     process {
         for ([int]$a=0; $a -lt $Address.Count; $a++) {
-            $itemname = ($Name[$a],$Address[$a] -ne '')[0]
+            $itemname = $Name[$a]
+            if ([string]::IsNullOrWhiteSpace($itemname)) { 
+                $itemname = $Address[$a].ToString()
+            }
             $newitem = New-F5Item -Name $itemname -Partition $Partition 
             #Check whether the specified node already exists
             If (Test-Node -F5session $F5Session -Name $newitem.Name -Partition $newitem.Partition){
                 Write-Error "The $($newitem.FullPath) node already exists."
             } else {
                 #Start building the JSON for the action
-                $JSONBody = @{address=$Address[$a];name=$newitem.Name;partition=$newitem.Partition;description=$Description[$a]} | ConvertTo-Json
+                $JSONBody = @{address=$Address[$a].ToString();name=$newitem.Name;partition=$newitem.Partition;description=$Description[$a]} | ConvertTo-Json
 
                 Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' |
                     Out-Null

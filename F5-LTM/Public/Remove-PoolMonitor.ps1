@@ -15,7 +15,7 @@
 
         [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipelineByPropertyName=$true)]
         [string[]]$PoolName,
-        [Parameter(Mandatory=$false,ParameterSetName='PoolName',ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
 
         [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true)]
