@@ -21,6 +21,7 @@ The module contains the following functions.
    * Disable-VirtualServer
    * Enable-PoolMember
    * Enable-VirtualServer
+   * Get-Application
    * Get-CurrentConnectionCount (deprecated; use __Get-PoolMemberStats | Select-Object -ExpandProperty 'serverside.curConns'__)
    * Get-F5Session (will be deprecated in future versions. use __New-F5Session__)
    * Get-F5Status
@@ -47,11 +48,13 @@ The module contains the following functions.
    * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Where rules | Select -ExpandProperty rules__)
    * Get-VirtualServerList (deprecated; use __Get-VirtualServer__) 
    * Invoke-RestMethodOverride
+   * New-Application
    * New-F5Session
    * New-HealthMonitor
    * New-Node
    * New-Pool
    * New-VirtualServer
+   * Remove-Application
    * Remove-HealthMonitor
    * Remove-iRule
    * Remove-iRuleFromVirtualServer
