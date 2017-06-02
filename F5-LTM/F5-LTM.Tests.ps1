@@ -3,8 +3,8 @@ $scriptroot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Pat
 Import-Module (Join-Path $scriptroot 'F5-LTM\F5-LTM.psm1') -Force
 
 $F5LTMTestCases = @{}
-[Regex]::Matches((Get-Content $MyInvocation.MyCommand.Path -raw),'(?<=F5LTMTestCases\.)Get_\w*') | 
-    Select-Object -ExpandProperty Value -Unique | 
+[Regex]::Matches((Get-Content $MyInvocation.MyCommand.Path -raw),'(?<=F5LTMTestCases\.)Get_\w*') |
+    Select-Object -ExpandProperty Value -Unique |
     Sort-Object | % {
         $F5LTMTestCases.Add($_, @())
 }
@@ -12,7 +12,7 @@ $TestCasePath = Invoke-NullCoalescing { $env:F5LTMTestCases } { (Join-Path $HOME
 if (Test-Path -Path $TestCasePath) {
     . $TestCasePath
 } else {
-    Write-Host ('Writing test case template to {0}' -f $TestCasePath) -ForegroundColor Green 
+    Write-Host ('Writing test case template to {0}' -f $TestCasePath) -ForegroundColor Green
     $F5LTMTestCasesTemplate = @"
 `$credentials = New-Object System.Management.Automation.PSCredential ('[username]', (ConvertTo-SecureString '[password]' -AsPlainText -Force))
 
@@ -48,7 +48,7 @@ if (Test-Path -Path $TestCasePath) {
         }
         $F5LTMTestCasesTemplate += '$F5LTMTestCases.{0} += @{{ session = ''default''{1} }}{2}' -f $_,($hashvalues -join ''),[Environment]::NewLine
     }
-    $F5LTMTestCasesTemplate | Out-File -FilePath $TestCasePath 
+    $F5LTMTestCasesTemplate | Out-File -FilePath $TestCasePath
 }
 Describe 'TestCases' -Tags 'Validation' {
     Context 'Empty' {
@@ -57,7 +57,7 @@ Describe 'TestCases' -Tags 'Validation' {
                 Write-Warning ('$F5LTMTestCases.{0} is empty' -f $_)
             }
         }
-        Write-Host 'Invoke-Pester -ExcludeTag Validation to suppress empty test case warnings' -ForegroundColor Green 
+        Write-Host 'Invoke-Pester -ExcludeTag Validation to suppress empty test case warnings' -ForegroundColor Green
     }
 }
 Describe 'HealthMonitor' {
@@ -69,8 +69,8 @@ Describe 'HealthMonitor' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-HealthMonitor -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -80,7 +80,7 @@ Describe 'HealthMonitor' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-HealthMonitor -F5Session $Sessions[$session] -Type $type |
-                        Select-Object -ExpandProperty type | 
+                        Select-Object -ExpandProperty type |
                         Should Be $type
                 }
             }
@@ -88,19 +88,19 @@ Describe 'HealthMonitor' {
                 It "Gets health monitors in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-HealthMonitor -F5Session $Sessions[$session] -Partition $partition |
-                        Select-Object -ExpandProperty partition | 
+                        Select-Object -ExpandProperty partition |
                         Should Be $partition
                 }
-            }            
+            }
             If ($F5LTMTestCases.Get_HealthMonitor_ByNameAndPartition) {
                 It "Gets health monitors in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-HealthMonitor -F5Session $Sessions[$session] -Partition $partition -Name $name |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Be $Name
                 }
             }
@@ -108,9 +108,9 @@ Describe 'HealthMonitor' {
                 It "Gets health monitors by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-HealthMonitor -F5Session $Sessions[$session] -Name $fullPath |
-                        Select-Object -ExpandProperty fullPath | 
+                        Select-Object -ExpandProperty fullPath |
                         Should Be $fullPath
                 }
             }
@@ -118,10 +118,10 @@ Describe 'HealthMonitor' {
                 It "Gets health monitors by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-HealthMonitor -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -129,10 +129,10 @@ Describe 'HealthMonitor' {
                 It "Gets health monitors by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $name | Get-HealthMonitor -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -140,10 +140,10 @@ Describe 'HealthMonitor' {
                 It "Gets health monitors by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $object | Get-HealthMonitor -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $object.Count
                 }
             }
@@ -159,8 +159,8 @@ Describe 'HealthMonitorType' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-HealthMonitorType -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -177,10 +177,10 @@ Describe 'HealthMonitorType' {
                 It "Gets health monitor types by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-HealthMonitorType -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -188,10 +188,10 @@ Describe 'HealthMonitorType' {
                 It "Gets health monitor types by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $name | Get-HealthMonitorType -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -207,8 +207,8 @@ Describe 'iRule' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-iRule -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -218,7 +218,7 @@ Describe 'iRule' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-iRule -F5Session $Sessions[$session] -Name $name |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Be $name
                 }
             }
@@ -226,19 +226,19 @@ Describe 'iRule' {
                 It "Gets irules in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-iRule -F5Session $Sessions[$session] -Partition $partition |
-                        Select-Object -ExpandProperty partition | 
+                        Select-Object -ExpandProperty partition |
                         Should Be $partition
                 }
-            }            
+            }
             If ($F5LTMTestCases.Get_iRule_ByNameAndPartition) {
                 It "Gets irules in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-iRule -F5Session $Sessions[$session] -Partition $partition -Name $name |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Be $Name
                 }
             }
@@ -246,9 +246,9 @@ Describe 'iRule' {
                 It "Gets irules by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-iRule -F5Session $Sessions[$session] -Name $fullPath |
-                        Select-Object -ExpandProperty fullPath | 
+                        Select-Object -ExpandProperty fullPath |
                         Should Be $fullPath
                 }
             }
@@ -256,10 +256,10 @@ Describe 'iRule' {
                 It "Gets irules by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-iRule -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -267,10 +267,10 @@ Describe 'iRule' {
                 It "Gets irules by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $name | Get-iRule -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -278,10 +278,10 @@ Describe 'iRule' {
                 It "Gets irules by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $object | Get-iRule -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $object.Count
                 }
             }
@@ -297,8 +297,8 @@ Describe 'Node' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-Node -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -306,19 +306,19 @@ Describe 'Node' {
                 It "Gets nodes in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Node -F5Session $Sessions[$session] -Partition $partition |
-                        Select-Object -ExpandProperty partition | 
+                        Select-Object -ExpandProperty partition |
                         Should Be $partition
                 }
-            }            
+            }
             If ($F5LTMTestCases.Get_Node_ByNameAndPartition) {
                 It "Gets nodes in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Node -F5Session $Sessions[$session] -Partition $partition -Name $name |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Be $Name
                 }
             }
@@ -326,9 +326,9 @@ Describe 'Node' {
                 It "Gets nodes by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Node -F5Session $Sessions[$session] -Name $fullPath |
-                        Select-Object -ExpandProperty fullPath | 
+                        Select-Object -ExpandProperty fullPath |
                         Should Be $fullPath
                 }
             }
@@ -336,10 +336,10 @@ Describe 'Node' {
                 It "Gets nodes by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Node -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -347,10 +347,10 @@ Describe 'Node' {
                 It "Gets nodes by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $name | Get-Node -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -358,10 +358,10 @@ Describe 'Node' {
                 It "Gets nodes by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $object | Get-Node -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $object.Count
                 }
             }
@@ -371,45 +371,45 @@ Describe 'Node' {
 Describe 'Partition' {
     Context 'Get' {
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_Partition) {
-                It "Gets partitions * on '<session>'" -TestCases $F5LTMTestCases.Get_Partition {
+            If ($F5LTMTestCases.Get_BIGIPPartition) {
+                It "Gets partitions * on '<session>'" -TestCases $F5LTMTestCases.Get_BIGIPPartition {
                     param($session)
                     $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-Partition -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                    Get-BIGIPPartition -F5Session $Sessions[$session] |
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
-            If ($F5LTMTestCases.Get_Partition_ByName) {
-                It "Gets partitions by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_Partition_ByName {
+            If ($F5LTMTestCases.Get_BIGIPPartition_ByName) {
+                It "Gets partitions by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_BIGIPPartition_ByName {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-Partition -F5Session $Sessions[$session] -Name $name |
+                    Get-BIGIPPartition -F5Session $Sessions[$session] -Name $name |
                         Should Be $name
                 }
             }
-            If ($F5LTMTestCases.Get_Partition_ByNameArray) {
-                It "Gets partitions by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_Partition_ByNameArray {
+            If ($F5LTMTestCases.Get_BIGIPPartition_ByNameArray) {
+                It "Gets partitions by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_BIGIPPartition_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
-                    Get-Partition -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+
+                    Get-BIGIPPartition -F5Session $Sessions[$session] -Name $name |
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
-            If ($F5LTMTestCases.Get_Partition_ByNameFromPipeline) {
-                It "Gets partitions by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Partition_ByNameFromPipeline {
+            If ($F5LTMTestCases.Get_BIGIPPartition_ByNameFromPipeline) {
+                It "Gets partitions by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_BIGIPPartition_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
-                    $name | Get-Partition -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+
+                    $name | Get-BIGIPPartition -F5Session $Sessions[$session] |
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -425,8 +425,8 @@ Describe 'Pool' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-Pool -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -434,19 +434,19 @@ Describe 'Pool' {
                 It "Gets pools in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Pool -F5Session $Sessions[$session] -Partition $partition |
-                        Select-Object -ExpandProperty partition | 
+                        Select-Object -ExpandProperty partition |
                         Should Be $partition
                 }
-            }            
+            }
             If ($F5LTMTestCases.Get_Pool_ByNameAndPartition) {
                 It "Gets pools in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Pool -F5Session $Sessions[$session] -Partition $partition -Name $name |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Be $Name
                 }
             }
@@ -454,9 +454,9 @@ Describe 'Pool' {
                 It "Gets pools by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Pool -F5Session $Sessions[$session] -Name $fullPath |
-                        Select-Object -ExpandProperty fullPath | 
+                        Select-Object -ExpandProperty fullPath |
                         Should Be $fullPath
                 }
             }
@@ -464,10 +464,10 @@ Describe 'Pool' {
                 It "Gets pools by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Pool -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -475,10 +475,10 @@ Describe 'Pool' {
                 It "Gets pools by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $name | Get-Pool -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -486,10 +486,10 @@ Describe 'Pool' {
                 It "Gets pools by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $object | Get-Pool -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $object.Count
                 }
             }
@@ -505,8 +505,8 @@ Describe "PoolMember" {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-PoolMember -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -514,7 +514,7 @@ Describe "PoolMember" {
                 It "Gets pool members in partition '<partition> on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-PoolMember -F5Session $Sessions[$session] -Partition $partition |
                         ForEach-Object { [Regex]::Match($_.GetPoolName(),'(?<=^/)[^/]*').Value } |
                         Should Be $partition
@@ -524,7 +524,7 @@ Describe "PoolMember" {
                 It "Gets pool members in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPoolnameAndPartition {
                     param($session, $partition, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     # Pool members can be from a different partition than the pool.  Check GetPoolName() partition matches instead.
                     Get-PoolMember -F5Session $Sessions[$session] -PoolName $poolname -Partition $Partition |
                         ForEach-Object { [Regex]::Match($_.GetPoolName(),'(?<=^/)[^/]*').Value } |
@@ -535,7 +535,7 @@ Describe "PoolMember" {
                 It "Gets pool members in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPoolnameFullpath {
                     param($session, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-PoolMember -F5Session $Sessions[$session] -PoolName $fullPath |
                         ForEach-Object { $_.GetPoolName() } |
                         Should Be $fullPath
@@ -545,10 +545,10 @@ Describe "PoolMember" {
                 It "Gets pool members in pool '<poolname>' by Address[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByAddressArray {
                     param($session, $address, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
                         Get-PoolMember -F5Session $Sessions[$session] -Address $address |
-                        Select-Object -ExpandProperty Address | 
+                        Select-Object -ExpandProperty Address |
                         Should Match '^\d+\.\d+\.\d+\.\d+'
                 }
             }
@@ -556,10 +556,10 @@ Describe "PoolMember" {
                 It "Gets pool members in pool '<poolname>' by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByNameArray {
                     param($session, $name, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
                         Get-PoolMember -F5Session $Sessions[$session] -Name $name |
-                        Select-Object -ExpandProperty Name | 
+                        Select-Object -ExpandProperty Name |
                         Should Match '^.+:\d+'
                 }
             }
@@ -573,7 +573,7 @@ Describe "PoolMemberStats" {
                 It "Gets pool member statistics in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats {
                     param($session, $poolname, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-PoolMemberStats -F5Session $Sessions[$session] -PoolName $poolname -Partition $partition |
                         Select-Object -ExpandProperty 'serverside.curConns' |
                         Should Not Be Null
@@ -583,7 +583,7 @@ Describe "PoolMemberStats" {
                 It "Gets pool member statistics in pool '<fullpath>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats_ByPoolnameFullpath {
                     param($session, $fullPath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-PoolMemberStats -F5Session $Sessions[$session] -PoolName $fullPath |
                         Select-Object -ExpandProperty 'serverside.curConns' |
                         Should Not Be Null
@@ -593,15 +593,15 @@ Describe "PoolMemberStats" {
                 It "Gets pool member statistics in pool '<fullpath>' and Address[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats_ByAddressArray {
                     param($session, $address, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $memberstats = Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
                         Get-PoolMemberStats -F5Session $Sessions[$session] -Address $address
                     $memberstats |
                         Select-Object -ExpandProperty 'serverside.curConns' |
                         Should Not Be Null
                     $memberstats |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $address.Count
                 }
             }
@@ -609,15 +609,15 @@ Describe "PoolMemberStats" {
                 It "Gets pool member statistics in pool '<poolname>' and Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats_ByNameArray {
                     param($session, $name, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $memberstats = Get-Pool -F5Session $Sessions[$session] -PoolName $poolname |
                         Get-PoolMemberStats -F5Session $Sessions[$session] -name $name
                     $memberstats |
                         Select-Object -ExpandProperty 'serverside.curConns' |
                         Should Not Be Null
                     $memberstats |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -633,8 +633,8 @@ Describe "PoolMonitor" {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-PoolMonitor -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -642,14 +642,14 @@ Describe "PoolMonitor" {
                 It "Gets pool monitors in partition '<partition> on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -Partition $partition
                     $monitors |
-                        Measure-Object -Sum Count | 
-                        Select-Object -ExpandProperty Sum | 
+                        Measure-Object -Sum Count |
+                        Select-Object -ExpandProperty Sum |
                         Should Not Be 0
                     $monitors |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Match '/[^/]*/.*'
                 }
             }
@@ -657,14 +657,14 @@ Describe "PoolMonitor" {
                 It "Gets pool monitors in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPoolnameAndPartition {
                     param($session, $partition, $poolname)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -PoolName $poolname -Partition $partition
                     $monitors |
-                        Measure-Object -Sum Count | 
-                        Select-Object -ExpandProperty Sum | 
+                        Measure-Object -Sum Count |
+                        Select-Object -ExpandProperty Sum |
                         Should Not Be 0
                     $monitors |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Match '/[^/]*/.*'
                 }
             }
@@ -672,14 +672,14 @@ Describe "PoolMonitor" {
                 It "Gets pool monitors in pool by Fullpath '<fullpath>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPoolnameFullpath {
                     param($session, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -PoolName $fullpath
                     $monitors |
-                        Measure-Object -Sum Count | 
-                        Select-Object -ExpandProperty Sum | 
+                        Measure-Object -Sum Count |
+                        Select-Object -ExpandProperty Sum |
                         Should Not Be 0
                     $monitors |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Match '/[^/]*/.*'
                 }
             }
@@ -687,14 +687,14 @@ Describe "PoolMonitor" {
                 It "Gets pool monitors in pool by Fullpath[] on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByFullpathArray {
                     param($session, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $monitors = Get-PoolMonitor -F5Session $Sessions[$session] -PoolName $fullpath
                     $monitors |
-                        Measure-Object -Sum Count | 
-                        Select-Object -ExpandProperty Sum | 
+                        Measure-Object -Sum Count |
+                        Select-Object -ExpandProperty Sum |
                         Should Not Be 0
                     $monitors |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Match '/[^/]*/.*'
                 }
             }
@@ -710,8 +710,8 @@ Describe 'VirtualServer' {
                     $Sessions.ContainsKey($session) | Should Be $true
 
                     Get-VirtualServer -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Not Be 0
                 }
             }
@@ -719,19 +719,19 @@ Describe 'VirtualServer' {
                 It "Gets virtual servers in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-VirtualServer -F5Session $Sessions[$session] -Partition $partition |
-                        Select-Object -ExpandProperty partition | 
+                        Select-Object -ExpandProperty partition |
                         Should Be $partition
                 }
-            }            
+            }
             If ($F5LTMTestCases.Get_VirtualServer_ByNameAndPartition) {
                 It "Gets virtual servers in partition '<partition>' by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameAndPartition {
                     param($session, $partition, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-VirtualServer -F5Session $Sessions[$session] -Partition $partition -Name $name |
-                        Select-Object -ExpandProperty name | 
+                        Select-Object -ExpandProperty name |
                         Should Be $Name
                 }
             }
@@ -739,9 +739,9 @@ Describe 'VirtualServer' {
                 It "Gets virtual servers by fullPath '<fullPath>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByFullpath {
                     param($session, $partition, $fullpath)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-VirtualServer -F5Session $Sessions[$session] -Name $fullPath |
-                        Select-Object -ExpandProperty fullPath | 
+                        Select-Object -ExpandProperty fullPath |
                         Should Be $fullPath
                 }
             }
@@ -749,10 +749,10 @@ Describe 'VirtualServer' {
                 It "Gets virtual servers by Name[] on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameArray {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     Get-VirtualServer -F5Session $Sessions[$session] -Name $name |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -760,10 +760,10 @@ Describe 'VirtualServer' {
                 It "Gets virtual servers by Name From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameFromPipeline {
                     param($session, $name)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $name | Get-VirtualServer -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $name.Count
                 }
             }
@@ -771,10 +771,10 @@ Describe 'VirtualServer' {
                 It "Gets virtual servers by Name and Partition From Pipeline on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByNameAndPartitionFromPipeline {
                     param($session, $object)
                     $Sessions.ContainsKey($session) | Should Be $true
-                    
+
                     $object | Get-VirtualServer -F5Session $Sessions[$session] |
-                        Measure-Object | 
-                        Select-Object -ExpandProperty Count | 
+                        Measure-Object |
+                        Select-Object -ExpandProperty Count |
                         Should Be $object.Count
                 }
             }
