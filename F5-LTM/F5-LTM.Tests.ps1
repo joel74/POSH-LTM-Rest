@@ -2,6 +2,8 @@ $scriptroot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Pat
 
 Import-Module (Join-Path $scriptroot 'F5-LTM\F5-LTM.psm1') -Force
 
+$PSVersion = $PSVersionTable.PSVersion.Major
+
 $F5LTMTestCases = @{}
 [Regex]::Matches((Get-Content $MyInvocation.MyCommand.Path -raw),'(?<=F5LTMTestCases\.)Get_\w*') |
     Select-Object -ExpandProperty Value -Unique |
@@ -50,8 +52,13 @@ if (Test-Path -Path $TestCasePath) {
     }
     $F5LTMTestCasesTemplate | Out-File -FilePath $TestCasePath
 }
+$SessionsTestCases = @()
+foreach ($key in $Sessions.Keys) {
+    $SessionsTestCases += @{session=$key}
+}
 Describe 'TestCases' -Tags 'Validation' {
-    Context 'Empty' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         $F5LTMTestCases.Keys | Sort-Object | ForEach-Object {
             If ($F5LTMTestCases[$_].Count -eq 0) {
                 Write-Warning ('$F5LTMTestCases.{0} is empty' -f $_)
@@ -60,19 +67,18 @@ Describe 'TestCases' -Tags 'Validation' {
         Write-Host 'Invoke-Pester -ExcludeTag Validation to suppress empty test case warnings' -ForegroundColor Green
     }
 }
-Describe 'HealthMonitor' {
-    Context 'Get' {
+Describe 'Get-HealthMonitor' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_HealthMonitor) {
-                It "Gets health monitors * on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets health monitors * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-HealthMonitor -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-HealthMonitor -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
             If ($F5LTMTestCases.Get_HealthMonitor_ByType) {
                 It "Gets health monitors of type '<type>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitor_ByType {
@@ -150,19 +156,18 @@ Describe 'HealthMonitor' {
         }
     }
 }
-Describe 'HealthMonitorType' {
-    Context 'Get' {
+Describe 'Get-HealthMonitorType' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_HealthMonitorType) {
-                It "Gets health monitor types * on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets health monitor types * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-HealthMonitorType -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-HealthMonitorType -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
             If ($F5LTMTestCases.Get_HealthMonitorType_ByName) {
                 It "Gets health monitor types by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_HealthMonitorType_ByName {
@@ -198,19 +203,18 @@ Describe 'HealthMonitorType' {
         }
     }
 }
-Describe 'iRule' {
-    Context 'Get' {
+Describe 'Get-iRule' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_iRule) {
-                It "Gets irules* on '<session>'" -TestCases $F5LTMTestCases.Get_iRule {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets irules* on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-iRule -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-iRule -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
             If ($F5LTMTestCases.Get_iRule_ByName) {
                 It "Gets irules by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_iRule_ByName {
@@ -288,19 +292,18 @@ Describe 'iRule' {
        }
     }
 }
-Describe 'Node' {
-    Context 'Get' {
+Describe 'Get-Node' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_Node) {
-                It "Gets nodes * on '<session>'" -TestCases $F5LTMTestCases.Get_Node {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets nodes * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-Node -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-Node -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
              If ($F5LTMTestCases.Get_Node_ByPartition) {
                 It "Gets nodes in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_Node_ByPartition {
@@ -368,19 +371,18 @@ Describe 'Node' {
        }
     }
 }
-Describe 'Partition' {
-    Context 'Get' {
+Describe 'Get-Partition' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_BIGIPPartition) {
-                It "Gets partitions * on '<session>'" -TestCases $F5LTMTestCases.Get_BIGIPPartition {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets partitions * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-BIGIPPartition -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-BIGIPPartition -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
             If ($F5LTMTestCases.Get_BIGIPPartition_ByName) {
                 It "Gets partitions by Name '<name>' on '<session>'" -TestCases $F5LTMTestCases.Get_BIGIPPartition_ByName {
@@ -416,21 +418,20 @@ Describe 'Partition' {
         }
     }
 }
-Describe 'Pool' {
-    Context 'Get' {
+Describe 'Get-Pool' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_Pool) {
-                It "Gets pools * on '<session>'" -TestCases $F5LTMTestCases.Get_Pool {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets pools * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-Pool -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-Pool -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
-             If ($F5LTMTestCases.Get_Pool_ByPartition) {
+            If ($F5LTMTestCases.Get_Pool_ByPartition) {
                 It "Gets pools in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_Pool_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
@@ -496,22 +497,21 @@ Describe 'Pool' {
        }
     }
 }
-Describe "PoolMember" {
-    Context "Get" {
+Describe 'Get-PoolMember' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         if ($Sessions) {
-            if ($F5LTMTestCases.Get_PoolMember) {
-                It "Gets pool members * on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets pool members * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-PoolMember -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-PoolMember -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
              If ($F5LTMTestCases.Get_PoolMember_ByPartition) {
-                It "Gets pool members in partition '<partition> on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPartition {
+                It "Gets pool members in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMember_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
 
@@ -566,8 +566,9 @@ Describe "PoolMember" {
         }
     }
 }
-Describe "PoolMemberStats" {
-    Context "Get" {
+Describe 'Get-PoolMemberStats' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         if ($Sessions) {
             if ($F5LTMTestCases.Get_PoolMemberStats) {
                 It "Gets pool member statistics in partition '<partition>' and pool '<poolname>' on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMemberStats {
@@ -624,19 +625,18 @@ Describe "PoolMemberStats" {
         }
     }
 }
-Describe "PoolMonitor" {
-    Context "Get" {
+Describe 'Get-PoolMonitor' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         if ($Sessions) {
-            if ($F5LTMTestCases.Get_PoolMonitor) {
-                It "Gets pool monitors * on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets pool monitors * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-PoolMonitor -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-PoolMonitor -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
              If ($F5LTMTestCases.Get_PoolMonitor_ByPartition) {
                 It "Gets pool monitors in partition '<partition> on '<session>'" -TestCases $F5LTMTestCases.Get_PoolMonitor_ByPartition {
@@ -701,21 +701,20 @@ Describe "PoolMonitor" {
         }
     }
 }
-Describe 'VirtualServer' {
-    Context 'Get' {
+Describe 'Get-Get-VirtualServer' {
+    Context "Strict mode PS$PSVersion" {
+        Set-StrictMode -Version latest
         If ($Sessions) {
-            If ($F5LTMTestCases.Get_VirtualServer) {
-                It "Gets virtual servers * on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer {
-                    param($session)
-                    $Sessions.ContainsKey($session) | Should Be $true
+            It "Gets virtual servers * on '<session>'" -TestCases $SessionsTestCases {
+                param($session)
+                $Sessions.ContainsKey($session) | Should Be $true
 
-                    Get-VirtualServer -F5Session $Sessions[$session] |
-                        Measure-Object |
-                        Select-Object -ExpandProperty Count |
-                        Should Not Be 0
-                }
+                Get-VirtualServer -F5Session $Sessions[$session] |
+                    Measure-Object |
+                    Select-Object -ExpandProperty Count |
+                    Should Not Be 0
             }
-             If ($F5LTMTestCases.Get_VirtualServer_ByPartition) {
+            If ($F5LTMTestCases.Get_VirtualServer_ByPartition) {
                 It "Gets virtual servers in partition '<partition>' on '<session>'" -TestCases $F5LTMTestCases.Get_VirtualServer_ByPartition {
                     param($session, $partition)
                     $Sessions.ContainsKey($session) | Should Be $true
