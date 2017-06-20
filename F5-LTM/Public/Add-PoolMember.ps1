@@ -81,7 +81,7 @@
                                 $JSONBody = @{name=$Name;partition=$Partition;address=$AddressString;description=$Description}
                                 if ($ExistingNode) {
                                     # Node exists, just add using name
-                                    $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber);partition=('{0}' -f $Partition)}
+                                    $JSONBody = @{name=('{0}:{1}' -f $ExistingNode.name,$PortNumber);partition=('{0}' -f $Partition);description=$Description}
                                 } # else the node will be created
                                 $JSONBody = $JSONBody | ConvertTo-Json
                                 $MembersLink = $F5session.GetLink($pool.membersReference.link)
@@ -104,7 +104,7 @@
             'PoolName' {
                 foreach($pName in $PoolName) {
 
-                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -PortNumber $PortNumber -Status $Status -Application $Application
+                    Get-Pool -F5Session $F5Session -PoolName $pName -Partition $Partition -Application $Application | Add-PoolMember -F5session $F5Session -Address $Address -Name $Name -Description $Description -PortNumber $PortNumber -Status $Status -Application $Application
 
                 }
             }
