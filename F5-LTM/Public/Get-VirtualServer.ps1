@@ -1,8 +1,20 @@
 ﻿Function Get-VirtualServer{
-<#
-.SYNOPSIS
-    Retrieve specified virtual server(s)
-#>
+    <#
+        .SYNOPSIS
+            Retrieve specified virtual server(s)
+
+        .EXAMPLE
+            #Retrieve all virtual servers with a list of assigned iRules for each
+            $VS_iRules = Get-VirtualServer |
+                ForEach {
+                    New-Object psobject -Property @{
+                        Name = $_.name;
+                        Rules = @{} 
+                    }
+                }
+
+            $VS_iRules | ForEach { $_.Rules = (Get-VirtualServer -Name $_.Name | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue  ) } 
+    #>
     [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
