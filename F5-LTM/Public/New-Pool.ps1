@@ -9,7 +9,8 @@ Function New-Pool {
     Optionally, it can contain a description of the member.
 
 .EXAMPLE
-    New-Pool -F5Session $F5Session -PoolName "MyPoolName" -MemberDefinitionList @("Server1,80,Web server","Server2,443,Another web server")
+    # The MemberDefinitionList can accept a server name / IP address, a port number, a description and a route domain value.
+    New-Pool -F5Session $F5Session -PoolName "MyPoolName" -MemberDefinitionList @("Server1,80,Web server,1","Server2,443,Another web server,2")
 
 #>   
     [cmdletBinding()]
@@ -50,8 +51,17 @@ Function New-Pool {
 
                 Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
                 ForEach ($MemberDefinition in $MemberDefinitionList){
-                    $Node,$PortNumber,$MemberDescription = $MemberDefinition -split ','
-                    $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled
+
+                    #split out comma-separated member definition values
+                    $Node,$PortNumber,$MemberDescription,$RouteDomain = $MemberDefinition -split ','
+                    #If a route domain is included in the member defintion, then pass it to Add-PoolMember
+                    #JN: At a later date, I'd like to update Add-PoolMember to accept splated params
+                    If ($RouteDomain -ne ''){
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled -RouteDomain $RouteDomain
+                    }
+                    Else {
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled
+                    }
                 }
             }
         }
