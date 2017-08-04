@@ -49,9 +49,17 @@ Function New-Pool {
                 $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;description=$Description;loadBalancingMode=$LoadBalancingMode;members=@()} | ConvertTo-Json
 
                 Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage ("Failed to create the $($newitem.FullPath) pool.") -AsBoolean
+
                 ForEach ($MemberDefinition in $MemberDefinitionList){
-                    $Node,$PortNumber,$MemberDescription = $MemberDefinition -split ','
-                    $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled
+
+                    #split comma-separated member definitions into a hash table
+                    $Node,$PortNumber,$MemberDescription,$RouteDomain = $MemberDefinition -split ','
+                    If ($RouteDomain -ne ''){
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled -RouteDomain $RouteDomain
+                    }
+                    Else {
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled
+                    }
                 }
             }
         }
