@@ -9,11 +9,13 @@
                 ForEach {
                     New-Object psobject -Property @{
                         Name = $_.name;
-                        Rules = @{} 
+                        Partition = $_.partition;
+                        Rules = @{}
                     }
                 }
 
-            $VS_iRules | ForEach { $_.Rules = (Get-VirtualServer -Name $_.Name | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue  ) } 
+            $VS_iRules | ForEach { $_.Rules = (Get-VirtualServer -Name $_.Name -Partition $_.Partition | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue  ) } 
+
     #>
     [cmdletBinding()]
     param (
