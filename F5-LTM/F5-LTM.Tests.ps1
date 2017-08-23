@@ -57,36 +57,42 @@ Describe 'Get-HealthMonitor' -Tags 'Unit' {
                 param($partition)
                 Get-HealthMonitor -F5Session $mocksession -Partition $partition |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
+                Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times $healthmonitortypes.Count -Exactly -Scope It
             }
             It "Requests health monitors in partition '<partition>' by Name '<name>'" -TestCases @(@{partition='Common';name='http'},@{partition='Development';name='Test'}) {
                 param($partition, $name)
                 Get-HealthMonitor -F5Session $mocksession -Partition $partition -Name $name |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
+                Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times $healthmonitortypes.Count -Exactly -Scope It
             }
             It "Requests health monitors by fullPath '<fullPath>'" -TestCases @(@{fullpath='/Common/https'}) {
                 param($fullpath)
                 Get-HealthMonitor -F5Session $mocksession -Name $fullPath |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
+                Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times $healthmonitortypes.Count -Exactly -Scope It
             }
             It "Requests health monitors by Name[]" -TestCases @(@{name=@('http','https','tcp')}) {
                 param($name)
                 Get-HealthMonitor -F5Session $mocksession -Name $name |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
+                Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times ($name.Count * $healthmonitortypes.Count) -Exactly -Scope It
             }
             It "Requests health monitors by Name From Pipeline" -TestCases @(@{name=@('http','https')}) {
                 param($name)
                 $name | Get-HealthMonitor -F5Session $mocksession |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
+                Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times ($name.Count * $healthmonitortypes.Count) -Exactly -Scope It
             }
             It "Requests health monitors by Name and Partition From Pipeline" -TestCases @(@{ object = ([pscustomobject]@{name = 'http'; partition = 'Common'}),([pscustomobject]@{name = 'host_ashx'; partition = 'Common'}) }) {
                 param($object)
                 $object | Get-HealthMonitor -F5Session $mocksession |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
+                Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times ($object.Count * $healthmonitortypes.Count) -Exactly -Scope It
             }
         }
