@@ -51,7 +51,7 @@ Describe 'Get-HealthMonitor' -Tags 'Unit' {
                 Get-HealthMonitor -F5Session $mocksession -Type $type |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
                     Assert-MockCalled Get-HealthMonitorType -Times 0 -Scope It
-                    Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It
+                    Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It -ParameterFilter { $Uri.AbsoluteUri -eq ('{0}monitor/{1}/' -f $mocksession.BaseURL,$type) }
             }
             It "Requests health monitors in partition '<partition>'" -TestCases @(@{partition='Development'},@{partition='Common'}) {
                 param($partition)
@@ -94,6 +94,80 @@ Describe 'Get-HealthMonitor' -Tags 'Unit' {
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'PoshLTM.HealthMonitor' }
                 Assert-MockCalled Get-HealthMonitorType -Times 1 -Exactly -Scope It
                 Assert-MockCalled Invoke-RestMethodOverride -Times ($object.Count * $healthmonitortypes.Count) -Exactly -Scope It
+            }
+        }
+    }
+}
+Describe 'New-F5Session' -Tags 'Unit' {
+    InModuleScope F5-LTM {
+        Context "Strict mode PS$($PSVersionTable.PSVersion.Major)" {
+            Set-StrictMode -Off
+
+#region Arrange: Initialize Mocks
+
+            # Mocking Invoke-RestMethodOverride for unit testing Module without F5 device connectivity
+            Mock Invoke-RestMethodOverride {
+                switch ($LTMName) {
+                    'version11' {
+                        if ($URI -match 'sys/version/') {
+                            '{"version":"11.5.1"}'
+                        } else {
+                            throw '404 Not found'
+                        }
+                    }
+                    Default {
+                        if ($URI -match 'mgmt/shared/authn/login') {
+                            [pscustomobject]@{token=@{token='dummytoken';starttime=[DateTime]::Now;uuid='9912a8f9-6fa9-474d-b00d-3f16226352b7'}}
+                        #} elseif ($URI -match 'mgmt/shared/authz/tokens') {
+                            # token extension request currently doesn't have to return anything, just not fail
+                        } elseif ($URI -match 'sys/version/') {
+                            '{"version":"12.1.0"}'
+                        }
+                    }
+                }
+            }
+            Mock Invoke-WebRequest { $true }
+            
+            $credentials = New-Object System.Management.Automation.PSCredential ('georgejetson', (ConvertTo-SecureString 'judyr0ck$!' -AsPlainText -Force))
+
+#endregion Arrange: Initialize Mocks
+
+            It "`$Script:F5Session initialized on 1st call" {
+                $testsession = New-F5Session -LTMName 'any' -LTMCredentials $credentials -PassThru
+                Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly -Scope It # Only v11 calls Invoke-WebRequest
+                Assert-MockCalled Invoke-RestMethodOverride -Times 2 -Exactly -Scope It
+                $Script:F5Session.BaseURL -eq $testsession.BaseURL | Should Be $true
+                $Script:F5Session.LTMVersion -eq $testsession.LTMVersion | Should Be $true
+            }
+            It "`$Script:F5Session overridden with -Default switch" {
+                $testsession = New-F5Session -LTMName 'newdefault' -LTMCredentials $credentials -Default -PassThru
+                Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly -Scope It # Only v11 calls Invoke-WebRequest
+                Assert-MockCalled Invoke-RestMethodOverride -Times 2 -Exactly -Scope It
+                $Script:F5Session.BaseURL -eq $testsession.BaseURL | Should Be $true
+                $Script:F5Session.LTMVersion -eq $testsession.LTMVersion | Should Be $true
+            }
+            It "v11: Authentication with Credentials" {
+                $testsession = New-F5Session -LTMName 'version11' -LTMCredentials $credentials -PassThru
+                Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly -Scope It # Only v11 calls Invoke-WebRequest
+                Assert-MockCalled Invoke-RestMethodOverride -Times 2 -Exactly -Scope It
+                $testsession.LTMVersion -eq [Version]'11.5.1' | Should Be $true
+            }
+            It "v12+: Authentication with X-F5-Auth-Token header" {
+                $testsession = New-F5Session -LTMName 'version12' -LTMCredentials $credentials -PassThru
+                Assert-MockCalled Invoke-WebRequest -Times 0 -Scope It # Only v11 calls Invoke-WebRequest
+                Assert-MockCalled Invoke-RestMethodOverride -Times 2 -Exactly -Scope It
+                $testsession.WebSession.Headers.Keys.Contains('X-F5-Auth-Token') | Should Be $true
+                $testsession.WebSession.Headers.Keys.Contains('Token-Expiration') | Should Be $true
+            }
+            It "v12+: Authentication with X-F5-Auth-Token header + custom TokenLifespan" {
+                $testsession = New-F5Session -LTMName 'version12' -LTMCredentials $credentials -TokenLifespan 36000 -PassThru
+                Assert-MockCalled Invoke-WebRequest -Times 0 -Scope It # Only v11 calls Invoke-WebRequest
+                Assert-MockCalled Invoke-RestMethodOverride -Times 3 -Exactly -Scope It #3rd call for TokenLifespan change
+                $testsession.WebSession.Headers.Keys.Contains('X-F5-Auth-Token') | Should Be $true
+                $testsession.WebSession.Headers.Keys.Contains('Token-Expiration') | Should Be $true
+            }
+            It "Throws an error if TokenLifespan is out of range" {
+                { New-F5Session -LTMName 'version12' -LTMCredentials $credentials -TokenLifespan 60000 } | Should Throw
             }
         }
     }
