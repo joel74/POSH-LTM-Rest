@@ -34,7 +34,8 @@
             $URI = $F5Session.BaseURL + 'node/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             Invoke-NullCoalescing {$JSON.items} {$JSON} |
-                Where-Object { [PoshLTM.F5Address]::IsMatch($itemaddress, $_.address) } |
+                Where-Object { $_.ephemeral -eq 'false' } | 
+                Where-Object { [PoshLTM.F5Address]::IsMatch($itemaddress, $_.address)  } |
                 Add-ObjectDetail -TypeName 'PoshLTM.Node'
         }
     }

@@ -22,7 +22,7 @@
         [string]$Partition,
 
         [Parameter(Mandatory=$false)]
-        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
+        [PoshLTM.F5Address[]]$Address,
 
         [Parameter(Mandatory=$false)]
         [string[]]$Name='*',
@@ -41,9 +41,12 @@
                 foreach($item in $InputObject) {
                     switch ($item.kind) {
                         "tm:ltm:pool:poolstate" {
-                            if ($Address -ne [PoshLTM.F5Address]::Any -or $Name) {
-                                $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
-                            } else {
+                            if ($Address -eq [PoshLTM.F5Address]::Any) {
+                                $InputObject | Get-PoolMember -F5session $F5Session -Address $Address -Application $Application | Remove-PoolMember -F5session $F5Session
+                            } elseif ($Name) {
+                                $InputObject | Get-PoolMember -F5session $F5Session -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
+                            }
+                            else {
                                 Write-Error 'Address and/or Name is required when the pipeline object is not a PoolMember'
                             }
                         }
@@ -57,7 +60,12 @@
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
+                    If ($Address){
+                        Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Application $Application | Remove-PoolMember -F5session $F5Session
+                    }
+                    Else {
+                        Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
+                    }
             }
         }
     }
