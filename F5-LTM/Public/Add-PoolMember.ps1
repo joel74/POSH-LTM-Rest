@@ -69,7 +69,7 @@
             'InputObject' {
                 switch ($InputObject.kind) {
                     "tm:ltm:pool:poolstate" {
-                        if ($Address -ne [IPAddress]::any) {
+                        if ($Address -ne [PoshLTM.F5Address]::Any) {
                             $AddressString = $Address.ToString()
                             # Default name to IPAddress
                             if (!$Name) {
