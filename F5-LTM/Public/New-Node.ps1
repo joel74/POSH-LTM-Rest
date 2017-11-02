@@ -79,6 +79,9 @@
                 #Process all nodes with fully qualified domain names
                 for ([int]$a=0; $a -lt $Name.Count; $a++) {
                     $itemname = $Name[$a].ToString()
+                    if ([string]::IsNullOrWhiteSpace($itemname)) { 
+                        $itemname = $FQDN[$a].ToString()
+                    }                    
                     $newitem = New-F5Item -Name $itemname -Partition $Partition 
                     $itemfqdn = $FQDN[$a]
                     #Check whether the specified node already exists
@@ -86,9 +89,8 @@
                         Write-Error "The $($newitem.FullPath) node already exists."
                     } else {
                         #Start building the JSON for the action
-                        $JSON_FQDN = @{name=$itemfqdn;partition=$newitem.Partition;'address-family'=$AddressType;autopopulate=$AutoPopulate;interval=$Interval;'down-interval'=$DownInterval} # | ConvertTo-Json
-                        $JSONBody = @{name=$itemname;fqdn=$JSON_FQDN} | ConvertTo-Json
-
+                        $JSON_FQDN = @{name=$itemfqdn;'address-family'=$AddressType;autopopulate=$AutoPopulate;interval=$Interval;'down-interval'=$DownInterval} # | ConvertTo-Json
+                        $JSONBody = @{name=$itemname;fqdn=$JSON_FQDN;partition=$newitem.Partition;description=$Description[$a]} | ConvertTo-Json
                         Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' |
                             Out-Null
                         if ($Passthru) {

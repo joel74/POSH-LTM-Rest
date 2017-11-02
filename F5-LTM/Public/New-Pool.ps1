@@ -54,13 +54,14 @@ Function New-Pool {
 
                     #split out comma-separated member definition values
                     $Node,$PortNumber,$MemberDescription,$RouteDomain = $MemberDefinition -split ','
+
                     #If a route domain is included in the member defintion, then pass it to Add-PoolMember
                     #JN: At a later date, I'd like to update Add-PoolMember to accept splated params
                     If ($RouteDomain -ne ''){
-                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled -RouteDomain $RouteDomain
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Name $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled -RouteDomain $RouteDomain
                     }
                     Else {
-                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Address $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled
+                        $null = Add-PoolMember -F5Session $F5Session -PoolName $Name -Partition $Partition -Name $Node -PortNumber $PortNumber -Description $MemberDescription -Status Enabled
                     }
                 }
             }
