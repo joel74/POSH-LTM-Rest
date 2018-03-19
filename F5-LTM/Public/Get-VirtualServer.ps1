@@ -39,14 +39,31 @@
         Write-Verbose "NB: Virtual server names are case-specific."
     }
     process {
-        foreach ($itemname in $Name) {
-            $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $itemname -Application $Application -Partition $Partition)
+        foreach ($vsname in $Name) {
+            $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $vsname -Application $Application -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
                 if(![string]::IsNullOrWhiteSpace($Application)) {
                     $items = $items | Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"}
                 }
+
+                #If the item is a subcollection, then retrieve the subcollection's contents 
+                $subcollections = [Array] $items | Get-Member -MemberType NoteProperty | % Name | %  { $items.$_ } | Where { $_.isSubcollection -eq 'True' } 
+
+                ForEach ($sub in $subcollections)
+                {
+                    $JSON = Invoke-F5RestMethod -Method Get -Uri ($sub.link -replace 'localhost',$F5Session.Name) -F5Session $F5Session
+                    #If the subcollection contains items, then add them to the JSON to return
+                    If ($JSON.items){
+                        $tmpArray = [string]($JSON.kind) -split ":"
+                        #Retrieve the name for the collection from the segment of the 'kind' value preceding the collection.
+                        #JN: There may be a better way to determine this
+                        $collName = [string]$tmpArray[$tmpArray.length-2]
+                        $items | Add-Member -NotePropertyName $collName -NotePropertyValue $JSON.items
+                    }
+                }
+
                 $items | Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
             }
         }
