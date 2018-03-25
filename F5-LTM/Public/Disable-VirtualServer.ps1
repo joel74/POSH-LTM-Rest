@@ -32,7 +32,7 @@
                 foreach($vs in $InputObject) {
                     $URI = $F5Session.GetLink($vs.selfLink)
                     $FullPath = $vs.fullPath
-                    $JSON = Invoke-F5RestMethod -Method PATCH -Uri $URI -F5Session $F5Session -Body $JSONBody
+                    $null = Invoke-F5RestMethod -Method PATCH -Uri $URI -F5Session $F5Session -Body $JSONBody
                     Get-VirtualServer -F5Session $F5Session -Name $FullPath
                 }
             }

@@ -6,6 +6,7 @@
     Pool and member names are case-specific.
 #>
     [cmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "")]
     param (
         $F5Session=$Script:F5Session,
 

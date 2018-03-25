@@ -124,10 +124,10 @@
 
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
-        if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting Pool $Name")) {
+        if ($null -ne $NewObject -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting Pool $Name")) {
             
             # We only update the pool if properties other than 'Name' are passed in
-            If ($NewObject | Get-Member -MemberType NoteProperty | Where Name -ne 'Name'){
+            If ($NewObject | Get-Member -MemberType NoteProperty | Where-Object Name -ne 'Name'){
 
                 Write-Verbose -Message 'Setting Pool details...'
 
@@ -144,7 +144,7 @@
 
                 #endregion
 
-                $result = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+                $null = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
 
             }
 

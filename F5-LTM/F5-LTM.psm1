@@ -18,31 +18,28 @@ Add-Type -Path "${PSScriptRoot}\Validation.cs"
 Add-Type -Path "${PSScriptRoot}\TypeData\PoshLTM.Types.cs"
 Update-FormatData "${PSScriptRoot}\TypeData\PoshLTM.Format.ps1xml"
 $ScriptPath = Split-Path $MyInvocation.MyCommand.Path
-
 #region Load Public Functions
 
-try {
     Get-ChildItem "$ScriptPath\Public" -Filter *.ps1 -Recurse| Select-Object -Expand FullName | ForEach-Object {
         $Function = Split-Path $_ -Leaf
-        . $_
-    }
-} catch {
-    Write-Warning ("{0}: {1}" -f $Function,$_.Exception.Message)
-    Continue
-}
+        try {
+            . $_
+        } catch {
+            Write-Warning ("{0}: {1}" -f $Function,$_.Exception.Message)
+        }
+   }
 
 #endregion
 
 #region Load Private Functions
 
-try {
-   Get-ChildItem "$ScriptPath\Private" -Filter *.ps1 -Recurse | Select-Object -Expand FullName | ForEach-Object {
-       $Function = Split-Path $_ -Leaf
-       . $_
-   }
-} catch {
-   Write-Warning ("{0}: {1}" -f $Function,$_.Exception.Message)
-   Continue
-}
+    Get-ChildItem "$ScriptPath\Private" -Filter *.ps1 -Recurse | Select-Object -Expand FullName | ForEach-Object {
+        $Function = Split-Path $_ -Leaf
+        try {
+            . $_
+        } catch {
+            Write-Warning ("{0}: {1}" -f $Function,$_.Exception.Message)
+        }
+    }
 
 #endregion

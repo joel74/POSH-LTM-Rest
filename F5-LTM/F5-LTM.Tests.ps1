@@ -1,3 +1,7 @@
+# PSScriptAnalyzer - ignore creation of a SecureString using plain text for the contents of this script file
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "")]
+param()
+
 $scriptroot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Import-Module (Join-Path $scriptroot 'F5-LTM\F5-LTM.psm1') -Force
 
