@@ -89,11 +89,18 @@
     $virtualServers = Get-VirtualServer -F5Session $F5Session | Select-Object -ExpandProperty fullPath
     $virtualServers
 
-    Write-Host ("`r`n* Test whether the first virtual server in the list - " +  $virtualServers[0] + " - exists") -ForegroundColor $TestNotesColor
-    Test-VirtualServer -F5Session $F5Session -VirtualServerName $virtualServers[0]
+    If ($virtualServers -is [array]){
+        $firstVirtualServer = $virtualServers[0]
+    }
+    Else {
+        $firstVirtualServer = $virtualServers
+    }
 
-    Write-Host ("`r`n* Get the virtual server '" + $virtualServers[0] + "'") -ForegroundColor $TestNotesColor
-    Get-VirtualServer -F5Session $F5Session -VirtualServerName $virtualServers[0]
+    Write-Host ("`r`n* Test whether the first virtual server in the list - " +  $firstVirtualServer + " - exists") -ForegroundColor $TestNotesColor
+    Test-VirtualServer -F5Session $F5Session -VirtualServerName $firstVirtualServer
+
+    Write-Host ("`r`n* Get the virtual server '" + $firstVirtualServer + "'") -ForegroundColor $TestNotesColor
+    Get-VirtualServer -F5Session $F5Session -VirtualServerName $firstVirtualServer
 
     Write-Host "`r`n* Create a new virtual server named '$TestVirtualServer'" -ForegroundColor $TestNotesColor
     New-VirtualServer -F5Session $F5Session -VirtualServerName $TestVirtualServer -Description 'description' -DestinationIP $TestVirtualServerIP -DestinationPort '80' -DefaultPool $TestPool -IPProtocol 'tcp' -ProfileNames 'http'

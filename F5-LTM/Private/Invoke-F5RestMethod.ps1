@@ -1,7 +1,7 @@
 Function Invoke-F5RestMethod {
     [cmdletBinding(DefaultParameterSetName='Anonymous')]
     [OutputType([Xml.XmlDocument])]
-    [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
+    [OutputType([Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject])]
     [OutputType([String])]
     [OutputType([bool])]
     param ( 

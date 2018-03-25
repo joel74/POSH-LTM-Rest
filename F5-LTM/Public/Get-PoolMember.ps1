@@ -44,7 +44,8 @@
                 foreach($pool in $InputObject) {
                     $MembersLink = $F5Session.GetLink($pool.membersReference.link)
                     $JSON = Invoke-F5RestMethod -Method Get -Uri $MembersLink -F5Session $F5Session
-                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { [PoshLTM.F5Address]::IsMatch($Address, $_.address) -and ($Name -eq '*' -or $Name -contains $_.name) } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
+                    #BIG-IP v 11.5 does not support FQDN nodes, and hence nodes require IP addresses and have no 'ephemeral' property
+                    Invoke-NullCoalescing {$JSON.items} {$JSON} | Where-Object { ($F5Session.LTMVersion.Major -eq '11' -or $_.ephemeral -eq 'false') -and [PoshLTM.F5Address]::IsMatch($Address, $_.address) -and ($Name -eq '*' -or $Name -contains $_.name) } | Add-Member -Name GetPoolName -MemberType ScriptMethod {
                         [Regex]::Match($this.selfLink, '(?<=pool/)[^/]*') -replace '~','/'
                     } -Force -PassThru | Add-Member -Name GetFullName -MemberType ScriptMethod {
                         '{0}{1}' -f $this.GetPoolName(),$this.fullPath
