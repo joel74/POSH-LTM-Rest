@@ -18,7 +18,7 @@ install:
   # Force bootstrap of the Nuget PackageManagement Provider; Reference: http://www.powershellgallery.com/GettingStarted?section=Get%20Started
   - ps: Get-PackageProvider -Name NuGet -Force
   # Install pester PowerShell Unit Testing module
-  #- cinst -y pester
+  - cinst -y pester
 
 before_test:
   # Set FunctionsToExport and ModuleVersion in the module manifest (F5-LTM.psd1); Fixes #37 Do not export Private\*.ps1 functions
@@ -35,19 +35,19 @@ test_script:
   # Invoke PSScriptAnalyzer against the module to make sure it's not failing any tests
   - ps: Invoke-ScriptAnalyzer -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM') -Recurse
   # Invoke-Pester unit tests
-  #- ps: |
-  #  $testResultsFile = '.\TestsResults.xml'
-  #
-  #  # run tests
-  #     $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
-  #
-  #  # upload results to AppVeyor
-  #  (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $testResultsFile))
-  #
-  #  # if failures, quit to prevent publish
-  #  if ($res.FailedCount -gt 0) { 
-  #    throw "$($res.FailedCount) tests failed."
-  #  }
+  - ps: |
+    $testResultsFile = '.\TestsResults.xml'
+  
+    # run tests
+       $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
+  
+    # upload results to AppVeyor
+    (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $testResultsFile))
+  
+    # if failures, quit to prevent publish
+    if ($res.FailedCount -gt 0) { 
+      throw "$($res.FailedCount) tests failed."
+    }
 
 deploy_script:
   # Publish module to the PowerShellGallery
