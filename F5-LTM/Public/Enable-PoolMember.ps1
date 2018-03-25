@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Enable a pool member in the specified pools
-    If no pool is specified, the member will be enabled in all pools
+    If no pool is specified, the member will be enabled in all pools, provided that the input consists of pool member objects, and not address(es) or name(s).
 #>
     [cmdletBinding()]
     param(
