@@ -26,6 +26,10 @@ namespace PoshLTM
             {
                 IPAddress = IPAddress.Parse(hostname);
             }
+            else if (address == "any6")
+            {
+                IPAddress = IPAddress.Any;
+            }
             else
             {
                 // Resolve hostname

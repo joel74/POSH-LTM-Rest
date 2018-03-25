@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Disable a pool member in the specified pools
-    If no pool is specified, the member will be disabled in all pools
+    If no pool is specified, the member will be disabled in all pools, provided that the input consists of pool member objects, and not address(es) or name(s).
 #>
     [cmdletBinding()]
     param(
