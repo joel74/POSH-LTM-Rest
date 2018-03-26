@@ -12,8 +12,6 @@ Describe 'Get-BigIPPartition' -Tags 'Unit' {
 
 #region Arrange: Initialize Mocks
 
-            $partitions = @('Common','Development','Production')
-
             # Mocking Invoke-RestMethodOverride for unit testing Module without F5 device connectivity
             Mock Invoke-RestMethodOverride {
                 # Behavior (not state) verification is applied to this mock.
