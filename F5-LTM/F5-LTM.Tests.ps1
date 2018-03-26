@@ -16,10 +16,20 @@ Describe 'Get-BigIPPartition' -Tags 'Unit' {
             Mock Invoke-RestMethodOverride {
                 # Behavior (not state) verification is applied to this mock.
                 # Therefore, the output need only meet the bare minimum requirements to maximize code coverage of the Subject Under Test.
-                [pscustomobject]@{
-                    items=@(@{name='bogus item for testing';subPath='subPath'})
-                    name='name'
-                    selfLink="https://localhost/mgmt/tm/sys/folder/~name?ver=12.1.2"
+                if ($URI -match 'JSON') {
+                    # This case included to support maximum code coverage
+                    [pscustomobject]@{
+                        items=$null
+                        name='name'
+                        subPath='subPath'
+                        selfLink="https://localhost/mgmt/tm/sys/folder/~name?ver=12.1.2"
+                    }
+                } else {
+                    [pscustomobject]@{
+                        items=@(@{name='bogus item for testing';subPath='subPath'})
+                        name='name'
+                        selfLink="https://localhost/mgmt/tm/sys/folder/~name?ver=12.1.2"
+                    }
                 }
             }
             # Mock session with fictional IP,credentials, and version
@@ -41,7 +51,8 @@ Describe 'Get-BigIPPartition' -Tags 'Unit' {
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
                 Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It -ParameterFilter { $Uri.AbsoluteUri -eq ($mocksession.BaseURL -replace 'ltm/','sys/folder/?$select=name,subPath') }
             }
-            It "Requests BigIP partitions by Name '<name>'" -TestCases @(@{name='Common'},@{name='Development'},@{name='Production'}) {
+            # JSON test also forces a codecoverage scenario for a single item without an items property returned from the F5
+            It "Requests BigIP partitions by Name '<name>'" -TestCases @(@{name='Common'},@{name='Development'},@{name='Production'},@{name='JSON'}) {
                 param($name)
                 Get-BigIPPartition -F5Session $mocksession -Name $name |
                     ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
