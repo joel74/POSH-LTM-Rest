@@ -5,6 +5,78 @@ param()
 $scriptroot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Import-Module (Join-Path $scriptroot 'F5-LTM\F5-LTM.psm1') -Force
 
+Describe 'Get-BigIPPartition' -Tags 'Unit' {
+    InModuleScope F5-LTM {
+        Context "Strict mode PS$($PSVersionTable.PSVersion.Major)" {
+            Set-StrictMode -Version latest
+
+#region Arrange: Initialize Mocks
+
+            $partitions = @('Common','Development','Production')
+
+            # Mocking Invoke-RestMethodOverride for unit testing Module without F5 device connectivity
+            Mock Invoke-RestMethodOverride {
+                # Behavior (not state) verification is applied to this mock.
+                # Therefore, the output need only meet the bare minimum requirements to maximize code coverage of the Subject Under Test.
+                [pscustomobject]@{
+                    items=@(@{name='bogus item for testing';subPath='subPath'})
+                    name='name'
+                    selfLink="https://localhost/mgmt/tm/sys/folder/~name?ver=12.1.2"
+                }
+            }
+            # Mock session with fictional IP,credentials, and version
+            $mocksession = [pscustomobject]@{
+                Name = '192.168.1.1'
+                BaseURL = 'https://192.168.1.1/mgmt/tm/ltm/'
+                Credential = New-Object System.Management.Automation.PSCredential ('georgejetson', (ConvertTo-SecureString 'judyr0ck$!' -AsPlainText -Force))
+                LTMVersion = [Version]'11.5.1'
+                WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+            } | Add-Member -Name GetLink -MemberType ScriptMethod {
+                    param($Link)
+                    $Link -replace 'localhost', $this.Name    
+            } -PassThru
+
+#endregion Arrange: Initialize Mocks
+
+            It "Requests BigIP partitions *" {
+                Get-BigIPPartition -F5Session $mocksession |
+                    ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
+                Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It -ParameterFilter { $Uri.AbsoluteUri -eq ($mocksession.BaseURL -replace 'ltm/','sys/folder/?$select=name,subPath') }
+            }
+            It "Requests BigIP partitions by Name '<name>'" -TestCases @(@{name='Common'},@{name='Development'},@{name='Production'}) {
+                param($name)
+                Get-BigIPPartition -F5Session $mocksession -Name $name |
+                    ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
+                    Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It -ParameterFilter { $Uri.AbsoluteUri -eq (($mocksession.BaseURL -replace 'ltm/','sys/folder') + ('/~{0}?$select=name,subPath' -f $name)) }
+            }
+            It "Requests BigIP partitions with Name [-Folder alias] '<name>'" -TestCases @(@{name='Common'}) {
+                param($name)
+                Get-BigIPPartition -F5Session $mocksession -Folder $name |
+                    ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
+                    Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It -ParameterFilter { $Uri.AbsoluteUri -eq (($mocksession.BaseURL -replace 'ltm/','sys/folder') + ('/~{0}?$select=name,subPath' -f $name)) }
+            }
+            It "Requests BigIP partitions with Name [-Partition alias] '<name>'" -TestCases @(@{name='Common'}) {
+                param($name)
+                Get-BigIPPartition -F5Session $mocksession -Partition $name |
+                    ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
+                    Assert-MockCalled Invoke-RestMethodOverride -Times 1 -Exactly -Scope It -ParameterFilter { $Uri.AbsoluteUri -eq (($mocksession.BaseURL -replace 'ltm/','sys/folder') + ('/~{0}?$select=name,subPath' -f $name)) }
+            }
+            It "Requests BigIP partitions by Name[]" -TestCases @(@{name=@('Common','Development','Production')}) {
+                param($name)
+                Get-BigIPPartition -F5Session $mocksession -Name $name |
+                    ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
+                Assert-MockCalled Invoke-RestMethodOverride -Times 3 -Exactly -Scope It
+            }
+            It "Requests BigIP partitions by Name From Pipeline" -TestCases @(@{ object = ([pscustomobject]@{name = 'Common'}),([pscustomobject]@{name = 'Development'}) }) {
+                param($object)
+                $object | Get-BigIPPartition -F5Session $mocksession |
+                    ForEach-Object { $_.PSObject.TypeNames[0] | Should Be 'string' }
+                Assert-MockCalled Invoke-RestMethodOverride -Times ($object.Count) -Exactly -Scope It
+            }
+        }
+    }
+}
+
 Describe 'Get-HealthMonitor' -Tags 'Unit' {
     InModuleScope F5-LTM {
         Context "Strict mode PS$($PSVersionTable.PSVersion.Major)" {
