@@ -219,7 +219,7 @@ Function Set-VirtualServer {
         if (-not $NewProperties.ContainsKey('DestinationIP')) {
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
-            } elseif ($ExistingVirtualServer -ne $null) {
+            } elseif ($null -ne $ExistingVirtualServer) {
                 $ExistingVirtualServer.destination
             }
             if ($destination) { $NewProperties['DestinationIP'] = ($destination -split ':')[0] }
@@ -227,7 +227,7 @@ Function Set-VirtualServer {
         if (-not $NewProperties.ContainsKey('DestinationPort')) {
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
-            } elseif ($ExistingVirtualServer -ne $null) {
+            } elseif ($null -eq $ExistingVirtualServer) {
                 $ExistingVirtualServer.destination
             }
             if ($destination) { $NewProperties['DestinationPort'] = ($destination -split ':')[1] }
@@ -243,7 +243,7 @@ Function Set-VirtualServer {
         }
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
-        if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
+        if ($null -ne $NewObject -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
             Write-Verbose -Message 'Setting VirtualServer details...'
 
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition)
@@ -259,7 +259,7 @@ Function Set-VirtualServer {
 
             #endregion
 
-            $result = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+            $null = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
         }
         if ($PassThru) { Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition }
     }
