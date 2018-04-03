@@ -12,8 +12,8 @@
         $F5Session=$Script:F5Session,
 
         [Alias('ProfileName')]
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Name,
+        [Parameter(Mandatory=$false,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [string[]]$Name='',
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition
     )
@@ -29,7 +29,7 @@
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session 
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
-                $items | Add-ObjectDetail -TypeName 'PoshLTM.Profil'
+                $items | Add-ObjectDetail -TypeName 'PoshLTM.ProfileHttp'
             }
         }
     }
