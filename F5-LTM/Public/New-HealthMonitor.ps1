@@ -50,7 +50,20 @@
             } else {
                 #Start building the JSON for the action
                 $JSONBody = @{name=$newitem.Name;partition=$newitem.Partition;recv=$Receive;send=$Send;interval=$Interval;timeout=$Timeout} | 
-                    ConvertTo-Json
+                    ConvertTo-Json        
+                # Caused by a bug in ConvertTo-Json https://windowsserver.uservoice.com/forums/301869-powershell/suggestions/11088243-provide-option-to-not-encode-html-special-characte
+                # '<', '>', ''' and '&' are replaced by ConvertTo-Json to \\u003c, \\u003e, \\u0027, and \\u0026. The F5 API doesn't understand this. Change them back.
+                $ReplaceChars = @{
+                    '\\u003c' = '<'
+                    '\\u003e' = '>'
+                    '\\u0027' = "'"
+                    '\\u0026' = "&"
+                }
+
+                foreach ($Char in $ReplaceChars.GetEnumerator()) 
+                {
+                    $JSONBody = $JSONBody -replace $Char.Key, $Char.Value
+                }
                 $newmonitor = Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to create the /$Type$($newitem.FullPath) health monitor."
                 if ($Passthru) {
                     Get-HealthMonitor -F5Session $F5Session -Name $newmonitor.name -Partition $newmonitor.partition -Type $Type
