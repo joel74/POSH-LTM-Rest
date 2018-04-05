@@ -43,6 +43,7 @@ The module contains the following functions.
    * Get-PoolMonitor
    * Get-PoolsForMember
    * Get-StatusShape
+   * Get-ProfileHttp
    * Get-VirtualServer
    * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Where rules | Select -ExpandProperty rules__)
    * Get-VirtualServerList (deprecated; use __Get-VirtualServer__) 
@@ -51,6 +52,7 @@ The module contains the following functions.
    * New-HealthMonitor
    * New-Node
    * New-Pool
+   * New-ProfileHttp
    * New-VirtualServer
    * Remove-HealthMonitor
    * Remove-iRule
@@ -60,6 +62,7 @@ The module contains the following functions.
    * Remove-PoolMonitor
    * Remove-ProfileRamCache
    * Remove-Node
+   * Remove-ProfileHttp
    * Remove-VirtualServer
    * Set-iRule
    * Set-PoolLoadBalancingMode (deprecated; use __Set-Pool__)
@@ -72,6 +75,7 @@ The module contains the following functions.
    * Test-HealthMonitor
    * Test-Node
    * Test-Pool
+   * Test-ProfileHttp
    * Test-VirtualServer
 
 Nearly all of the functions require an F5 session object to manipulate the F5 LTM via the REST API.
