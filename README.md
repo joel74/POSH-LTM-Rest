@@ -17,10 +17,14 @@ The module contains the following functions.
    * Add-iRuleToVirtualServer
    * Add-PoolMember
    * Add-PoolMonitor
+   * Disable-Node
    * Disable-PoolMember
    * Disable-VirtualServer
+   * Enable-Node
    * Enable-PoolMember
    * Enable-VirtualServer
+   * Get-Application
+   * Get-BIGIPPartition
    * Get-CurrentConnectionCount (deprecated; use __Get-PoolMemberStats | Select-Object -ExpandProperty 'serverside.curConns'__)
    * Get-F5Session (will be deprecated in future versions. use __New-F5Session__)
    * Get-F5Status
@@ -29,7 +33,6 @@ The module contains the following functions.
    * Get-iRule
    * Get-iRuleCollection (deprecated; use __Get-iRule__)
    * Get-Node
-   * Get-BIGIPPartition
    * Get-Pool
    * Get-PoolList (deprecated; use __Get-Pool__)
    * Get-PoolMember
@@ -37,23 +40,24 @@ The module contains the following functions.
    * Get-PoolMemberCollectionStatus
    * Get-PoolMemberDescription (deprecated; use __Get-PoolMember__)
    * Get-PoolMemberIP (deprecated; use __Get-PoolMember__)
-   * Get-PoolMembers (deprecated; use __Get-PoolMember__)
    * Get-PoolMemberStats
    * Get-PoolMemberStatus (deprecated; use __Get-PoolMember__)
    * Get-PoolMonitor
    * Get-PoolsForMember
-   * Get-StatusShape
    * Get-ProfileHttp
+   * Get-StatusShape
    * Get-VirtualServer
    * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Where rules | Select -ExpandProperty rules__)
    * Get-VirtualServerList (deprecated; use __Get-VirtualServer__) 
    * Invoke-RestMethodOverride
+   * New-Application
    * New-F5Session
    * New-HealthMonitor
    * New-Node
    * New-Pool
    * New-ProfileHttp
    * New-VirtualServer
+   * Remove-Application
    * Remove-HealthMonitor
    * Remove-iRule
    * Remove-iRuleFromVirtualServer
