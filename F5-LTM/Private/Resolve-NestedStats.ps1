@@ -6,7 +6,7 @@
  
     To resolve this discrepancy, this function performs version-specific transformations to the JSON data and returns it in a standardized format with the "entries" property at the top.
 #>
-
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "")]
     param (
         $F5Session=$Script:F5Session,
 

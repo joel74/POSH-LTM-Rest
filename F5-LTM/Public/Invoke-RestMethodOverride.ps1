@@ -1,7 +1,7 @@
 Function Invoke-RestMethodOverride {
     [cmdletBinding(DefaultParameterSetName='Anonymous')]
     [OutputType([Xml.XmlDocument])]
-    [OutputType([Microsoft.PowerShell.Commands.HtmlWebResponseObject])]
+    [OutputType([Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject])]
     [OutputType([String])]
     [OutputType([bool])]
     param ( 
@@ -18,9 +18,12 @@ Function Invoke-RestMethodOverride {
         $Headers,
         $ContentType
     )
-    [SSLValidator]::OverrideValidation()
-
-    Invoke-RestMethod @PSBoundParameters
-
-    [SSLValidator]::RestoreValidation()
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        Invoke-RestMethod @PSBoundParameters -SkipCertificateCheck
+    }
+    else {
+        [SSLValidator]::OverrideValidation()
+        Invoke-RestMethod @PSBoundParameters
+        [SSLValidator]::RestoreValidation()
+    }
 }
