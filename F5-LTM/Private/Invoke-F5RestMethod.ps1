@@ -36,7 +36,12 @@ Function Invoke-F5RestMethod {
         if ($AsBoolean) {
             $false
         } else {
-            $message = $_.ErrorDetails.Message | ConvertFrom-json | Select-Object -expandproperty message
+            #Try to treat the returned error as JSON. If it isn't, then treat it as a string
+            try {
+                $message = $_.ErrorDetails.Message | ConvertFrom-json | Select-Object -expandproperty message
+            } catch {
+                $message = [string]$_.ErrorDetails.Message 
+            }
             $ErrorOutput = '"{0} {1}: {2}' -f $_.Exception.Response.StatusCode.value__,$_.Exception.Response.StatusDescription,(Invoke-NullCoalescing {$message} {$ErrorMessage}) 
             Write-Error $ErrorOutput
         } 
