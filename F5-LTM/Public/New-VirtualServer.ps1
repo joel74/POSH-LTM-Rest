@@ -103,10 +103,15 @@ Function New-VirtualServer
       ipProtocol               = $ipProtocol
       mask                     = $Mask
       connectionLimit          = $ConnectionLimit
-      persist                  = $PersistenceProfiles
       fallbackPersistence      = $FallbackPersistence
 
     }
+
+    if ($PersistenceProfiles)
+    {
+      $JSONBody.persist = $PersistenceProfiles
+    }
+
     if ($newItem.application) {
       $JSONBody.Add('application',$newItem.application)
     }
