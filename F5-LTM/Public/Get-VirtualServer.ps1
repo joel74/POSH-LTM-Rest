@@ -54,8 +54,8 @@
                 $subcollections = [Array] $items | Get-Member -MemberType NoteProperty | % Name | %  { $items.$_ } | Where { $_.isSubcollection -eq 'True' } 
 
                 #Add properties for policies and profiles
-                $items | Add-Member -NotePropertyName 'policies' -NotePropertyValue ''
-                $items | Add-Member -NotePropertyName 'profiles' -NotePropertyValue ''
+                $items | Add-Member -NotePropertyName 'policies' -NotePropertyValue @()
+                $items | Add-Member -NotePropertyName 'profiles' -NotePropertyValue @()
 
                 ForEach ($sub in $subcollections)
                 {
