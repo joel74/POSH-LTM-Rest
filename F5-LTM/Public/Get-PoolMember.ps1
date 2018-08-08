@@ -49,11 +49,11 @@
                         [Regex]::Match($this.selfLink, '(?<=pool/)[^/]*') -replace '~','/'
                     } -Force -PassThru | Add-Member -Name GetFullName -MemberType ScriptMethod {
                         '{0}{1}' -f $this.GetPoolName(),$this.fullPath
-                    } -Force -PassThru | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember' | Select-Object -Unique
+                    } -Force -PassThru | Add-ObjectDetail -TypeName 'PoshLTM.PoolMember'                     
                 }
             }
             PoolName {
-                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition -Application $Application | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application
+                Get-Pool -F5Session $F5Session -Name $PoolName -Partition $Partition -Application $Application | Get-PoolMember -F5session $F5Session -Address $Address -Name $Name -Application $Application | Sort-object Name | Get-Unique –AsString
             }
         }
     }
