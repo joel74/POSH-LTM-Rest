@@ -57,7 +57,13 @@
                 }
             }
             PoolName {
-                Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name -Application $Application | Remove-PoolMember -F5session $F5Session
+                $PoolMember = Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name -Application $Application;
+                If ($PoolMember) { 
+                    $PoolMember | Remove-PoolMember -F5session $F5Session
+                }
+                Else {
+                    Write-Warning "Pool member not found"
+                }
             }
         }
     }
