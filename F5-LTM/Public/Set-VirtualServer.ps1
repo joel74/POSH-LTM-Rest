@@ -46,7 +46,6 @@ Function Set-VirtualServer {
             #Add the profiles member to the virtual server object
             $vs | Add-Member -Name 'profiles' -Value $ProfileItems -MemberType NoteProperty
 
-
             #Define the persistence profiles to apply
             $PersistenceProfiles = @('hash','cookie')
             $PersistItems = @()
@@ -61,7 +60,7 @@ Function Set-VirtualServer {
 
 
             #Add the fallbackPersistence member to the virtual server object
-            $vs | Add-Member 'fallbackPersistence' -Value 'source_addr'
+			$vs | Add-Member -Name 'fallbackPersistence' -Value 'source_addr' -MemberType NoteProperty
 
             #Set the virtual server by passing the modified local object to the LTM
             $vs | Set-VirtualServer
