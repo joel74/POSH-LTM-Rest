@@ -11,6 +11,7 @@ Function New-Pool {
 .EXAMPLE
     # The MemberDefinitionList can accept a server name / IP address, a port number, a description and a route domain value.
     New-Pool -F5Session $F5Session -PoolName "MyPoolName" -MemberDefinitionList @("Server1,80,Web server,1","Server2,443,Another web server,2")
+    If you don't use route domains, leave that value blank.
 
 #>   
     [cmdletBinding()]
