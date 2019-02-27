@@ -70,6 +70,7 @@
         Catch {
             #If an error is thrown and it doesn't contain the word 'Unauthorized' then the LTM name and $BaseURL are invalid
             If ($LTMError[0] -notmatch 'Unauthorized'){
+                Throw $_
                 Throw ("The specified LTM name $LTMName is not valid.")
             }
         }
