@@ -67,7 +67,7 @@
                         Write-Error "The $($newitem.FullPath) node already exists."
                     } else {
                         #Start building the JSON for the action
-                        $JSONBody = @{address=$Address[$a].ToString();name=$newitem.Name;partition=$newitem.Partition;description=$Description[$a];monitor=$Monitor[$a]} | ConvertTo-Json
+                        $JSONBody = @{address=$Address[$a].ToString();name=$newitem.Name;partition=$newitem.Partition;description=$Description[$a];monitor=$($Monitor -join ' and ')} | ConvertTo-Json
 
                         Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' |
                             Out-Null
@@ -93,7 +93,7 @@
                     } else {
                         #Start building the JSON for the action
                         $JSON_FQDN = @{name=$itemfqdn;'address-family'=$AddressType;autopopulate=$AutoPopulate;interval=$Interval;'down-interval'=$DownInterval} # | ConvertTo-Json
-                        $JSONBody = @{name=$itemname;fqdn=$JSON_FQDN;partition=$newitem.Partition;description=$Description[$a];monitor=$Monitor[$a]} | ConvertTo-Json
+                        $JSONBody = @{name=$itemname;fqdn=$JSON_FQDN;partition=$newitem.Partition;description=$Description[$a];monitor=$($Monitor -join ' and ')} | ConvertTo-Json
                         Invoke-F5RestMethod -Method POST -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' |
                             Out-Null
                         if ($Passthru) {
