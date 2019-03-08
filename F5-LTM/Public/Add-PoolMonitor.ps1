@@ -30,8 +30,8 @@
             InputObject {
                 $InputObject | ForEach-Object {
                     $JSONBody = @{
-                        monitor=(($($_.monitor -split ' and ') + $Name | Where-Object { $_ } | ForEach-Object { [Regex]::Match($_.Trim(), '[^/\s]*$').Value } | Select-Object -Unique) -join ' and ')
-                    } | ConvertTo-Json
+                        monitor=(([string[]]$($_.monitor -split ' and ') + $Name | Where-Object { $_ } | ForEach-Object { [Regex]::Match($_.Trim(), '[^/\s]*$').Value } | Select-Object -Unique) -join ' and ')
+                    } | ConvertTo-Json 
                     $URI = $F5Session.GetLink($InputObject.selfLink)
                     Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
                 }
