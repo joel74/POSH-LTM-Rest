@@ -132,6 +132,9 @@ Function Set-VirtualServer {
         [ValidateSet('tcp','udp','sctp')]
         $ipProtocol=$null
         ,
+        [Parameter(Mandatory = $false)]
+        [string[]]$PolicyNames=$null
+        ,
         #endregion
 
         #endregion
@@ -194,6 +197,17 @@ Function Set-VirtualServer {
                     }
                     $ChgProperties['profiles'] = $ProfileItems
                 }
+                'PolicyNames' {
+                    $NewProperties[$key] = $PSBoundParameters[$key]
+                    $PolicyItems = @()
+                    ForEach ($PolicyName in $PolicyNames) {
+                        $PolicyItems += @{
+                            kind = 'tm:ltm:virtual:policies:policiesstate'
+                            name = $PolicyName
+                        }
+                    }
+                    $ChgProperties['policies'] = $PolicyItems
+                }
                 'InputObject' {} # Ignore
                 'PassThru' {} # Ignore
                 { @('VlanEnabled','VlanDisabled') -contains $_ } {
@@ -246,7 +260,9 @@ Function Set-VirtualServer {
             Write-Verbose -Message 'Setting VirtualServer details...'
 
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition)
-            $JSONBody = $NewObject | ConvertTo-Json -Compress
+            # The default depth of ConvertTo-Json is 2.
+            # We need at least a depth of 3 for working with virtual servers that have a persistence profile set.
+            $JSONBody = $NewObject | ConvertTo-Json -Compress -Depth 10
 
             #region case-sensitive parameter names
 

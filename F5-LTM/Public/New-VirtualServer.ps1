@@ -72,6 +72,12 @@ Function New-VirtualServer
     ,
     [Parameter(Mandatory = $false)]
     [string]$FallbackPersistence
+    ,
+    [Parameter(Mandatory = $false)]
+    [string[]]$SecurityLogProfiles
+    ,
+    [Parameter(Mandatory = $false)]
+    [string[]]$PolicyNames = $null
 
 
   )
@@ -103,10 +109,19 @@ Function New-VirtualServer
       ipProtocol               = $ipProtocol
       mask                     = $Mask
       connectionLimit          = $ConnectionLimit
-      persist                  = $PersistenceProfiles
       fallbackPersistence      = $FallbackPersistence
 
     }
+
+    if ($PersistenceProfiles)
+    {
+      $JSONBody.persist = $PersistenceProfiles
+    }
+    if ($SecurityLogProfiles)
+    {
+      $JSONBody.securityLogProfiles = $SecurityLogProfiles
+    }
+
     if ($newItem.application) {
       $JSONBody.Add('application',$newItem.application)
     }
@@ -152,6 +167,20 @@ Function New-VirtualServer
       }
     }
     $JSONBody.profiles = $ProfileItems
+
+    #Build array of policy items
+    $PolicyItems = @()
+    ForEach ($PolicyName in $PolicyNames)
+    {
+      $PolicyItems += @{
+        kind = 'tm:ltm:virtual:policies:policiesstate'
+        name = $PolicyName
+      }
+    }
+    if ($PolicyItems.Count -gt 0)
+    {
+      $JSONBody.policies = $PolicyItems
+    }
 
     $JSONBody = $JSONBody | ConvertTo-Json
 

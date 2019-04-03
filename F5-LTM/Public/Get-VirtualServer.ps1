@@ -1,4 +1,4 @@
-﻿Function Get-VirtualServer{
+Function Get-VirtualServer{
     <#
         .SYNOPSIS
             Retrieve specified virtual server(s)
