@@ -30,7 +30,13 @@
         [string]$Application='',
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [string]$Partition
+        [string]$Partition,
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [PoshLTM.F5Address[]]$Address,
+
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [switch]$ExcludeSubcollections
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -50,37 +56,47 @@
                     $items = $items | Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"}
                 }
 
-                #Retrieve all subcollections' contents 
-                $subcollections = [Array] $items | Get-Member -MemberType NoteProperty | % Name | %  { $items.$_ } | Where { $_.isSubcollection -eq 'True' } 
-
-                #Add properties for policies and profiles
-                $items | Add-Member -NotePropertyName 'policies' -NotePropertyValue ''
-                $items | Add-Member -NotePropertyName 'profiles' -NotePropertyValue ''
-
-                ForEach ($sub in $subcollections)
-                {
-
-                    #Retrieve the virtual server name from the link
-                    $tmpArray = [string]($sub.link) -split "/"
-                    $tmpArray = ($tmpArray[$tmpArray.Length-2]).Split("~")
-                    $virtualServerName = $tmpArray[$tmpArray.Length-1]
-
-                    #Expand each subcollection
-                    $JSON = Invoke-F5RestMethod -Method Get -Uri ($sub.link -replace 'localhost',$F5Session.Name) -F5Session $F5Session
-
-                    #If the subcollection contains items, then add them to the JSON to return
-                    #Make sure to add them to the corresponding virtual server
-                    If ($JSON.items){
-
-                        #Retrieve the name for the collection from the segment of the 'kind' value preceding the collection.
-                        #JN: There may be a better way to determine this
-                        $tmpArray = [string]($JSON.kind) -split ":"
-                        $collName = [string]$tmpArray[$tmpArray.length-2]
-
-                        #Add the contents of the subcollection
-                        ($items | Where-Object Name -CContains $virtualServerName).$collName = $JSON.items
-                    }
+                #If an IP address was specified, filter the results by that
+                If ($Address){
+                    $items = $items | Where-Object {$_.Destination -match $Address}
                 }
+
+                #Unless requested subcollections will be included
+                #Excluding subcollections has a significant performance increase
+                If (!$ExcludeSubcollections) {
+
+                    #Retrieve all subcollections' contents 
+                    $subcollections = [Array] $items | Get-Member -MemberType NoteProperty | % Name | %  { $items.$_ } | Where { $_.isSubcollection -eq 'True' } 
+
+                    #Add properties for policies and profiles
+                    $items | Add-Member -NotePropertyName 'policies' -NotePropertyValue @()
+                    $items | Add-Member -NotePropertyName 'profiles' -NotePropertyValue @()
+
+                    ForEach ($sub in $subcollections)
+                    {
+
+                        #Retrieve the virtual server name from the link
+                        $tmpArray = [string]($sub.link) -split "/"
+                        $tmpArray = ($tmpArray[$tmpArray.Length-2]).Split("~")
+                        $virtualServerName = $tmpArray[$tmpArray.Length-1]
+
+                        #Expand each subcollection
+                        $JSON = Invoke-F5RestMethod -Method Get -Uri ($sub.link -replace 'localhost',$F5Session.Name) -F5Session $F5Session
+
+                        #If the subcollection contains items, then add them to the JSON to return
+                        #Make sure to add them to the corresponding virtual server
+                        If ($JSON.items){
+
+                            #Retrieve the name for the collection from the segment of the 'kind' value preceding the collection.
+                            #JN: There may be a better way to determine this
+                            $tmpArray = [string]($JSON.kind) -split ":"
+                            $collName = [string]$tmpArray[$tmpArray.length-2]
+
+                            #Add the contents of the subcollection
+                            ($items | Where-Object Name -CContains $virtualServerName).$collName = $JSON.items
+                        }
+                    }
+                } #End of subcollection gathering
 
                 $items | Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
             }
