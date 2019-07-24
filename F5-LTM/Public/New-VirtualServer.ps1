@@ -46,6 +46,9 @@ Function New-VirtualServer
     [Parameter(Mandatory = $false)]
     [string[]]$ProfileNames = $null
     ,
+    [Parameter(Mandatory = $false)]
+    [string[]]$Rules = $null
+    ,
     [Parameter(Mandatory = $True)]
     [ValidateSet('tcp','udp','sctp')]
     $ipProtocol = $null
@@ -108,6 +111,7 @@ Function New-VirtualServer
       pool                     = $DefaultPool
       ipProtocol               = $ipProtocol
       mask                     = $Mask
+      rules                     = $rules
       connectionLimit          = $ConnectionLimit
       fallbackPersistence      = $FallbackPersistence
 
@@ -167,7 +171,7 @@ Function New-VirtualServer
       }
     }
     $JSONBody.profiles = $ProfileItems
-
+    
     #Build array of policy items
     $PolicyItems = @()
     ForEach ($PolicyName in $PolicyNames)
