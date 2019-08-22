@@ -6,6 +6,7 @@ It is built to work with the following BIG-IP versions:
    * All versions of 12.x
 
 It requires PowerShell v3 or higher.
+It is set to negotiate connections using TLS 1.2. TLS 1.2 is only supported on .NET Framework 4.5+.
 
 It includes a Validation.cs class file (based on code posted by Brian Scholer on www.briantist.com) to allow for using the REST API with LTM devices using self-signed SSL certificates.
 
@@ -17,10 +18,14 @@ The module contains the following functions.
    * Add-iRuleToVirtualServer
    * Add-PoolMember
    * Add-PoolMonitor
+   * Disable-Node
    * Disable-PoolMember
    * Disable-VirtualServer
+   * Enable-Node
    * Enable-PoolMember
    * Enable-VirtualServer
+   * Get-Application
+   * Get-BIGIPPartition
    * Get-CurrentConnectionCount (deprecated; use __Get-PoolMemberStats | Select-Object -ExpandProperty 'serverside.curConns'__)
    * Get-F5Session (will be deprecated in future versions. use __New-F5Session__)
    * Get-F5Status
@@ -29,7 +34,6 @@ The module contains the following functions.
    * Get-iRule
    * Get-iRuleCollection (deprecated; use __Get-iRule__)
    * Get-Node
-   * Get-BIGIPPartition
    * Get-Pool
    * Get-PoolList (deprecated; use __Get-Pool__)
    * Get-PoolMember
@@ -37,21 +41,24 @@ The module contains the following functions.
    * Get-PoolMemberCollectionStatus
    * Get-PoolMemberDescription (deprecated; use __Get-PoolMember__)
    * Get-PoolMemberIP (deprecated; use __Get-PoolMember__)
-   * Get-PoolMembers (deprecated; use __Get-PoolMember__)
    * Get-PoolMemberStats
    * Get-PoolMemberStatus (deprecated; use __Get-PoolMember__)
    * Get-PoolMonitor
    * Get-PoolsForMember
+   * Get-ProfileHttp
    * Get-StatusShape
    * Get-VirtualServer
    * Get-VirtualServeriRuleCollection (deprecated; use __Get-VirtualServer | Where rules | Select -ExpandProperty rules__)
    * Get-VirtualServerList (deprecated; use __Get-VirtualServer__) 
    * Invoke-RestMethodOverride
+   * New-Application
    * New-F5Session
    * New-HealthMonitor
    * New-Node
    * New-Pool
+   * New-ProfileHttp
    * New-VirtualServer
+   * Remove-Application
    * Remove-HealthMonitor
    * Remove-iRule
    * Remove-iRuleFromVirtualServer
@@ -60,8 +67,9 @@ The module contains the following functions.
    * Remove-PoolMonitor
    * Remove-ProfileRamCache
    * Remove-Node
+   * Remove-ProfileHttp
    * Remove-VirtualServer
-   * Set-iRule
+   * Set-iRule (used to both create and update)
    * Set-PoolLoadBalancingMode (deprecated; use __Set-Pool__)
    * Set-PoolMemberDescription
    * Set-Pool
@@ -72,6 +80,7 @@ The module contains the following functions.
    * Test-HealthMonitor
    * Test-Node
    * Test-Pool
+   * Test-ProfileHttp
    * Test-VirtualServer
 
 Nearly all of the functions require an F5 session object to manipulate the F5 LTM via the REST API.

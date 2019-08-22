@@ -7,6 +7,7 @@
     for a user with permissions to work with the REST API. Based on the scope value, it either returns the 
     session object (local scope) or adds the session object to the script scope
     It takes an optional parameter of TokenLifespan, a value in seconds between 300 and 36000 (5 minutes and 10 hours).
+    NB: If you need to connect to an LTM on other than the standard HTTPS port of 443, please include that port in the LTM name. I.e. $LTMName = '192.168.1.1:8443'
 #>
     [cmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]

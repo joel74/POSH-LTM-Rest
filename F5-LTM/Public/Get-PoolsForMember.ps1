@@ -1,7 +1,11 @@
 ﻿Function Get-PoolsForMember {
 <#
-.SYNOPSIS
-    Determine which pool(s) a server is in
+    .SYNOPSIS
+        Determine which pool(s) a pool member is in. Expects either a pool member object or an IP address to be passed as a parameter
+    .EXAMPLE
+        #Get all pools that 'member1' pool member is in
+        Get-poolmember -Name 'member1' | Get-PoolsForMember
+
 #>
     [cmdletBinding()]
     param(

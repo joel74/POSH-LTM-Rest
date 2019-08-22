@@ -46,7 +46,6 @@ Function Set-VirtualServer {
             #Add the profiles member to the virtual server object
             $vs | Add-Member -Name 'profiles' -Value $ProfileItems -MemberType NoteProperty
 
-
             #Define the persistence profiles to apply
             $PersistenceProfiles = @('hash','cookie')
             $PersistItems = @()
@@ -61,7 +60,7 @@ Function Set-VirtualServer {
 
 
             #Add the fallbackPersistence member to the virtual server object
-            $vs | Add-Member 'fallbackPersistence' -Value 'source_addr'
+			$vs | Add-Member -Name 'fallbackPersistence' -Value 'source_addr' -MemberType NoteProperty
 
             #Set the virtual server by passing the modified local object to the LTM
             $vs | Set-VirtualServer
@@ -133,6 +132,9 @@ Function Set-VirtualServer {
         [ValidateSet('tcp','udp','sctp')]
         $ipProtocol=$null
         ,
+        [Parameter(Mandatory = $false)]
+        [string[]]$PolicyNames=$null
+        ,
         #endregion
 
         #endregion
@@ -195,6 +197,17 @@ Function Set-VirtualServer {
                     }
                     $ChgProperties['profiles'] = $ProfileItems
                 }
+                'PolicyNames' {
+                    $NewProperties[$key] = $PSBoundParameters[$key]
+                    $PolicyItems = @()
+                    ForEach ($PolicyName in $PolicyNames) {
+                        $PolicyItems += @{
+                            kind = 'tm:ltm:virtual:policies:policiesstate'
+                            name = $PolicyName
+                        }
+                    }
+                    $ChgProperties['policies'] = $PolicyItems
+                }
                 'InputObject' {} # Ignore
                 'PassThru' {} # Ignore
                 { @('VlanEnabled','VlanDisabled') -contains $_ } {
@@ -219,7 +232,7 @@ Function Set-VirtualServer {
         if (-not $NewProperties.ContainsKey('DestinationIP')) {
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
-            } elseif ($ExistingVirtualServer -ne $null) {
+            } elseif ($null -ne $ExistingVirtualServer) {
                 $ExistingVirtualServer.destination
             }
             if ($destination) { $NewProperties['DestinationIP'] = ($destination -split ':')[0] }
@@ -227,7 +240,7 @@ Function Set-VirtualServer {
         if (-not $NewProperties.ContainsKey('DestinationPort')) {
             $destination = if ($InputObject -and $InputObject.destination) {
                 $InputObject.destination
-            } elseif ($ExistingVirtualServer -ne $null) {
+            } elseif ($null -eq $ExistingVirtualServer) {
                 $ExistingVirtualServer.destination
             }
             if ($destination) { $NewProperties['DestinationPort'] = ($destination -split ':')[1] }
@@ -243,11 +256,13 @@ Function Set-VirtualServer {
         }
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
-        if ($NewObject -ne $null -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
+        if ($null -ne $NewObject -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting VirtualServer $Name")) {
             Write-Verbose -Message 'Setting VirtualServer details...'
 
             $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition)
-            $JSONBody = $NewObject | ConvertTo-Json -Compress
+            # The default depth of ConvertTo-Json is 2.
+            # We need at least a depth of 3 for working with virtual servers that have a persistence profile set.
+            $JSONBody = $NewObject | ConvertTo-Json -Compress -Depth 10
 
             #region case-sensitive parameter names
 
@@ -259,7 +274,7 @@ Function Set-VirtualServer {
 
             #endregion
 
-            $result = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
+            $null = Invoke-F5RestMethod -Method PATCH -URI "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json'
         }
         if ($PassThru) { Get-VirtualServer -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition }
     }

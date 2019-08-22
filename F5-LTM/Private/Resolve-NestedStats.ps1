@@ -6,7 +6,7 @@
  
     To resolve this discrepancy, this function performs version-specific transformations to the JSON data and returns it in a standardized format with the "entries" property at the top.
 #>
-
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "")]
     param (
         $F5Session=$Script:F5Session,
 
@@ -17,6 +17,7 @@
         11 { <# no conversion needed #> }
         12 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
         13 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
+        14 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
         Default { <# assume no conversion needed #> }
     }
 
