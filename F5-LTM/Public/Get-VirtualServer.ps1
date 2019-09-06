@@ -33,10 +33,8 @@ Function Get-VirtualServer{
         [string]$Partition,
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [PoshLTM.F5Address[]]$Address,
+        [PoshLTM.F5Address[]]$Address
 
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [switch]$ExcludeSubcollections
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -48,7 +46,7 @@ Function Get-VirtualServer{
 
         foreach ($vsname in $Name) {
 
-            $URI = $F5Session.BaseURL + 'virtual/{0}' -f (Get-ItemPath -Name $vsname -Application $Application -Partition $Partition)
+            $URI = $F5Session.BaseURL + 'virtual/{0}?expandSubcollections=true' -f (Get-ItemPath -Name $vsname -Application $Application -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
@@ -60,6 +58,9 @@ Function Get-VirtualServer{
                 If ($Address){
                     $items = $items | Where-Object {$_.Destination -match $Address}
                 }
+
+<#
+    JN: the expandSubcollections=true param should be a better way to expand subcollections and so this subcollection expansion logic wouldn't be needed.
 
                 #Unless requested subcollections will be included
                 #Excluding subcollections has a significant performance increase
@@ -97,7 +98,7 @@ Function Get-VirtualServer{
                         }
                     }
                 } #End of subcollection gathering
-
+#>
                 $items | Add-ObjectDetail -TypeName 'PoshLTM.VirtualServer'
             }
         }
