@@ -93,7 +93,7 @@ You can create a credential object using 'Get-Credential' and entering the usern
 $secpasswd = ConvertTo-SecureString "PlainTextPassword" -AsPlainText -Force
 $mycreds = New-Object System.Management.Automation.PSCredential "username", $secpasswd
 ```
-Thanks to Kotesh Bandhamravuri and his blog entry http://blogs.msdn.com/b/koteshb/archive/2010/02/13/powershell-creating-a-pscredential-object.aspx for this snippet.
+Thanks to Kotesh Bandhamravuri and his blog entry https://docs.microsoft.com/en-us/archive/blogs/koteshb/powershell-how-to-create-a-pscredential-object for this snippet.
 
 The first time New-F5Session is called, it creates a script-scoped $F5Session object that is referenced by the functions that require an F5 session. If an F5 session object is passed to one of these functions, that will be used in place of the script-scoped $F5Session object.
 
