@@ -35,6 +35,7 @@ The module contains the following functions.
    * Get-iRuleCollection (deprecated; use __Get-iRule__)
    * Get-Node
    * Get-Pool
+   * Get-NodeStats
    * Get-PoolList (deprecated; use __Get-Pool__)
    * Get-PoolMember
    * Get-PoolMemberCollection (deprecated; use __Get-PoolMember__)

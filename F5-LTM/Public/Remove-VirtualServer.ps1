@@ -32,6 +32,8 @@
                 foreach($virtualserver in $InputObject) {
                     if ($pscmdlet.ShouldProcess($virtualserver.fullPath)){
                         $URI = $F5Session.GetLink($virtualserver.selfLink)
+                        #expandSubcollections is not a supported parameter for a DELETE call
+                        $URI = $URI -replace "expandSubcollections=true&", ""
                         Invoke-F5RestMethod -Method DELETE -Uri $URI -F5Session $F5Session
                     }
                 }

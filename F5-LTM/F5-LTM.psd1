@@ -21,13 +21,13 @@ GUID = 'f4649254-d64a-407d-822f-66a4618ed5fb'
 Author = 'Joel Newton'
 
 # Company or vendor of this module
-CompanyName = 'SpringCM'
+CompanyName = 'SpringCM, a DocuSign company'
 
 # Copyright statement for this module
-Copyright = '(c) 2017 Joel Newton. All rights reserved.'
+Copyright = '(c) 2020 Joel Newton. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'This module uses the REST API in the F5 LTM v11.6 to query and manipulate the F5 LTM device.'
+Description = 'This module uses the REST API in the F5 LTM v11.6 and higher to query and manipulate the F5 LTM device.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '3.0'

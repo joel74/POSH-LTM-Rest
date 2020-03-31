@@ -4,6 +4,10 @@ build: false
 version: 1.4.{build}
 os: WMF 5
 
+branches:
+  only:
+    - master
+
 environment:
   # Encrypted PowerShellGallery API Key to facilitate publishing
   # See https://ci.appveyor.com/tools/encrypt
