@@ -14,10 +14,7 @@
     )
     switch ($F5Session.LTMVersion.Major)
     {
-        11 { <# no conversion needed #> }
-        12 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
-        13 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
-        14 { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
+        { $_ -gt 11 } { $JSON = $JSON.entries.PSObject.Properties.Value.nestedStats; }
         Default { <# assume no conversion needed #> }
     }
 
