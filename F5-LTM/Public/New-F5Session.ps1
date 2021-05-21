@@ -84,6 +84,7 @@
             BaseURL = $BaseURL
             Credential = $Credential
             WebSession = $session
+			Token      = $Token
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)
                 $Link -replace 'localhost', $this.Name    
