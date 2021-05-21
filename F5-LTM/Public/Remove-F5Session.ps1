@@ -19,19 +19,9 @@ Function Remove-F5Session {
         }
         else {
 
-            add-type @"
-        using System.Net;
-        using System.Security.Cryptography.X509Certificates;
-        public class TrustAllCertsPolicy : ICertificatePolicy {
-            public bool CheckValidationResult(
-                ServicePoint srvPoint, X509Certificate certificate,
-                WebRequest request, int certificateProblem) {
-                return true;
-            }
-        }
-"@
-            [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+            [SSLValidator]::OverrideValidation()
             $RemoveSession = Invoke-RestMethod "https://$($F5Session.name)/mgmt/shared/authz/tokens/$($F5Session.token)" -Headers @{'X-F5-Auth-Token' = $F5Session.token } -Method DELETE
+            [SSLValidator]::RestoreValidation()
         }
     }
     else {
