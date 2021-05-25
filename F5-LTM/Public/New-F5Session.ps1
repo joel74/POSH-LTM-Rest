@@ -80,10 +80,11 @@
     }
 
     $newSession = [pscustomobject]@{
-            Name = $LTMName
-            BaseURL = $BaseURL
+            Name       = $LTMName
+            BaseURL    = $BaseURL
             Credential = $Credential
             WebSession = $session
+            Token      = $Token
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)
                 $Link -replace 'localhost', $this.Name    
