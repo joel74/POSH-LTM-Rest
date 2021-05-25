@@ -2,7 +2,6 @@ Function Remove-F5Session {
 <#
 .SYNOPSIS
     Remove F5 session based on the token
-
 #>
     [cmdletBinding()]
     param (

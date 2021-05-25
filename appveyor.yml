@@ -12,7 +12,7 @@ environment:
   # Encrypted PowerShellGallery API Key to facilitate publishing
   # See https://ci.appveyor.com/tools/encrypt
   POWERSHELLGALLERY_APIKEY:
-    secure: oy2l4uvjvutdoo3emitaftnr5wz73b7ufea3v4iqs562tu
+    secure: w0MMvYcnPpKznDxApa5E70azWekUTy5kw059gKQadYBV3qMJoNZT6cH8wACxkR1N
   
 skip_commits:
   # Skip on updates to the readme. [skip ci] or [ci skip] anywhere in commit message will also prevent a ci build 
