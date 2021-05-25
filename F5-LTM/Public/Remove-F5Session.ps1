@@ -32,6 +32,7 @@ Function Remove-F5Session {
         }
 
         Write-Verbose "Session : token $($RemoveSession.token) deleted"
+        Remove-Variable F5Session -Scope Script
         Return($true)
     }
 
