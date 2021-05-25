@@ -60,6 +60,7 @@ The module contains the following functions.
    * New-ProfileHttp
    * New-VirtualServer
    * Remove-Application
+   * Remove-F5Session
    * Remove-HealthMonitor
    * Remove-iRule
    * Remove-iRuleFromVirtualServer

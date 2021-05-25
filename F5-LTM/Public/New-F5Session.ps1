@@ -79,15 +79,17 @@
         $Credential = $LTMCredentials
     }
 
-    $newSession = [pscustomobject]@{
-            Name = $LTMName
-            BaseURL = $BaseURL
+     $newSession = [pscustomobject]@{
+            Name       = $LTMName
+            BaseURL    = $BaseURL
             Credential = $Credential
             WebSession = $session
+            Token      = $Token
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)
                 $Link -replace 'localhost', $this.Name    
     } -PassThru 
+
 
 
     # Since we've connected to the LTM, we can now retrieve the device version
