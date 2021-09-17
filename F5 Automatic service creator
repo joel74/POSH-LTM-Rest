@@ -1,0 +1,105 @@
+######F5 PS service creation####### 
+
+#######PS Module verification################
+if (Get-Module -ListAvailable -Name F5-LTM  ) {
+    Write-Host "F5-LTM Module Exsist"
+} else {
+    Write-Host "F5-LTM Module does not exist"
+    Install-Module F5-LTM
+}
+
+########Login#########
+
+$f5IP = '192.168.1.1'
+$f5username = 'admin'
+####################Ask for a password for each run (More secure)
+#$f5password = Read-Host 'Specify F5 Password' -AsSecureString
+
+###########Put a password for multiple run###############
+$f5password = ConvertTo-SecureString "Password!!@!@!" -AsPlainText -Force
+
+$mycreds = New-Object System.Management.Automation.PSCredential $f5username, $f5password
+New-F5Session -LTMName $f5IP -LTMCredentials $mycreds
+
+
+###################Application Details#####################
+$virtualservicename = 'www.f5.com'
+$virtualserviceip = '10.10.10.5'
+$virtualserviceport = '443'
+$nodeip = '10.10.10.6'
+$nodeport = '443'
+
+
+###########################Auto Choose SSL Profile##############################################################
+# We can choose the Client SSL profile for you based on Virtual service name (Name convention is important)    #
+# F.E www.test.com > test.com Client SSL profile                                                               #
+# If you want to choose it manualy, change the value of autossl to '0'.                                        #
+#                                                                                                              #
+################################################################################################################
+
+####################SSL Menu###############
+$autossl = '1'   
+#######Defualt SSL profile##########
+$clientssl = 'clientssl'                                                                                       
+$serverssl = 'serverssl-secure'  
+
+if ($virtualservicename.IndexOf('f5.com') -notlike '-1' -and $autossl -ne '0' ) {
+	$clientssl = $wildcard_f5.com
+	'SSL Profile = $wildcard_f5.com'
+} elseif ($virtualservicename.IndexOf('www.test.com') -notlike '-1' -and $autossl -ne '0' ) {
+	$clientssl = $www.test.f5.com
+	'SSL Profile = $www.test.f5.com'
+} elseif ($virtualservicename.IndexOf('test.test.com') -notlike '-1' -and $autossl -ne '0' ) {
+	$clientssl = $test.test.com
+	'SSL Profile = $test.test.com'
+} else {
+"No auto SSL policy found or autossl = 0, Choosen SSL profile: $clientssl "
+}
+
+
+################SSL Profile choose####################
+####Please use varible = F5 Client SSL profile name#####
+
+$wildcard_f5.com = 'wildcard_f5.com'
+$www.test.f5.com = 'client_profile_www.test.f5.com'
+$test.test.com = 'Client_test.test.com'
+
+
+#################################Enviroment Varibals, Mostly not should being changed################
+$nodename = ( foreach {$virtualservicename +  "_node"} )
+$poolname = ( foreach {$virtualservicename +  "_pool"} )
+
+####################Specify Enabled Vlan,HTTP Profile,Snat Pool##################
+$enablevlan = 'External'
+$applicationprofile = 'http'
+$snatpool = 'Snat_Pool'
+
+############################Check for exsisting node or create a new one if not exsist#################
+$checknode = Get-Node -Address $nodeip
+if ($checknode.address -notlike $nodeip ) {
+"No node exsist"
+New-Node -name $nodename -Address $nodeip
+} else {
+$nodename = $checknode.name
+$nodeip = $checknode.address
+"Node is exsist, Using $nodename "
+}
+
+
+
+
+
+##################Pool creation####################
+new-pool -Name $poolname -LoadBalancingMode round-robin
+Add-PoolMonitor -Name https -PoolName $poolname
+Add-PoolMember -PoolName $poolname -Name $nodename -PortNumber $nodeport -Status Enabled
+
+
+
+
+
+
+##################Virtual Virtual Service configuration####################
+
+ New-VirtualServer -Name $virtualservicename -DestinationIP $virtualserviceip -DestinationPort $virtualserviceport  -ipProtocol tcp -DefaultPool $poolname -enabled true -SourceAddressTranslationType snat -SourceAddressTranslationPool $snatpool -VlanEnabled $enablevlan -ProfileNames $applicationprofile , $clientssl , $serverssl
+
