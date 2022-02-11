@@ -19,6 +19,14 @@
         [switch]$PassThru,
         [ValidateRange(300,36000)][int]$TokenLifespan=1200
     )
+    If ($PSVersionTable.PSVersion -lt [System.Management.Automation.SemanticVersion]"7.2") {
+        $OriginalWarningPreference = $WarningPreference
+        If ($PSBoundParameters.ContainsKey('WarningAction')) {
+            $WarningPreference = $PSBoundParameters['WarningAction']
+        } else {
+            $WarningPreference = 'SilentlyContinue'
+        }
+    }
     $BaseURL = "https://$LTMName/mgmt/tm/ltm/"
 
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
@@ -26,7 +34,8 @@
     #First, we attempt to get an authorization token. We need an auth token to do anything for LTMs using external authentication, including getting the LTM version.
     #If we fail to get an auth token, that means the LTM version is prior to 11.6, so we fall back on Credentials
     $AuthURL = "https://$LTMName/mgmt/shared/authn/login"
-    $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json
+    $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json -WarningAction $WarningPreference
+    
 
     try {
         $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
@@ -47,7 +56,7 @@
         #Max value is 36000 seconds (10 hours)
         If ($TokenLifespan -ne 1200){
 
-            $Body = @{ timeout = $TokenLifespan  }  | ConvertTo-Json
+            $Body = @{ timeout = $TokenLifespan  }  | ConvertTo-Json -WarningAction $WarningPreference
             $Headers = @{
                 'X-F5-Auth-Token' = $Token
             }
@@ -90,12 +99,14 @@
                 $Link -replace 'localhost', $this.Name    
     } -PassThru 
 
-
+    If ($PSVersionTable.PSVersion -lt [System.Management.Automation.SemanticVersion]"7.2") {
+        $WarningPreference = $OriginalWarningPreference
+    }
 
     # Since we've connected to the LTM, we can now retrieve the device version
     # We'll add it to the session object and reference it in cases where the iControlREST web services differ between LTM versions.
     $VersionURL = $BaseURL.Replace('ltm/','sys/version/')
-    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json
+    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json -WarningAction $WarningActionPreference
     
     $version = '0.0.0.0' # Default value, rather than throw error
     if ($JSON -match '(\d+\.?){3,4}') {
