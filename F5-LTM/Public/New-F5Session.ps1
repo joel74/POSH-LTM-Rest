@@ -106,7 +106,7 @@
     # Since we've connected to the LTM, we can now retrieve the device version
     # We'll add it to the session object and reference it in cases where the iControlREST web services differ between LTM versions.
     $VersionURL = $BaseURL.Replace('ltm/','sys/version/')
-    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json -WarningAction $WarningActionPreference
+    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json -WarningAction $WarningActionPreference -Depth 10
     
     $version = '0.0.0.0' # Default value, rather than throw error
     if ($JSON -match '(\d+\.?){3,4}') {
