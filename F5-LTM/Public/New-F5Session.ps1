@@ -19,7 +19,7 @@
         [switch]$PassThru,
         [ValidateRange(300,36000)][int]$TokenLifespan=1200
     )
-    If ($PSVersionTable.PSVersion -lt [System.Management.Automation.SemanticVersion]"7.2") {
+    If ($PSVersionTable.PSVersion -lt '7.2') {
         $OriginalWarningPreference = $WarningPreference
         If ($PSBoundParameters.ContainsKey('WarningAction')) {
             $WarningPreference = $PSBoundParameters['WarningAction']
@@ -99,14 +99,14 @@
                 $Link -replace 'localhost', $this.Name    
     } -PassThru 
 
-    If ($PSVersionTable.PSVersion -lt [System.Management.Automation.SemanticVersion]"7.2") {
+    If ($PSVersionTable.PSVersion -lt '7.2') {
         $WarningPreference = $OriginalWarningPreference
     }
 
     # Since we've connected to the LTM, we can now retrieve the device version
     # We'll add it to the session object and reference it in cases where the iControlREST web services differ between LTM versions.
     $VersionURL = $BaseURL.Replace('ltm/','sys/version/')
-    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json -WarningAction $WarningActionPreference -Depth 10
+    $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json -WarningAction $WarningPreference -Depth 10
     
     $version = '0.0.0.0' # Default value, rather than throw error
     if ($JSON -match '(\d+\.?){3,4}') {
