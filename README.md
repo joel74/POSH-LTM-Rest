@@ -3,7 +3,7 @@ This PowerShell module uses the F5 LTM REST API to manipulate and query pools, p
 It is built to work with the following BIG-IP versions:
    * 11.5.1 Build 8.0.175 Hotfix 8 and later
    * 11.6.0 Build 5.0.429 Hotfix 4 and later
-   * All versions of 12.x
+   * All versions of LTM from 12.0.0 onward.
 
 It requires PowerShell v3 or higher.
 It is set to negotiate connections using TLS 1.2. TLS 1.2 is only supported on .NET Framework 4.5+.
