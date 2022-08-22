@@ -1,7 +1,7 @@
 ﻿Function Get-PoolsForMember {
 <#
     .SYNOPSIS
-        Determine which pool(s) a pool member is in. Expects either a pool member object or an IP address to be passed as a parameter
+        Determine which pool(s) a pool member is in. Expects either a pool member object, an IP address, or a pool member name to be passed as a parameter
     .EXAMPLE
         #Get all pools that 'member1' pool member is in
         Get-poolmember -Name 'member1' | Get-PoolsForMember
@@ -15,7 +15,10 @@
         [PSObject]$InputObject,
 
         [Parameter(Mandatory=$false,ParameterSetName='Address')]
-        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any
+        [PoshLTM.F5Address[]]$Address=[PoshLTM.F5Address]::Any,
+
+        [Parameter(Mandatory=$false,ParameterSetName='Name')]
+        [String]$Name
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -27,6 +30,15 @@
                 $pools = Get-Pool -F5Session $F5Session
                 foreach ($pool in $pools) {
                     $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { [PoshLTM.F5Address]::IsMatch($Address, $_.address) }
+                    if ($members) {
+                        $pool
+                    }
+                }
+            }
+            Name {
+                $pools = Get-Pool -F5Session $F5Session
+                foreach ($pool in $pools) {
+                    $members = $pool | Get-PoolMember -F5session $F5Session | Where-Object { $_.name -eq $Name }
                     if ($members) {
                         $pool
                     }
