@@ -24,7 +24,7 @@ Author = 'Joel Newton'
 CompanyName = 'SpringCM, a DocuSign company'
 
 # Copyright statement for this module
-Copyright = '(c) 2022 Joel Newton. All rights reserved.'
+Copyright = '(c) 2020 Joel Newton. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'This module uses the REST API in the F5 LTM v11.6 and higher to query and manipulate the F5 LTM device.'
@@ -57,10 +57,10 @@ PowerShellVersion = '3.0'
 # ScriptsToProcess = @()
 
 # Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+TypesToProcess = @('./TypeData/PoshLTM.Types.ps1xml')
 
 # Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+FormatsToProcess = @('./TypeData/PoshLTM.Format.ps1xml')
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 # NestedModules = @()
