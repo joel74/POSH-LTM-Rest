@@ -35,7 +35,7 @@
                 if(![string]::IsNullOrWhiteSpace($Application) -and ![string]::IsNullOrWhiteSpace($Partition)) {
                     $items = $items | Where-Object {$_.fullPath -eq "/$($_.partition)/$Application.app/$($_.name)"}
                 }
-                $items | Add-ObjectDetail -TypeName 'PoshLTM.iRule' | Add-Member -MemberType AliasProperty -Name Definition -Value apiAnonymous;
+                $items | Add-ObjectDetail -TypeName 'PoshLTM.iRule' | Add-Member -MemberType AliasProperty -Name iRuleContent -Value apiAnonymous;
                 $items
             }
         }
