@@ -10,13 +10,13 @@
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [Alias('Pool')]
         [PSObject[]]$InputObject,
-        
+
         [Parameter(Mandatory=$true,ParameterSetName='PoolName',ValueFromPipeline=$true)]
         [string[]]$PoolName,
 
         [Parameter(Mandatory=$false,ParameterSetName='PoolName')]
         [string]$Partition,
-        
+
         [Alias('LoadBalancingMode')]
         [Parameter(Mandatory=$true)]
         [ValidateSet("dynamic-ratio-member","dynamic-ratio-node","fastest-app-response","fastest-node","least-connections-members","least-connections-node","least-sessions","observed-member","observed-node","predictive-member","predictive-node","ratio-least-connections-member","ratio-least-connections-node","ratio-member","ratio-node","ratio-session","round-robin","weighted-least-connections-member","weighted-least-connections-node")]

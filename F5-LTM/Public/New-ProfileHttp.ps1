@@ -4,15 +4,15 @@ Function New-ProfileHttp {
     Create a new profile.
 
 .DESCRIPTION
-    Read more about http profiles 
+    Read more about http profiles
     https://devcentral.f5.com/Wiki/iControlREST.APIRef_tm_ltm_profile_http.ashx
-	
+
 .EXAMPLE
     New-Profile -F5Session $F5Session -Name $ProfileName -Partition $Partition -insertXforwardedFor "Enabled"
 .EXAMPLE
-    New-Profile -F5Session $F5Session -Name "Service1" -Partition "ADO" -insertXforwardedFor "Enabled" 
+    New-Profile -F5Session $F5Session -Name "Service1" -Partition "ADO" -insertXforwardedFor "Enabled"
 .EXAMPLE
-    Result of RestAPI 
+    Result of RestAPI
     kind                      : tm:ltm:profile:http:httpstate
     name                      : http_ServiceGB123
     partition                 : ADO
@@ -50,14 +50,14 @@ Function New-ProfileHttp {
     viaRequest                : Preserve
     viaResponse               : Preserve
     xffAlternativeNames       : {}
-#>   
+#>
     [cmdletBinding()]
     param (
         $F5Session=$Script:F5Session,
         [Alias('ProfileName')]
         [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Name,
-        
+
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
         [ValidateSet('enabled','disabled')]
@@ -98,12 +98,12 @@ Function New-ProfileHttp {
         #Test that the F5 session is in a valid format
         Test-F5Session($F5Session)
 
-        
+
     }
     process {
         $URI = ($F5Session.BaseURL + "profile/http")
         foreach ($profilename in $Name) {
-            $newitem = New-F5Item -Name $profilename -Partition $Partition 
+            $newitem = New-F5Item -Name $profilename -Partition $Partition
             #Check whether the specified profile already exists
             If (Test-Profilehttp -F5session $F5Session -Name $newitem.Name -Partition $newitem.Partition){
                 Write-Error "The $($newitem.FullPath) profile already exists."
