@@ -2,8 +2,8 @@
 $Script:F5LTMPublicCommands = Get-ChildItem -Path ($PSScriptRoot -replace 'Private','Public') -Filter '*.ps1' -Recurse | Select-Object -ExpandProperty BaseName
 function Get-F5Command {
 <#
-.SYNOPSIS  
-    (Get-Command -Module F5-LTM) adversely affects module import performance.  
+.SYNOPSIS
+    (Get-Command -Module F5-LTM) adversely affects module import performance.
     This is a much faster alternative without resorting to static command names
     for Register-ArgumentCompleter -Command parameters.
 #>
@@ -24,21 +24,21 @@ function Get-CompleteSession {
 function CompleteMonitorName {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-HealthMonitor -F5Session $Session -Partition $fakeBoundParameters.Partition -Type $fakeBoundParameters.Type | Where-Object { $_.name -like "$wordToComplete*" } | ForEach-Object {
             if ($fakeBoundParameters.Partition) {
                 $_.name
             } else {
-                $_.fullPath 
+                $_.fullPath
             }
-        } 
+        }
     }
 }
 function CompleteMonitorType {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session         
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-HealthMonitorType -F5Session $Session | Where-Object { $_ -like "$wordToComplete*" }
     }
@@ -46,31 +46,31 @@ function CompleteMonitorType {
 function CompleteNodeAddress {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
-        Get-Node -F5Session $Session -Partition $fakeBoundParameters.Partition | 
-        Where-Object { $_.address -like "$wordToComplete*" } | 
+        Get-Node -F5Session $Session -Partition $fakeBoundParameters.Partition |
+        Where-Object { $_.address -like "$wordToComplete*" } |
         Select-Object -ExpandProperty address
     }
 }
 function CompleteNodeName {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-Node -F5Session $Session -Partition $fakeBoundParameters.Partition | Where-Object { $_.name -like "$wordToComplete*" } | ForEach-Object {
             if ($fakeBoundParameters.Partition) {
                 $_.name
             } else {
-                $_.fullPath 
+                $_.fullPath
             }
-        } 
+        }
     }
 }
 function CompleteBIGIPPartition {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-BIGIPPartition -F5Session $Session | Where-Object { $_ -like "$wordToComplete*" }
     }
@@ -79,10 +79,10 @@ function CompletePoolMemberAddress {
     param($wordToComplete,
         $fakeBoundParameters)
     if ($fakeBoundParameters.PoolName) {
-        $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+        $Session = Get-CompleteSession $fakeBoundParameters.F5Session
         if ($Session) {
-            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Name (Invoke-NullCoalescing {$fakeBoundParameters.Name} {'*'})  | 
-                Where-Object { $_.address -like "$wordToComplete*" } | 
+            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Name (Invoke-NullCoalescing {$fakeBoundParameters.Name} {'*'})  |
+                Where-Object { $_.address -like "$wordToComplete*" } |
                 Select-Object -ExpandProperty address
         }
     }
@@ -91,10 +91,10 @@ function CompletePoolMemberName {
     param($wordToComplete,
         $fakeBoundParameters)
     if ($fakeBoundParameters.PoolName) {
-        $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+        $Session = Get-CompleteSession $fakeBoundParameters.F5Session
         if ($Session) {
-            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Address (Invoke-NullCoalescing {$fakeBoundParameters.Address} {'*'})  | 
-                Where-Object { $_.name -like "$wordToComplete*" } | 
+            Get-PoolMember -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition -Address (Invoke-NullCoalescing {$fakeBoundParameters.Address} {'*'})  |
+                Where-Object { $_.name -like "$wordToComplete*" } |
                 Select-Object -ExpandProperty name
         }
     }
@@ -103,10 +103,10 @@ function CompletePoolMonitorName {
     param($wordToComplete,
         $fakeBoundParameters)
     if ($fakeBoundParameters.PoolName) {
-        $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+        $Session = Get-CompleteSession $fakeBoundParameters.F5Session
         if ($Session) {
-            Get-PoolMonitor -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition | 
-                Where-Object { $_.name -match "\b$wordToComplete*" } | 
+            Get-PoolMonitor -F5Session $Session -PoolName $fakeBoundParameters.PoolName -Partition $fakeBoundParameters.Partition |
+                Where-Object { $_.name -match "\b$wordToComplete*" } |
                 Select-Object -ExpandProperty name
         }
     }
@@ -114,43 +114,43 @@ function CompletePoolMonitorName {
 function CompletePoolName {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-Pool -F5Session $Session -Partition $fakeBoundParameters.Partition | Where-Object { $_.name -like "$wordToComplete*" -or $_.fullPath -like "$wordToComplete*" } | ForEach-Object {
             if ($fakeBoundParameters.Partition) {
                 $_.name
             } else {
-                $_.fullPath 
+                $_.fullPath
             }
-        } 
+        }
     }
 }
 function CompleteRuleName {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-iRule -F5Session $Session -Partition $fakeBoundParameters.Partition | Where-Object { $_.name -like "$wordToComplete*" -or $_.fullPath -like "$wordToComplete" } | ForEach-Object {
             if ($fakeBoundParameters.Partition) {
                 $_.name
             } else {
-                $_.fullPath 
+                $_.fullPath
             }
-        } 
+        }
     }
 }
 function CompleteVirtualServerName {
     param($wordToComplete,
         $fakeBoundParameters)
-    $Session = Get-CompleteSession $fakeBoundParameters.F5Session    
+    $Session = Get-CompleteSession $fakeBoundParameters.F5Session
     if ($Session) {
         Get-VirtualServer -F5Session $Session -Partition $fakeBoundParameters.Partition | Where-Object { $_.name -like "$wordToComplete*" -or $_.fullPath -like "$wordToComplete" } | ForEach-Object {
             if ($fakeBoundParameters.Partition) {
                 $_.name
             } else {
-                $_.fullPath 
+                $_.fullPath
             }
-        } 
+        }
     }
 }
 if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
@@ -199,17 +199,17 @@ if (Get-Command Register-ArgumentCompleter -ErrorAction Ignore)
         -CommandName @(Get-F5Command '*') `
         -ParameterName Partition `
         -ScriptBlock $function:CompletePartition
-        
+
     Register-ArgumentCompleter `
         -CommandName 'Get-BIGIPPartition' `
         -ParameterName Name `
         -ScriptBlock $function:CompleteBIGIPPartition
-        
+
     Register-ArgumentCompleter `
         -CommandName @(Get-F5Command '*-Pool*') `
         -ParameterName PoolName `
         -ScriptBlock $function:CompletePoolName
-        
+
     Register-ArgumentCompleter `
         -CommandName 'Get-iRule' `
         -ParameterName Name `
