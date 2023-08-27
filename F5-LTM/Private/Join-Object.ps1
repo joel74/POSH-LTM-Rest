@@ -43,7 +43,7 @@
 		$AllProperty = $LeftProperty + $RightProperty | Select-Object -Unique
 
 		$LeftGroups = $Left | Group-Object $($On) -AsHashTable -AsString
-		$RightGroups = $Right | Group-Object $($OnRight) -AsHashTable -AsString		
+		$RightGroups = $Right | Group-Object $($OnRight) -AsHashTable -AsString
 	}
 	process {
 		if ($null -eq $Left -and $null -eq $Right) {

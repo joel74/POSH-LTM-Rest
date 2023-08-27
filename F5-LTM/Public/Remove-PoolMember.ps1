@@ -58,7 +58,7 @@
             }
             PoolName {
                 $PoolMember = Get-PoolMember -F5session $F5Session -PoolName $PoolName -Partition $Partition -Address $Address -Name $Name -Application $Application;
-                If ($PoolMember) { 
+                If ($PoolMember) {
                     $PoolMember | Remove-PoolMember -F5session $F5Session
                 }
                 Else {

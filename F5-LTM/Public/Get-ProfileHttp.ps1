@@ -26,7 +26,7 @@
     process {
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'profile/http/{0}' -f (Get-ItemPath -Name $itemname -Partition $Partition)
-            $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session 
+            $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
             if ($JSON.items -or $JSON.name) {
                 $items = Invoke-NullCoalescing {$JSON.items} {$JSON}
                 $items | Add-ObjectDetail -TypeName 'PoshLTM.ProfileHttp'

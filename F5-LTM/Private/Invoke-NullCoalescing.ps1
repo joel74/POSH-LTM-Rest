@@ -24,9 +24,9 @@ Function Invoke-NullCoalescing {
         [Parameter(ValueFromPipeline, ParameterSetName='InputObject')]
         [psobject]
         $InputObject
-    ) 
-        
-    Process { 
+    )
+
+    Process {
         if ($pscmdlet.ParameterSetName -eq 'InputObject') {
             if ($PrimaryExpr -eq $null) {
                 Foreach-Object $AlternateExpr -InputObject $InputObject

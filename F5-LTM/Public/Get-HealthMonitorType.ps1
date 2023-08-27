@@ -19,10 +19,10 @@
         foreach ($itemname in $Name) {
             $URI = $F5Session.BaseURL + 'monitor/'
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
-            $JSON.items.reference | ForEach-Object { 
+            $JSON.items.reference | ForEach-Object {
                 [Regex]::Match($_.Link,'(?<=/)[^/?]*(?=\?)').Value |
                     Where-Object { $_ -like $itemname }
             }
         }
-    }    
+    }
 }

@@ -1,11 +1,11 @@
 ﻿Function Remove-PoolMonitor {
 <#
 .SYNOPSIS
-    Remove health monitor(s) from a pool 
+    Remove health monitor(s) from a pool
 .NOTES
     Health monitor names are case-specific.
 #>
-    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]  
+    [cmdletBinding( SupportsShouldProcess=$true, ConfirmImpact="Low")]
     param(
         $F5Session=$Script:F5Session,
 

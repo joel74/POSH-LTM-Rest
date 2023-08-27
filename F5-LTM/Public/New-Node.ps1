@@ -58,10 +58,10 @@
                 #Process all nodes with IP addresses
                 for ([int]$a=0; $a -lt $Address.Count; $a++) {
                     $itemname = $Name[$a]
-                    if ([string]::IsNullOrWhiteSpace($itemname)) { 
+                    if ([string]::IsNullOrWhiteSpace($itemname)) {
                         $itemname = $Address[$a].ToString()
                     }
-                    $newitem = New-F5Item -Name $itemname -Partition $Partition 
+                    $newitem = New-F5Item -Name $itemname -Partition $Partition
                     #Check whether the specified node already exists
                     If (Test-Node -F5session $F5Session -Name $newitem.Name -Partition $newitem.Partition){
                         Write-Error "The $($newitem.FullPath) node already exists."
@@ -82,10 +82,10 @@
                 #Process all nodes with fully qualified domain names
                 for ([int]$a=0; $a -lt $Name.Count; $a++) {
                     $itemname = $Name[$a].ToString()
-                    if ([string]::IsNullOrWhiteSpace($itemname)) { 
+                    if ([string]::IsNullOrWhiteSpace($itemname)) {
                         $itemname = $FQDN[$a].ToString()
-                    }                    
-                    $newitem = New-F5Item -Name $itemname -Partition $Partition 
+                    }
+                    $newitem = New-F5Item -Name $itemname -Partition $Partition
                     $itemfqdn = $FQDN[$a]
                     #Check whether the specified node already exists
                     If (Test-Node -F5session $F5Session -Name $newitem.Name -Partition $newitem.Partition){

@@ -44,6 +44,8 @@ Describe 'Get-BigIPPartition' -Tags 'Unit' {
                     $Link -replace 'localhost', $this.Name
             } -PassThru
 
+            # Add the mock session to the Script scope
+            $Script:F5Session = $mocksession
 #endregion Arrange: Initialize Mocks
 
             It "Requests BigIP partitions *" {

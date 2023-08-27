@@ -4,7 +4,7 @@ Function Invoke-F5RestMethod {
     [OutputType([Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject])]
     [OutputType([String])]
     [OutputType([bool])]
-    param ( 
+    param (
         [Parameter(Mandatory)][Microsoft.PowerShell.Commands.WebRequestMethod]$Method,
         [Parameter(Mandatory)][uri]$URI,
         [Parameter(Mandatory)]$F5Session,
@@ -40,10 +40,10 @@ Function Invoke-F5RestMethod {
             try {
                 $message = $_.ErrorDetails.Message | ConvertFrom-json | Select-Object -expandproperty message
             } catch {
-                $message = [string]$_.ErrorDetails.Message 
+                $message = [string]$_.ErrorDetails.Message
             }
-            $ErrorOutput = '"{0} {1}: {2}' -f $_.Exception.Response.StatusCode.value__,$_.Exception.Response.StatusDescription,(Invoke-NullCoalescing {$message} {$ErrorMessage}) 
+            $ErrorOutput = '"{0} {1}: {2}' -f $_.Exception.Response.StatusCode.value__,$_.Exception.Response.StatusDescription,(Invoke-NullCoalescing {$message} {$ErrorMessage})
             Write-Error $ErrorOutput
-        } 
+        }
     }
 }

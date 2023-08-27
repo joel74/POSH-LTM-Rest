@@ -4,7 +4,7 @@ Function Invoke-RestMethodOverride {
     [OutputType([Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject])]
     [OutputType([String])]
     [OutputType([bool])]
-    param ( 
+    param (
         [Parameter(Mandatory=$true)][Microsoft.PowerShell.Commands.WebRequestMethod]$Method,
         [Parameter(Mandatory=$true)][uri]$URI,
 

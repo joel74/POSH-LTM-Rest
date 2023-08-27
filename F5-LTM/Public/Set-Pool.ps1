@@ -16,22 +16,22 @@
             Set-Pool -Name 'northwindtraders_servers' -Description 'Northwind Traders example' -LoadBalancingMode dynamic-ratio-member
 
             Creates or updates a Pool.  Note that parameters that are Mandatory for New-Pool (Name and LoadBalancingMode) must be specified for Pools that do not yet exist.
-            
+
         .EXAMPLE
             Set-Pool -Name 'northwindtraders_servers' -Description 'Some useful description'
-            
+
             Sets the description of an existing Pool.
 
         .EXAMPLE
             Set-Pool -Name 'northwindtraders_servers' -MemberDefinitionList {192.168.1.100,80},{192.168.1.101,80}
-            
+
         .EXAMPLE
             $pool = Get-Pool -Name 'northwindtraders_servers';
             $pool.minActiveMembers = if ($pool.minActiveMembers -lt 3) { 3 };
             $pool | Set-Pool -PassThru;
 
             Set the minimum active pool members to 3 if currently less than 3 and returns the resulting Pool with -PassThru.
-            
+
     #>
     [cmdletbinding(ConfirmImpact='Medium',SupportsShouldProcess,DefaultParameterSetName="Default")]
     param (
@@ -57,7 +57,7 @@
         #endregion
 
         #region New-Pool equivalents
-        
+
         [string]$Description,
 
         [ValidateSet('dynamic-ratio-member','dynamic-ratio-node','fastest-app-response','fastest-node','least-connections-member','least-connections-node','least-sessions','observed-member','observed-node','predictive-member','predictive-node','ratio-least-connections-member','ratio-least-connections-node','ratio-member','ratio-node','ratio-session','round-robin','weighted-least-connections-member','weighted-least-connections-node')]
@@ -69,7 +69,7 @@
 
         [switch]$PassThru
     )
-    
+
     begin {
         Test-F5Session -F5Session ($F5Session)
 
@@ -85,7 +85,7 @@
             monitor='monitor'
         }
     }
-    
+
     process {
         if ($InputObject -and (
                 ($Name -and $Name -cne $InputObject.name) -or
@@ -98,7 +98,7 @@
 
         $NewProperties = @{} # A hash table to facilitate splatting of New-Pool params
         $ChgProperties = @{} # A hash table of PSBoundParameters to override InputObject properties
-        
+
         # Build out both hashtables based on $PSBoundParameters
         foreach ($key in $PSBoundParameters.Keys) {
             switch ($key) {
@@ -114,7 +114,7 @@
                 }
             }
         }
-        
+
         $ExistingPool = Get-Pool -F5Session $F5Session -Name $Name -Application $Application -Partition $Partition -ErrorAction SilentlyContinue
 
         if ($null -eq $ExistingPool) {
@@ -125,13 +125,13 @@
         # This performs the magic necessary for ChgProperties to override $InputObject properties
         $NewObject = Join-Object -Left $InputObject -Right ([pscustomobject]$ChgProperties) -Join FULL -WarningAction SilentlyContinue
         if ($null -ne $NewObject -and $pscmdlet.ShouldProcess($F5Session.Name, "Setting Pool $Name")) {
-            
+
             # We only update the pool if properties other than 'Name' are passed in
             If ($NewObject | Get-Member -MemberType NoteProperty | Where-Object Name -ne 'Name'){
 
                 Write-Verbose -Message 'Setting Pool details...'
 
-                $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition) 
+                $URI = $F5Session.BaseURL + 'pool/{0}' -f (Get-ItemPath -Name $Name -Application $Application -Partition $Partition)
                 $JSONBody = $NewObject | ConvertTo-Json -Compress
 
                 #region case-sensitive parameter names

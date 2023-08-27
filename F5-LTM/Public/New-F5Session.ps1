@@ -4,7 +4,7 @@
     Generate an F5 session object to be used in querying and modifying the F5 LTM
 .DESCRIPTION
     This function takes the DNS name or IP address of the F5 LTM device, and a PSCredential credential object
-    for a user with permissions to work with the REST API. Based on the scope value, it either returns the 
+    for a user with permissions to work with the REST API. Based on the scope value, it either returns the
     session object (local scope) or adds the session object to the script scope
     It takes an optional parameter of TokenLifespan, a value in seconds between 300 and 36000 (5 minutes and 10 hours).
     NB: If you need to connect to an LTM on other than the standard HTTPS port of 443, please include that port in the LTM name. I.e. $LTMName = '192.168.1.1:8443'
@@ -35,7 +35,7 @@
     #If we fail to get an auth token, that means the LTM version is prior to 11.6, so we fall back on Credentials
     $AuthURL = "https://$LTMName/mgmt/shared/authn/login"
     $JSONBody = @{username = $LTMCredentials.username; password=$LTMCredentials.GetNetworkCredential().password; loginProviderName='tmos'} | ConvertTo-Json -WarningAction $WarningPreference
-    
+
 
     try {
         $Result = Invoke-RestMethodOverride -Method POST -Uri $AuthURL -Body $JSONBody -Credential $LTMCredentials -ContentType 'application/json'
@@ -43,7 +43,7 @@
         $Token = $Result.token.token
         $session.Headers.Add('X-F5-Auth-Token', $Token)
 
-        #A UUID is returned by LTM v11.6. This is needed for modifying the token. 
+        #A UUID is returned by LTM v11.6. This is needed for modifying the token.
         #For v12+, the name value is used.
         If ($Result.token.uuid){
             $TokenReference = $Result.token.uuid;
@@ -67,7 +67,7 @@
 
         # Add token expiration time to session
         $ts = New-TimeSpan -Minutes ($TokenLifespan/60)
-        $date = Get-Date -Date $Result.token.startTime 
+        $date = Get-Date -Date $Result.token.startTime
         $ExpirationTime = $date + $ts
         $session.Headers.Add('Token-Expiration', $ExpirationTime)
 
@@ -96,8 +96,8 @@
             Token      = $Token
         } | Add-Member -Name GetLink -MemberType ScriptMethod {
                 param($Link)
-                $Link -replace 'localhost', $this.Name    
-    } -PassThru 
+                $Link -replace 'localhost', $this.Name
+    } -PassThru
 
     If ($PSVersionTable.PSVersion -lt '7.2') {
         $WarningPreference = $OriginalWarningPreference
@@ -107,7 +107,7 @@
     # We'll add it to the session object and reference it in cases where the iControlREST web services differ between LTM versions.
     $VersionURL = $BaseURL.Replace('ltm/','sys/version/')
     $JSON = Invoke-F5RestMethod -Method Get -Uri $VersionURL -F5Session $newSession | ConvertTo-Json -WarningAction $WarningPreference -Depth 10
-    
+
     $version = '0.0.0.0' # Default value, rather than throw error
     if ($JSON -match '(\d+\.?){3,4}') {
         $version = [Regex]::Match($JSON,'(\d+\.?){3,4}').Value

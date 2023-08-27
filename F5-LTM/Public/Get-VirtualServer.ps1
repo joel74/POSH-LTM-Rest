@@ -14,7 +14,7 @@ Function Get-VirtualServer{
                     }
                 }
 
-            $VS_iRules | ForEach { $_.Rules = (Get-VirtualServer -Name $_.Name -Partition $_.Partition | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue  ) } 
+            $VS_iRules | ForEach { $_.Rules = (Get-VirtualServer -Name $_.Name -Partition $_.Partition | Select-Object -ExpandProperty rules -ErrorAction SilentlyContinue  ) }
 
     #>
     [cmdletBinding()]
@@ -66,8 +66,8 @@ Function Get-VirtualServer{
                 #Excluding subcollections has a significant performance increase
                 If (!$ExcludeSubcollections) {
 
-                    #Retrieve all subcollections' contents 
-                    $subcollections = [Array] $items | Get-Member -MemberType NoteProperty | % Name | %  { $items.$_ } | Where { $_.isSubcollection -eq 'True' } 
+                    #Retrieve all subcollections' contents
+                    $subcollections = [Array] $items | Get-Member -MemberType NoteProperty | % Name | %  { $items.$_ } | Where { $_.isSubcollection -eq 'True' }
 
                     #Add properties for policies and profiles
                     $items | Add-Member -NotePropertyName 'policies' -NotePropertyValue @()

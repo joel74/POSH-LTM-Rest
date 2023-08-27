@@ -1,6 +1,6 @@
 ﻿Function Get-F5Status{
 <#
-.SYNOPSIS                                                                          
+.SYNOPSIS
     Test whether the specified F5 is currently in active or standby failover mode
 #>
     [cmdletBinding()]

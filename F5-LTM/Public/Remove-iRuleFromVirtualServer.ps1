@@ -11,14 +11,14 @@
 
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
-        
+
         [Alias("VirtualServer")]
         [Alias("VirtualServerName")]
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
         [Parameter(Mandatory=$false)]
         [string]$Partition='Common',
-        
+
         [Parameter(Mandatory=$true)]
         [string]$iRuleName,
 
@@ -46,7 +46,7 @@
                             $iRules = @()
                         }
 
-                        #Check that the specified iRule is not already in the collection 
+                        #Check that the specified iRule is not already in the collection
                         If ($iRules -match $iRuleFullName){
                             $iRules = $iRules | Where-Object { $_ -ne $iRuleFullName }
 

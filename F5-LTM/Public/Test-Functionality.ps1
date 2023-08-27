@@ -78,7 +78,7 @@
     Set-PoolMemberDescription -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool -Description 'My new pool' | out-null
     Write-Host "New description:"
     Get-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool | Select-Object -ExpandProperty Description
-    
+
     Write-Host "`r`n* Enable the new pool member" -ForegroundColor $TestNotesColor
     Enable-PoolMember -F5Session $F5Session -Address $PoolMemberAddress -PoolName $TestPool
 

@@ -8,11 +8,11 @@ Function Remove-F5Session {
         $F5Session = $Script:F5Session,
         [switch]$SkipCertificateCheck
     )
-    #Validate F5Session 
+    #Validate F5Session
     Test-F5Session($F5Session)
 
     try {
-    
+
         if ($SkipCertificateCheck) {
 
             if ($PSVersionTable.PSVersion.Major -ge 6) {

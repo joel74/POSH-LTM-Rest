@@ -11,19 +11,19 @@
         Helper function to decorate an object with
             - A TypeName
             - New properties
-            - Default parameters 
+            - Default parameters
 
     .PARAMETER InputObject
         Object to decorate. Accepts pipeline input.
 
     .PARAMETER TypeName
         Typename to insert.
-        
+
         This will show up when you use Get-Member against the resulting object.
-        
+
     .PARAMETER PropertyToAdd
         Add these noteproperties.
-        
+
         Format is a hashtable with Key (Property Name) = Value (Property Value).
 
         Example to add a One and Date property:
@@ -86,7 +86,7 @@
     .NOTES
         This breaks the 'do one thing' rule from certain perspectives...
         The goal is to decorate an object all in one shot
-   
+
         This abstraction simplifies decorating an object, with a slight trade-off in performance. For example:
 
         10,000 objects, add a property and typename:
@@ -98,7 +98,7 @@
     .LINK
         https://raw.githubusercontent.com/RamblingCookieMonster/PSStash/master/PSStash/Private/Add-ObjectDetail.ps1
     #>
-    [cmdletBinding()] 
+    [cmdletBinding()]
     param(
            [Parameter( Mandatory = $false,
                        Position=0,
@@ -110,7 +110,7 @@
            [string]$TypeName,
 
            [Parameter( Mandatory = $false,
-                       Position=2)]    
+                       Position=2)]
            [System.Collections.Hashtable]$PropertyToAdd,
 
            [Parameter( Mandatory = $false,
@@ -121,7 +121,7 @@
 
            [boolean]$Passthru = $True
     )
-    
+
     Begin
     {
         if($PSBoundParameters.ContainsKey('DefaultProperties'))
@@ -142,7 +142,7 @@
                     foreach($Key in $PropertyToAdd.Keys)
                     {
                         #Add some noteproperties. Slightly faster than Add-Member.
-                        $Object.PSObject.Properties.Add( ( New-Object PSNoteProperty($Key, $PropertyToAdd[$Key]) ) )  
+                        $Object.PSObject.Properties.Add( ( New-Object PSNoteProperty($Key, $PropertyToAdd[$Key]) ) )
                     }
                 }
                 'TypeName'

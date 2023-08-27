@@ -27,7 +27,7 @@
         Test-F5Session($F5Session)
 
         Write-Verbose "NB: Pool and monitor names are case-specific."
-        
+
         $monitors = @{}
     }
     process {
@@ -37,7 +37,7 @@
                     $InputObject = Get-Pool -F5Session $F5Session -Partition $Partition
                 }
                 ($InputObject | Select-Object -ExpandProperty monitor -ErrorAction SilentlyContinue) -split ' and ' | ForEach-Object {
-                    $monitorname = $_.Trim() 
+                    $monitorname = $_.Trim()
                     if ($Name -eq '*' -or $Name -contains $monitorname) {
                         $monitors[$monitorname]++
                     }
@@ -50,7 +50,7 @@
     }
     end {
         foreach ($key in $monitors.Keys) {
-            [pscustomobject]@{Name=$key;Count=$monitors[$key]} 
-        }         
+            [pscustomobject]@{Name=$key;Count=$monitors[$key]}
+        }
     }
 }

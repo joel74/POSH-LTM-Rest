@@ -19,7 +19,7 @@
 
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Partition,
-        
+
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string[]]$Type
     )
