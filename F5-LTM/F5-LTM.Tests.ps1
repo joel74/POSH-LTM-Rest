@@ -37,11 +37,11 @@ Describe 'Get-BigIPPartition' -Tags 'Unit' {
                 Name = '192.168.1.1'
                 BaseURL = 'https://192.168.1.1/mgmt/tm/ltm/'
                 Credential = New-Object System.Management.Automation.PSCredential ('georgejetson', (ConvertTo-SecureString 'judyr0ck$!' -AsPlainText -Force))
-                LTMVersion = [Version]'12.1.1'
+                LTMVersion = [Version]'11.5.1'
                 WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
             } | Add-Member -Name GetLink -MemberType ScriptMethod {
                     param($Link)
-                    $Link -replace 'localhost', $this.Name    
+                    $Link -replace 'localhost', $this.Name
             } -PassThru
 
 #endregion Arrange: Initialize Mocks
@@ -120,7 +120,7 @@ Describe 'Get-HealthMonitor' -Tags 'Unit' {
                 WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
             } | Add-Member -Name GetLink -MemberType ScriptMethod {
                     param($Link)
-                    $Link -replace 'localhost', $this.Name    
+                    $Link -replace 'localhost', $this.Name
             } -PassThru
 
 #endregion Arrange: Initialize Mocks
@@ -212,7 +212,7 @@ Describe 'New-F5Session' -Tags 'Unit' {
                 }
             }
             Mock Invoke-WebRequest { $true }
-            
+
             $credentials = New-Object System.Management.Automation.PSCredential ('georgejetson', (ConvertTo-SecureString 'judyr0ck$!' -AsPlainText -Force))
 
 #endregion Arrange: Initialize Mocks

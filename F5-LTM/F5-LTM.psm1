@@ -1,14 +1,14 @@
 <#
-.SYNOPSIS  
+.SYNOPSIS
     A module for using the F5 LTM REST API to administer an LTM device
-.DESCRIPTION  
+.DESCRIPTION
     This module uses the F5 LTM REST API to manipulate and query pools, pool members, virtual servers and iRules
     It is built to work with version 11.6 and higher
-.NOTES  
+.NOTES
     File Name    : F5-LTM.psm1
     Author       : Joel Newton - jnewton@springcm.com
     Requires     : PowerShell V3
-    Dependencies : It includes a Validation.cs class file (based on code posted by Brian Scholer) to allow for using the REST API 
+    Dependencies : It includes a Validation.cs class file (based on code posted by Brian Scholer) to allow for using the REST API
     with LTM devices using self-signed SSL certificates.
 #>
 
