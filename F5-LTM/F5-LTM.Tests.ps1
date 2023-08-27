@@ -37,7 +37,7 @@ Describe 'Get-BigIPPartition' -Tags 'Unit' {
                 Name = '192.168.1.1'
                 BaseURL = 'https://192.168.1.1/mgmt/tm/ltm/'
                 Credential = New-Object System.Management.Automation.PSCredential ('georgejetson', (ConvertTo-SecureString 'judyr0ck$!' -AsPlainText -Force))
-                LTMVersion = [Version]'11.5.1'
+                LTMVersion = [Version]'12.1.1'
                 WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
             } | Add-Member -Name GetLink -MemberType ScriptMethod {
                     param($Link)
