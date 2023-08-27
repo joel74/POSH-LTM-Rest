@@ -8,7 +8,7 @@ Function Add-iRuleToVirtualServer {
     [cmdletBinding()]
     param(
         $F5Session=$Script:F5Session,
-        
+
         [Parameter(Mandatory=$true,ParameterSetName='InputObject',ValueFromPipeline=$true)]
         [PSObject[]]$InputObject,
 
@@ -16,7 +16,7 @@ Function Add-iRuleToVirtualServer {
         [Alias("VirtualServerName")]
         [Parameter(Mandatory=$true,ParameterSetName='Name',ValueFromPipeline=$true)]
         [string[]]$Name,
-        
+
         [Parameter(Mandatory=$true)]
         [string]$iRuleName,
 
@@ -46,7 +46,7 @@ Function Add-iRuleToVirtualServer {
                             $iRules = @()
                         }
 
-                        #Check that the specified iRule is not already in the collection 
+                        #Check that the specified iRule is not already in the collection
                         If ($iRules -match $iRuleFullName){
                             Write-Warning "The $Name virtual server already contains the $iRuleFullName iRule."
                             $false
@@ -58,7 +58,7 @@ Function Add-iRuleToVirtualServer {
 
                             $JSONBody = @{rules=$iRules} | ConvertTo-Json
 
-                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleFullName iRule to the $Name virtual server." -AsBoolean 
+                            Invoke-F5RestMethod -Method PATCH -Uri "$URI" -F5Session $F5Session -Body $JSONBody -ContentType 'application/json' -ErrorMessage "Failed to add the $iRuleFullName iRule to the $Name virtual server." -AsBoolean
                         }
                     }
                 }

@@ -57,7 +57,7 @@
         If (!$Name -and !$Address){
             Write-Error 'Either a name or an IP address is required.'
         }
-        
+
         #Strip out any port info when checking for an existing node
         $NodeName = $Name -replace ':\d+$',''
 
