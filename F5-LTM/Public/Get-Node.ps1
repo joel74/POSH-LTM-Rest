@@ -5,7 +5,6 @@
 # .NOTES
     # This function makes no attempt to resolve names to ip addresses.  If you are having trouble finding a node, try:
         # Get-Node | Where-Object { $_.address -like 'N.N.N.N' -or $_.name -like 'XXXXX' }
->
     # [cmdletBinding()]
     # param (
         # $F5Session=$Script:F5Session,
@@ -22,7 +21,7 @@
         # [string]$Partition
     # )
     # begin {
-        Test that the F5 session is in a valid format
+        ## Test that the F5 session is in a valid format
         # Test-F5Session($F5Session)
 
         # Write-Verbose "NB: Node names are case-specific."
