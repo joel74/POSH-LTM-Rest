@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+    name: POSH-LTM-Rest
+    title: ROSH-LTM-Rest PowerShell module
+    description: This PowerShell module uses the F5 LTM REST API to manipulate and query pools, pool members, virtual servers and iRules.
+    namespace: stone
+    tags:
+        - powershell
+        - iac-library
+    annotations:
+      legacy.stone.tech/owner-email: foundation.platform@stone.com.br
+spec:
+    type: library
+    lifecycle: production
+    owner: stone-payments/foundation-platform-experience
