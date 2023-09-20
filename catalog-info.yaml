@@ -13,4 +13,4 @@ metadata:
 spec:
     type: library
     lifecycle: production
-    owner: stone-payments/foundation-platform-experience
+    owner: stone-payments/tis-automation
