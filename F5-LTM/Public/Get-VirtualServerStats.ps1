@@ -1,4 +1,4 @@
-﻿Function Get-NodeStats {
+﻿Function Get-VirtualServerStats {
 <#
 .SYNOPSIS
     Retrieve specified Node(s) statistics
@@ -13,10 +13,11 @@
         [Parameter(Mandatory=$false)]
         [string]$Partition,
 
-        [Alias('ComputerName')]
-        [Alias('NodeName')]
+        [Alias('VirtualServerName')]
+        [Alias('VirtualName')]
         [Parameter(Mandatory=$true,ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [string[]]$Name=''
+
     )
     begin {
         #Test that the F5 session is in a valid format
@@ -27,7 +28,7 @@
     process {
         for($i=0; $i -lt $Name.Count; $i++) {
             $itemname = Invoke-NullCoalescing {$Name[$i]} {''}
-            $URI = $F5Session.BaseURL + 'node/{0}/stats' -f (Get-ItemPath -Name $itemname -Partition $Partition)
+            $URI = $F5Session.BaseURL + 'virtual/{0}/stats' -f (Get-ItemPath -Name $itemname -Partition $Partition)
             $JSON = Invoke-F5RestMethod -Method Get -Uri $URI -F5Session $F5Session
 		    $JSON = Resolve-NestedStats -F5Session $F5Session -JSONData $JSON
             Invoke-NullCoalescing {$JSON.entries} {$JSON} | Add-ObjectDetail
