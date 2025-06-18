@@ -14,7 +14,7 @@
 
 $Script:F5Session=$null
 
- if ($PSVersionTable.PSVersion.Major -ge 6) {
+ if ($PSVersionTable.PSVersion.Major -lt 6) {
     Add-Type -Path "${PSScriptRoot}\Validation.cs"
  }
 
