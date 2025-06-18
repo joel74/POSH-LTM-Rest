@@ -18,7 +18,6 @@ $Script:F5Session=$null
     Add-Type -Path "${PSScriptRoot}\Validation.cs"
  }
 
-
 #Only add this type if it isn't already added to the session
 if (!("PoshLTM.F5Address" -as [type])) {
     Add-Type -Path "${PSScriptRoot}\TypeData\PoshLTM.Types.cs"
