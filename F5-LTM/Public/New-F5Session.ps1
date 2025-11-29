@@ -75,11 +75,12 @@
         # We failed to retrieve an authorization token. Either the version of the LTM is pre 11.6, or the $LTMName is not valid
         # Verify that the LTM base URL is available. Otherwise return a message saying the LTM specified is not valid.
         Try {
-            Invoke-WebRequest -Uri $BaseURL -ErrorVariable LTMError -TimeoutSec 3
+            Invoke-WebRequest -Uri $BaseURL -ErrorVariable LTMError -TimeoutSec 5 -NoProxy
         }
         Catch {
             #If an error is thrown and it doesn't contain the word 'Unauthorized' then the LTM name and $BaseURL are invalid
             If ($LTMError[0] -notmatch 'Unauthorized'){
+                $LTMError
                 Throw ("The specified LTM name $LTMName is not valid.")
             }
         }
