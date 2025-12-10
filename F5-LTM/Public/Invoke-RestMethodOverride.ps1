@@ -19,7 +19,7 @@ Function Invoke-RestMethodOverride {
         $ContentType
     )
     if ($PSVersionTable.PSVersion.Major -ge 6) {
-        Invoke-RestMethod @PSBoundParameters -SkipCertificateCheck
+        Invoke-RestMethod @PSBoundParameters -SkipCertificateCheck -NoProxy
     }
     else {
         [SSLValidator]::OverrideValidation()

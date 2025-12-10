@@ -17,7 +17,7 @@ Function Remove-F5Session {
 
             if ($PSVersionTable.PSVersion.Major -ge 6) {
 
-                $RemoveSession = Invoke-RestMethod "https://$($F5Session.name)/mgmt/shared/authz/tokens/$($F5Session.token)" -Headers @{'X-F5-Auth-Token' = $F5Session.token } -Method DELETE -SkipCertificateCheck -ErrorVariable LTMError
+                $RemoveSession = Invoke-RestMethod "https://$($F5Session.name)/mgmt/shared/authz/tokens/$($F5Session.token)" -Headers @{'X-F5-Auth-Token' = $F5Session.token } -Method DELETE -SkipCertificateCheck -ErrorVariable LTMError -NoProxy
             }
             else {
 
@@ -28,7 +28,7 @@ Function Remove-F5Session {
         }
         else {
 
-            $RemoveSession = Invoke-RestMethod "https://$($F5Session.name)/mgmt/shared/authz/tokens/$($F5Session.token)" -Headers @{'X-F5-Auth-Token' = $F5Session.token } -Method DELETE -ErrorVariable LTMError
+            $RemoveSession = Invoke-RestMethod "https://$($F5Session.name)/mgmt/shared/authz/tokens/$($F5Session.token)" -Headers @{'X-F5-Auth-Token' = $F5Session.token } -Method DELETE -ErrorVariable LTMError -NoProxy
         }
 
         Write-Verbose "Session : token $($RemoveSession.token) deleted"
