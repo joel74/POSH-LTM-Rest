@@ -4,6 +4,12 @@ build: false
 version: 1.4.{build}
 os: WMF 5
 
+on:
+	pull_requests:
+		types:
+			- closed
+	workflow_dispatchs:
+  
 branches:
   only:
     - master
