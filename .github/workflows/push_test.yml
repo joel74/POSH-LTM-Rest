@@ -18,9 +18,10 @@ skip_commits:
 install:
   # Force bootstrap of the Nuget PackageManagement Provider; Reference: http://www.powershellgallery.com/GettingStarted?section=Get%20Started
   shell: pwsh
+    run: Install-PackageProvider -Name NuGet
     run: Get-PackageProvider -Name NuGet -Force
   # Install pester PowerShell Unit Testing module
-  - cinst -y pester
+  # - cinst -y pester
 
 before_test:
   # Set FunctionsToExport and ModuleVersion in the module manifest (F5-LTM.psd1); Fixes #37 Do not export Private\*.ps1 functions
