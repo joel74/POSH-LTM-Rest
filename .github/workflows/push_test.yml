@@ -18,8 +18,7 @@ skip_commits:
 install:
   # Force bootstrap of the Nuget PackageManagement Provider; Reference: http://www.powershellgallery.com/GettingStarted?section=Get%20Started
   shell: pwsh
-    run: Install-PackageProvider -Name NuGet
-    run: Get-PackageProvider -Name NuGet -Force
+  run: Get-PackageProvider -Name NuGet -Force
   # Install pester PowerShell Unit Testing module
   # - cinst -y pester
 
