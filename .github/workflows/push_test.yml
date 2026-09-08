@@ -25,23 +25,23 @@ install:
 before_test:
   # Set FunctionsToExport and ModuleVersion in the module manifest (F5-LTM.psd1); Fixes #37 Do not export Private\*.ps1 functions
   shell: pwsh
-    run: |
-      $FunctionsToExport = ((Get-ChildItem (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM\Public') -Filter '*.ps1' -Recurse).BaseName) -join "','"
-      (Get-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM\F5-LTM.psd1') -Raw) -replace 
-      "FunctionsToExport = '.*'","FunctionsToExport = '$FunctionsToExport'" -replace 
-      "ModuleVersion = '.*'", "ModuleVersion = '$env:APPVEYOR_BUILD_VERSION'" | 
-      Set-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM\F5-LTM.psd1')
+  run: |
+    $FunctionsToExport = ((Get-ChildItem (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM\Public') -Filter '*.ps1' -Recurse).BaseName) -join "','"
+    (Get-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM\F5-LTM.psd1') -Raw) -replace 
+    "FunctionsToExport = '.*'","FunctionsToExport = '$FunctionsToExport'" -replace 
+    "ModuleVersion = '.*'", "ModuleVersion = '$env:APPVEYOR_BUILD_VERSION'" | 
+    Set-Content (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM\F5-LTM.psd1')
 
 test_script:
   # Install PSScriptAnalyzer module for enforcing best practices
   shell: pwsh
-    run: Install-Module -Name PSScriptAnalyzer -Force
+  run: Install-Module -Name PSScriptAnalyzer -Force
   # Invoke PSScriptAnalyzer against the module to make sure it's not failing any tests
   shell: pwsh
-    run: Invoke-ScriptAnalyzer -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM') -Recurse
+  run: Invoke-ScriptAnalyzer -Path (Join-Path $env:APPVEYOR_BUILD_FOLDER 'F5-LTM') -Recurse
   # Invoke-Pester unit tests
   shell: pwsh
-    run: $testResultsFile = '.\TestsResults.xml'
+  run: $testResultsFile = '.\TestsResults.xml'
 # JN: The Pester tests have failed for years because the Test-F5Sesssion does not recognize the mocked session object that is passed.
 # I do not know Pester. If someone else wants to fix the Pester tests and submit a PR, please do so.
 # Until them, they will remain commented out.
