@@ -6,6 +6,7 @@ It is built to work with the following BIG-IP versions:
    * All versions of LTM from 12.0.0 onward.
 
 It requires PowerShell v3 or higher.
+
 It is set to negotiate connections using TLS 1.2. TLS 1.2 is only supported on .NET Framework 4.5+.
 
 It includes a Validation.cs class file (based on code posted by Brian Scholer on www.briantist.com) to allow for using the REST API with LTM devices using self-signed SSL certificates.
