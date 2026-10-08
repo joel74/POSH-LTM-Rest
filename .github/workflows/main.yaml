@@ -17,7 +17,11 @@ jobs:
       - name: Invoke-ScriptAnalyzer
         run: |
           $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error;
-          if ($result.Count -ne 0) { Write-Error $result}
+          if ($result.Count -ne 0) { 
+            foreach ($singleError in $result) {
+              Write-Error $singleError.Message
+            }
+          }
         shell: pwsh
 
       - name: Publish Module
