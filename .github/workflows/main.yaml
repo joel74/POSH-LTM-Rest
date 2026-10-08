@@ -3,22 +3,27 @@ name: Publish to PowerShell Gallery
 on:
   push:
     branches:
-      - main  # Triggers the workflow on commits to the main branch
+      - main
     paths:
-      - 'F5-LTM/**' # Optional: Only run if files in your module folder change
+      - 'F5-LTM/**'       # Path to your module source code
+      - 'F5-LTM/**.psd1'      # Path to your module manifest
 
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest  # Modern, lightweight, cross-platform runner
 
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Latest checkout action
 
-      - name: Publish Module to PowerShell Gallery
+      - name: Publish Module
         shell: pwsh
+        env:
+          # Injecting the secret as an environment variable is more secure
+          PSGALLERY_API_KEY: ${{ secrets.PS_GALLERY_API }} 
         run: |
-          # Build, test, or update your module manifest version here if needed
+          # 1. (Optional) Force modern security protocol if needed
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           
-          # Publish using the secret API key
-          Publish-Module -Path "./F5-LTM" -Repository "PSGallery" -APIKey "${{ secrets.PS_GALLERY_API }}" -Verbose
+          # 2. Publish using the environment variable
+          Publish-Module -Path "./src/F5-LTM" -Repository "PSGallery" -NuGetApiKey $env:PSGALLERY_API_KEY -Verbose
