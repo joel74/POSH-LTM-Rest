@@ -15,7 +15,8 @@ jobs:
         uses: actions/checkout@v6  # Latest checkout action
 
       - name: Invoke-ScriptAnalyzer
-        run: $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error
+        run: |
+          $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error;
           if ($result.Count -ne 0) { Write-Error $result}
         shell: pwsh
 
