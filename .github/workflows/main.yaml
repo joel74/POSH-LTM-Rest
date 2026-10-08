@@ -18,7 +18,7 @@ jobs:
         run: $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error
           if ($result.Count -ne 0) { Write-Error $result}
         shell: pwsh
-		
+
       - name: Publish Module
         shell: pwsh
         env:
