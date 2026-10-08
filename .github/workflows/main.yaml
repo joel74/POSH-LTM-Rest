@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'F5-LTM/**'       # Path to your module source code
-      - 'F5-LTM/**.psd1'      # Path to your module manifest
 
 jobs:
   publish:
