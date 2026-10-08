@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4  # Latest checkout action
+        uses: actions/checkout@v6  # Latest checkout action
 
       - name: Invoke-ScriptAnalyzer
         run: $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error
