@@ -5,14 +5,6 @@ on:
     types:
       - closed
   workflow_dispatch:
-  
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'F5-LTM/**'       # Path to your module source code
-      - 'F5-LTM/**.psd1'      # Path to your module manifest
 
 jobs:
   publish:
@@ -23,10 +15,10 @@ jobs:
         uses: actions/checkout@v4  # Latest checkout action
 
       - name: Invoke-ScriptAnalyzer
-	    run: $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error
-		if ($result.Count -ne 0) { Write-Error $result}
-		shell: pwsh
-
+        run: $result = Invoke-ScriptAnalyzer -Path .\F5-LTM -Recurse -Severity Warning,Error
+          if ($result.Count -ne 0) { Write-Error $result}
+        shell: pwsh
+		
       - name: Publish Module
         shell: pwsh
         env:
