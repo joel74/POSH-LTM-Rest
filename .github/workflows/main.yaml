@@ -34,4 +34,4 @@ jobs:
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           
           # 2. Publish using the environment variable
-          Publish-Module -Path "./src/F5-LTM" -Repository "PSGallery" -NuGetApiKey $env:PSGALLERY_API_KEY -Verbose
+          Publish-Module -Path "./F5-LTM" -Repository "PSGallery" -NuGetApiKey $env:PSGALLERY_API_KEY -Verbose
