@@ -3,7 +3,7 @@ name: Publish to PowerShell Gallery
 on:
   pull_request:
     types:
-	  - closed
+      - closed
   workflow_dispatch:
   
 on:
