@@ -1,5 +1,24 @@
-name: Publish Module to PowerShell Gallery
-uses: pcgeek86/publish-powershell-module-action@v20
-id: publish-module
-with:
-  NuGetApiKey: ${{ secrets.POWERSHELLGALLERY_APIKEY }}
+name: Publish to PowerShell Gallery
+
+on:
+  push:
+    branches:
+      - main  # Triggers the workflow on commits to the main branch
+    paths:
+      - 'F5-LTM/**' # Optional: Only run if files in your module folder change
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Publish Module to PowerShell Gallery
+        shell: pwsh
+        run: |
+          # Build, test, or update your module manifest version here if needed
+          
+          # Publish using the secret API key
+          Publish-Module -Path "./F5-LTM" -Repository "PSGallery" -APIKey "${{ secrets.PS_GALLERY_API }}" -Verbose
